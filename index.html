@@ -19,7 +19,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .stat{text-align:right}.stat-l{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
 .stat-v{font-size:12px;color:#8492a6;font-family:monospace;margin-top:1px}
 
-/* Controls row */
 #controls{padding:7px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .group-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px;margin-right:2px}
 .btn-group{display:flex;gap:3px}
@@ -33,14 +32,19 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 #status{font-size:11px;color:#3d4a5c;font-family:monospace}
 #warn-msg{font-size:10px;color:#c8900a;font-family:monospace;padding:3px 8px;background:#1a1100;border-radius:4px;border:1px solid #7a5500;display:none}
 
-/* OHLC bar */
-#tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:14px;align-items:center;min-height:28px}
+/* EMA legend */
+#ema-legend{display:flex;gap:14px;align-items:center;margin-left:8px}
+.ema-dot{width:22px;height:2px;border-radius:1px;display:inline-block;margin-right:4px;vertical-align:middle}
+.ema-lbl{font-size:11px;font-family:monospace;display:flex;align-items:center}
+#ema50-val{color:#f0a500;font-weight:600;margin-left:4px}
+#ema200-val{color:#2196f3;font-weight:600;margin-left:4px}
+
+#tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:14px;align-items:center;min-height:28px;flex-wrap:wrap}
 .oi{display:none;gap:5px;align-items:baseline}
 .ol{font-size:11px;color:#3d4a5c;font-family:monospace}
 .ov{font-size:12px;font-weight:600;font-family:monospace}
 #hint{font-size:11px;color:#3d4a5c;font-family:monospace}
 
-/* Chart */
 #cwrap{flex:1;position:relative;min-height:0}
 #cv{width:100%;height:100%}
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117;z-index:10}
@@ -71,12 +75,11 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <div class="stat"><div class="stat-l">Volume</div><div class="stat-v" id="vol">—</div></div>
       <div class="stat"><div class="stat-l">High</div><div class="stat-v" id="dhigh" style="color:#26c281">—</div></div>
       <div class="stat"><div class="stat-l">Low</div><div class="stat-v" id="dlow" style="color:#e74c3c">—</div></div>
-      <div class="stat"><div class="stat-l">Updated</div><div class="stat-v" id="upd">—</div></div>
+      <div class="stat"><div class="stat-l">Praha (CET/CEST)</div><div class="stat-v" id="prg-time">—</div></div>
     </div>
   </div>
 
   <div id="controls">
-    <!-- Rozpětí -->
     <span class="group-label">Rozpětí</span>
     <div class="btn-group" id="range-grp">
       <button class="tf" data-r="7d">7D</button>
@@ -87,7 +90,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <button class="tf" data-r="2y">2Y</button>
     </div>
     <div class="sep"></div>
-    <!-- Interval svíček -->
     <span class="group-label">Interval</span>
     <div class="btn-group" id="iv-grp">
       <button class="iv warn" data-iv="1m"  data-max-days="7">1m</button>
@@ -110,6 +112,10 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     <div class="oi" id="oi-h"><span class="ol">H</span><span class="ov" id="tv-h" style="color:#26c281"></span></div>
     <div class="oi" id="oi-l"><span class="ol">L</span><span class="ov" id="tv-l" style="color:#e74c3c"></span></div>
     <div class="oi" id="oi-c"><span class="ol">C</span><span class="ov" id="tv-c"></span></div>
+    <div id="ema-legend" style="margin-left:auto">
+      <span class="ema-lbl"><span class="ema-dot" style="background:#f0a500"></span>EMA 50<span id="ema50-val">—</span></span>
+      <span class="ema-lbl"><span class="ema-dot" style="background:#2196f3"></span>EMA 200<span id="ema200-val">—</span></span>
+    </div>
   </div>
 
   <div id="cwrap">
@@ -121,7 +127,7 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
   </div>
 
   <div id="footer">
-    <span>NG=F · NYMEX · USD/MMBtu · Zdroj: Yahoo Finance</span>
+    <span>NG=F · NYMEX · USD/MMBtu · Zdroj: Yahoo Finance · Čas: Europe/Prague (CET/CEST automaticky)</span>
     <span>Scroll = zoom · Táhni = posuv · Dvojklik osy X = fit all</span>
   </div>
 </div>
@@ -130,19 +136,13 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 'use strict';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const TICKER = 'NG=F';
+const TICKER   = 'NG=F';
+const TZ       = 'Europe/Prague';   // IANA timezone — automaticky CET/CEST
 
-// Refresh intervaly podle zvoleného candle intervalu
-// Minutové svíčky = refresh každých 10s, hodinové = 60s, denní = 5min
-const REFRESH_BY_IV = { '1m':10000, '5m':15000, '15m':20000, '1h':60000, '1d':300000, '1wk':600000 };
+const REFRESH_BY_IV = { '1m':10000,'5m':15000,'15m':20000,'1h':60000,'1d':300000,'1wk':600000 };
+const MAX_DAYS_BY_IV = { '1m':7,'5m':60,'15m':60,'1h':730,'1d':9999,'1wk':9999 };
+const RANGE_DAYS     = { '7d':7,'1mo':30,'3mo':90,'ytd':180,'1y':365,'2y':730 };
 
-// Yahoo Finance: maximální počet dní pro daný interval
-const MAX_DAYS_BY_IV = { '1m':7, '5m':60, '15m':60, '1h':730, '1d':9999, '1wk':9999 };
-
-// Rozpětí → počet dní (přibližně)
-const RANGE_DAYS = { '7d':7, '1mo':30, '3mo':90, 'ytd':180, '1y':365, '2y':730 };
-
-// CORS proxy fallbacky
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -150,29 +150,76 @@ const PROXIES = [
 ];
 const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
 
+// ─── Prague time helpers ──────────────────────────────────────────────────────
+// Vrátí aktuální čas v Praze jako string, automaticky CET (+1) / CEST (+2)
+function pragueNow() {
+  return new Date().toLocaleTimeString('cs-CZ', { timeZone: TZ, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+// Převede Unix timestamp (sekundy) na "YYYY-MM-DD HH:MM" v pražském čase
+function tsToPragueLabel(ts) {
+  return new Date(ts * 1000).toLocaleString('cs-CZ', {
+    timeZone: TZ,
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit',
+  });
+}
+
+// Pražský offset v hodinách pro daný Unix timestamp (správně bere v úvahu DST)
+function pragueOffsetHours(ts) {
+  const d = new Date(ts * 1000);
+  // Trik: porovnáme UTC čas s "lokálním" časem v Praze
+  const utcStr  = d.toLocaleString('en-GB', { timeZone:'UTC' });
+  const przStr  = d.toLocaleString('en-GB', { timeZone: TZ });
+  const parse   = s => { const [dPart, tPart] = s.split(', '); const [h,m,sec] = tPart.split(':'); return +h*60 + +m; };
+  let diff = parse(przStr) - parse(utcStr);
+  if (diff > 12*60) diff -= 24*60;
+  if (diff < -12*60) diff += 24*60;
+  return diff / 60;
+}
+
+// Posune Unix timestamp o pražský offset, aby lightweight-charts zobrazil pražský čas na ose
+function shiftToPrague(ts) {
+  return ts + pragueOffsetHours(ts) * 3600;
+}
+
+// ─── Hodiny (Prague) — živý ticker v headeru ──────────────────────────────────
+setInterval(() => { document.getElementById('prg-time').textContent = pragueNow(); }, 1000);
+document.getElementById('prg-time').textContent = pragueNow();
+
+// ─── EMA výpočet ──────────────────────────────────────────────────────────────
+function calcEMA(closes, period) {
+  if (closes.length < period) return [];
+  const k = 2 / (period + 1);
+  const result = new Array(closes.length).fill(null);
+  // SMA pro první hodnotu
+  let sum = 0;
+  for (let i = 0; i < period; i++) sum += closes[i];
+  result[period - 1] = sum / period;
+  for (let i = period; i < closes.length; i++) {
+    result[i] = closes[i] * k + result[i-1] * (1 - k);
+  }
+  return result;
+}
+
 // ─── State ───────────────────────────────────────────────────────────────────
-let chart, candleSeries, volSeries;
-let curRange = 'ytd';
-let curIv    = '1d';
+let chart, candleSeries, volSeries, ema50Series, ema200Series;
+let curRange = 'ytd', curIv = '1d';
 let refreshTimer;
 let lastCandles = [];
 
-// ─── Efektivní interval: pokud je rozpětí > max pro daný interval, přepni ───
+// ─── effectiveIv ─────────────────────────────────────────────────────────────
 function effectiveIv() {
   const days    = RANGE_DAYS[curRange] || 365;
   const maxDays = MAX_DAYS_BY_IV[curIv] || 9999;
   if (days > maxDays) {
-    // Najdi nejbližší větší interval
-    const order = ['1m','5m','15m','1h','1d','1wk'];
-    for (const iv of order) {
-      if (MAX_DAYS_BY_IV[iv] >= days) return { iv, clamped: true };
-    }
-    return { iv: '1wk', clamped: true };
+    for (const iv of ['1m','5m','15m','1h','1d','1wk'])
+      if (MAX_DAYS_BY_IV[iv] >= days) return { iv, clamped:true };
+    return { iv:'1wk', clamped:true };
   }
-  return { iv: curIv, clamped: false };
+  return { iv:curIv, clamped:false };
 }
 
-// ─── Refresh timer ────────────────────────────────────────────────────────────
 function resetTimer() {
   clearInterval(refreshTimer);
   const { iv } = effectiveIv();
@@ -183,7 +230,7 @@ function resetTimer() {
     secs < 60 ? `Auto-refresh ${secs}s` : `Auto-refresh ${secs/60}min`;
 }
 
-// ─── Wait for LightweightCharts ──────────────────────────────────────────────
+// ─── Wait for lib ─────────────────────────────────────────────────────────────
 function waitForLib(cb) {
   if (typeof LightweightCharts !== 'undefined') { cb(); return; }
   let n = 0;
@@ -222,6 +269,19 @@ function initChart() {
   });
   chart.priceScale('vol').applyOptions({ scaleMargins:{top:0.80,bottom:0} });
 
+  // EMA série
+  ema50Series = chart.addLineSeries({
+    color:'#f0a500', lineWidth:1.5, priceLineVisible:false, lastValueVisible:false,
+    crosshairMarkerVisible:false,
+    priceFormat:{type:'price',precision:3,minMove:0.001},
+  });
+  ema200Series = chart.addLineSeries({
+    color:'#2196f3', lineWidth:1.5, priceLineVisible:false, lastValueVisible:false,
+    crosshairMarkerVisible:false,
+    priceFormat:{type:'price',precision:3,minMove:0.001},
+  });
+
+  // Crosshair — OHLC + EMA hodnoty
   chart.subscribeCrosshairMove(p => {
     if (!p.time || !p.seriesData) { clearTooltip(); return; }
     const b = p.seriesData.get(candleSeries);
@@ -232,6 +292,11 @@ function initChart() {
     setOI('h', b.high?.toFixed(3),  '#26c281');
     setOI('l', b.low?.toFixed(3),   '#e74c3c');
     setOI('c', b.close?.toFixed(3), up ? '#26c281' : '#e74c3c');
+    // EMA při crosshair
+    const e50  = p.seriesData.get(ema50Series);
+    const e200 = p.seriesData.get(ema200Series);
+    document.getElementById('ema50-val').textContent  = e50  ? e50.value.toFixed(3)  : '—';
+    document.getElementById('ema200-val').textContent = e200 ? e200.value.toFixed(3) : '—';
   });
 
   new ResizeObserver(([e]) => {
@@ -243,10 +308,10 @@ function initChart() {
 // ─── Fetch helpers ────────────────────────────────────────────────────────────
 async function fetchWithFallback(yfUrl) {
   const errs = [];
-  for (const mkProxy of PROXIES) {
+  for (const mkP of PROXIES) {
     try {
-      const res = await fetch(mkProxy(yfUrl), {
-        headers:{ Accept:'application/json' },
+      const res = await fetch(mkP(yfUrl), {
+        headers:{Accept:'application/json'},
         signal: AbortSignal.timeout(10000),
       });
       if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
@@ -273,18 +338,17 @@ function parseYF(json) {
 
   const candles = ts.map((t,i) => ({
     time: Math.floor(t),
-    open: q.open?.[i], high: q.high?.[i], low: q.low?.[i], close: q.close?.[i],
+    open:q.open?.[i], high:q.high?.[i], low:q.low?.[i], close:q.close?.[i],
     volume: q.volume?.[i] ?? 0,
-  })).filter(c => c.open!=null && c.close!=null).sort((a,b)=>a.time-b.time);
+  })).filter(c=>c.open!=null && c.close!=null).sort((a,b)=>a.time-b.time);
 
   if (!candles.length) throw new Error('Žádné platné svíčky po filtrování');
-
   const last = candles[candles.length-1];
   return {
     candles,
-    price:     m.regularMarketPrice    ?? last.close,
-    prevClose: m.chartPreviousClose    ?? candles[candles.length-2]?.close,
-    volume:    m.regularMarketVolume   ?? last.volume,
+    price:     m.regularMarketPrice   ?? last.close,
+    prevClose: m.chartPreviousClose   ?? candles[candles.length-2]?.close,
+    volume:    m.regularMarketVolume  ?? last.volume,
     dayHigh:   m.regularMarketDayHigh,
     dayLow:    m.regularMarketDayLow,
   };
@@ -305,42 +369,54 @@ async function loadData(isRefresh = false) {
       const { candles, price, prevClose, volume, dayHigh, dayLow } = parseYF(json);
       lastCandles = candles;
 
-      // Aktualizuj svíčky — při refreshi jen přidej/uprav poslední
-      if (isRefresh && lastCandles.length) {
-        // updateData je rychlejší než setData pro refresh
-        const last = candles[candles.length-1];
-        try { candleSeries.update(last); volSeries.update({time:last.time,value:last.volume,color:last.close>=last.open?'#1a3d2b':'#3d1a1a'}); }
-        catch { candleSeries.setData(candles); setVolData(candles); }
-      } else {
-        candleSeries.setData(candles);
-        setVolData(candles);
-        chart.timeScale().fitContent();
+      // Posuneme timestampy do pražského času pro osu X
+      const shifted = candles.map(c => ({ ...c, time: shiftToPrague(c.time) }));
+
+      // Svíčky + volume
+      candleSeries.setData(shifted);
+      volSeries.setData(shifted.map(c=>({
+        time:c.time, value:c.volume, color:c.close>=c.open?'#1a3d2b':'#3d1a1a'
+      })));
+
+      // EMA výpočet na close cenách
+      const closes = candles.map(c => c.close);
+      const ema50arr  = calcEMA(closes, 50);
+      const ema200arr = calcEMA(closes, 200);
+
+      const ema50data  = [];
+      const ema200data = [];
+      for (let i = 0; i < shifted.length; i++) {
+        if (ema50arr[i]  != null) ema50data.push({ time: shifted[i].time, value: +ema50arr[i].toFixed(4) });
+        if (ema200arr[i] != null) ema200data.push({ time: shifted[i].time, value: +ema200arr[i].toFixed(4) });
       }
+      ema50Series.setData(ema50data);
+      ema200Series.setData(ema200data);
+
+      // Poslední EMA hodnoty do legendy
+      if (ema50data.length)  document.getElementById('ema50-val').textContent  = ema50data[ema50data.length-1].value.toFixed(3);
+      if (ema200data.length) document.getElementById('ema200-val').textContent = ema200data[ema200data.length-1].value.toFixed(3);
+
+      chart.timeScale().fitContent();
 
       // Header
       const ch  = prevClose!=null ? price-prevClose : null;
       const pct = ch!=null && prevClose ? ch/prevClose*100 : null;
       const up  = ch>=0, sign=up?'+':'', clr=up?'#26c281':'#e74c3c';
       setText('price', price.toFixed(3));
-      el('change').textContent  = ch!=null ? sign+ch.toFixed(3) : '—'; el('change').style.color=clr;
-      el('changePct').textContent = pct!=null ? `(${sign}${pct.toFixed(2)}%)` : ''; el('changePct').style.color=clr;
-      setText('vol',   volume ? Number(volume).toLocaleString('cs-CZ') : '—');
+      el('change').textContent=ch!=null?sign+ch.toFixed(3):'—'; el('change').style.color=clr;
+      el('changePct').textContent=pct!=null?`(${sign}${pct.toFixed(2)}%)`:''; el('changePct').style.color=clr;
+      setText('vol',   volume ? Number(volume).toLocaleString('cs-CZ'):'—');
       setText('dhigh', dayHigh ? dayHigh.toFixed(3) : (candles.reduce((m,c)=>Math.max(m,c.high),0)||0).toFixed(3));
       setText('dlow',  dayLow  ? dayLow.toFixed(3)  : (candles.reduce((m,c)=>Math.min(m,c.low),Infinity)||0).toFixed(3));
-      setText('upd',   new Date().toLocaleTimeString('cs-CZ'));
 
       hideOverlay();
       setRefreshing(false);
       resetTimer();
       return;
-    } catch(e) { lastErr = e; }
+    } catch(e) { lastErr = e; console.warn(e); }
   }
   setRefreshing(false);
   if (!isRefresh) showErr(lastErr?.message || 'Neznámá chyba');
-}
-
-function setVolData(candles) {
-  volSeries.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'#1a3d2b':'#3d1a1a'})));
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
@@ -349,7 +425,8 @@ const setText = (id,v) => { el(id).textContent=v; };
 
 function clearTooltip() {
   el('hint').style.display='';
-  ['o','h','l','c'].forEach(k=>{ el('oi-'+k).style.display='none'; });
+  ['o','h','l','c'].forEach(k => el('oi-'+k).style.display='none');
+  el('ema50-val').textContent='—'; el('ema200-val').textContent='—';
 }
 function setOI(k,v,c) {
   el('oi-'+k).style.display='flex';
@@ -365,25 +442,19 @@ function showErr(msg) {
 }
 function hideOverlay() { el('overlay').style.display='none'; }
 function setRefreshing(on) {
-  el('dot').style.background = on?'#e7a22b':'#26c281';
+  el('dot').style.background=on?'#e7a22b':'#26c281';
   if (on) setText('status','Načítám…');
 }
 
-// ─── Controls ────────────────────────────────────────────────────────────────
+// ─── Controls ─────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tf').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('.tf').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  curRange = btn.dataset.r;
-  clearTooltip(); loadData();
+  btn.classList.add('on'); curRange=btn.dataset.r; clearTooltip(); loadData();
 }));
-
 document.querySelectorAll('.iv').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('.iv').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  curIv = btn.dataset.iv;
-  clearTooltip(); loadData();
+  btn.classList.add('on'); curIv=btn.dataset.iv; clearTooltip(); loadData();
 }));
-
 el('rbtn').addEventListener('click', () => loadData(true));
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
