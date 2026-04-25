@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NG=F · Natural Gas Futures</title>
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-ui,sans-serif;overflow:hidden}
+  #app{display:flex;flex-direction:column;height:100vh}
+  /* header */
+  #header{padding:12px 20px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:#0d1117}
+  #ticker{font-size:22px;font-weight:700;font-family:monospace}
+  .badge{font-size:11px;color:#5a6478;background:#151b26;padding:2px 8px;border-radius:4px;border:1px solid #1e2530}
+  #price{font-size:34px;font-weight:700;font-family:monospace;letter-spacing:-0.5px}
+  #change{font-size:15px;font-weight:600;font-family:monospace}
+  #changePct{font-size:12px;font-family:monospace}
+  .stat-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
+  .stat-value{font-size:13px;color:#8492a6;font-family:monospace;margin-top:2px}
+  /* controls */
+  #controls{padding:8px 20px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .tf-btn{padding:4px 14px;font-size:12px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .15s}
+  .tf-btn.active{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
+  #refresh-btn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:14px;margin-left:4px}
+  #dot{width:7px;height:7px;border-radius:50%;background:#26c281;margin-left:auto;transition:background .3s}
+  #status{font-size:11px;color:#3d4a5c;font-family:monospace}
+  /* tooltip bar */
+  #tooltip-bar{padding:5px 20px;border-bottom:1px solid #1e2530;display:flex;gap:16px;align-items:center;min-height:30px;background:#0d1117}
+  .ohlc-item{display:flex;gap:5px;align-items:baseline}
+  .ohlc-lbl{font-size:11px;color:#3d4a5c;font-family:monospace}
+  .ohlc-val{font-size:13px;font-weight:600;font-family:monospace}
+  #hint{font-size:11px;color:#3d4a5c;font-family:monospace}
+  /* chart */
+  #chart-wrap{flex:1;position:relative;overflow:hidden}
+  #chart{width:100%;height:100%}
+  /* loading / error */
+  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117}
+  #spinner{width:36px;height:36px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #err-box{background:#110d10;border:1px solid #5c1a1a;border-radius:10px;padding:24px 32px;text-align:center;max-width:380px}
+  #err-title{color:#e74c3c;font-size:16px;margin-bottom:8px}
+  #err-msg{color:#5a6478;font-size:12px;font-family:monospace;margin-bottom:16px}
+  #retry-btn{padding:6px 20px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:13px}
+  /* footer */
+  #footer{padding:5px 20px;border-top:1px solid #1e2530;display:flex;justify-content:space-between;font-size:10px;color:#2a3548;font-family:monospace;flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span id="ticker">NG=F</span>
+      <span class="badge">Natural Gas Futures · NYMEX</span>
+      <span class="badge" style="color:#3d4a5c">USD/MMBtu</span>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <span id="price">—</span>
+      <div>
+        <div id="change">—</div>
+        <div id="changePct"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:24px;margin-left:auto;flex-wrap:wrap">
+      <div><div class="stat-label">Volume</div><div class="stat-value" id="vol">—</div></div>
+      <div><div class="stat-label">Updated</div><div class="stat-value" id="updated">—</div></div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="controls">
+    <button class="tf-btn" data-range="1mo"  data-interval="1d">1M</button>
+    <button class="tf-btn" data-range="3mo"  data-interval="1d">3M</button>
+    <button class="tf-btn active" data-range="ytd" data-interval="1d">YTD</button>
+    <button class="tf-btn" data-range="1y"   data-interval="1d">1Y</button>
+    <button class="tf-btn" data-range="2y"   data-interval="1wk">2Y</button>
+    <button id="refresh-btn" title="Obnovit nyní">↻</button>
+    <div id="dot"></div>
+    <span id="status">Auto-refresh 60s</span>
+  </div>
+
+  <!-- OHLC TOOLTIP BAR -->
+  <div id="tooltip-bar">
+    <span id="hint">Přejeďte myší přes graf pro OHLC hodnoty</span>
+    <div class="ohlc-item" id="ohlc-o" style="display:none"><span class="ohlc-lbl">O</span><span class="ohlc-val" id="tv-o" style="color:#8492a6"></span></div>
+    <div class="ohlc-item" id="ohlc-h" style="display:none"><span class="ohlc-lbl">H</span><span class="ohlc-val" id="tv-h" style="color:#26c281"></span></div>
+    <div class="ohlc-item" id="ohlc-l" style="display:none"><span class="ohlc-lbl">L</span><span class="ohlc-val" id="tv-l" style="color:#e74c3c"></span></div>
+    <div class="ohlc-item" id="ohlc-c" style="display:none"><span class="ohlc-lbl">C</span><span class="ohlc-val" id="tv-c"></span></div>
+  </div>
+
+  <!-- CHART -->
+  <div id="chart-wrap">
+    <div id="chart"></div>
+    <div id="overlay">
+      <div id="spinner"></div>
+      <span style="color:#3d4a5c;font-size:14px;font-family:monospace">Načítám tržní data…</span>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div id="footer">
+    <span>NG=F · NYMEX · USD/MMBtu · Zdroj: Yahoo Finance</span>
+    <span>Scroll = zoom · Táhni = posuv · Dvojklik osy = fit</span>
+  </div>
+</div>
+
+<script>
+// ── Konfigurace ──────────────────────────────────────────────────────────────
+const TICKER      = 'NG=F'
+const REFRESH_MS  = 60_000
+// Veřejný CORS proxy (zdarma, bez klíče)
+const PROXY       = 'https://corsproxy.io/?url='
+
+// ── Stav ─────────────────────────────────────────────────────────────────────
+let chart, candleSeries, volumeSeries
+let currentRange    = 'ytd'
+let currentInterval = '1d'
+let refreshTimer
+let prevClose       = null
+
+// ── Inicializace lightweight-charts ─────────────────────────────────────────
+function initChart() {
+  const wrap = document.getElementById('chart-wrap')
+  chart = LightweightCharts.createChart(document.getElementById('chart'), {
+    layout: {
+      background: { type: 'solid', color: '#0d1117' },
+      textColor:  '#5a6478',
+      fontFamily: 'monospace',
+      fontSize:   11,
+    },
+    grid: {
+      vertLines: { color: '#131a24' },
+      horzLines: { color: '#131a24' },
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color:'#334155', labelBackgroundColor:'#1e2d3d' },
+      horzLine: { color:'#334155', labelBackgroundColor:'#1e2d3d' },
+    },
+    rightPriceScale: {
+      borderColor: '#1e2530',
+      scaleMargins: { top: 0.08, bottom: 0.28 },
+    },
+    timeScale: {
+      borderColor:    '#1e2530',
+      timeVisible:    true,
+      secondsVisible: false,
+      rightOffset:    5,
+      barSpacing:     8,
+      minBarSpacing:  2,
+    },
+    handleScroll: { mouseWheel:true, pressedMouseMove:true, horzTouchDrag:true },
+    handleScale:  { mouseWheel:true, pinch:true, axisPressedMouseMove:true },
+    width:  wrap.clientWidth,
+    height: wrap.clientHeight,
+  })
+
+  candleSeries = chart.addCandlestickSeries({
+    upColor:         '#26c281',
+    downColor:       '#e74c3c',
+    borderUpColor:   '#26c281',
+    borderDownColor: '#e74c3c',
+    wickUpColor:     '#26c281',
+    wickDownColor:   '#e74c3c',
+    priceFormat:     { type:'price', precision:3, minMove:0.001 },
+  })
+
+  volumeSeries = chart.addHistogramSeries({
+    priceFormat:  { type:'volume' },
+    priceScaleId: 'volume',
+    color:        '#1a2d4a',
+  })
+  chart.priceScale('volume').applyOptions({
+    scaleMargins: { top:0.78, bottom:0 },
+  })
+
+  // Crosshair → OHLC tooltip
+  chart.subscribeCrosshairMove(param => {
+    const hint = document.getElementById('hint')
+    if (!param.time || !param.seriesData) { showHint(); return }
+    const bar = param.seriesData.get(candleSeries)
+    if (!bar) { showHint(); return }
+    hint.style.display = 'none'
+    const up  = bar.close >= bar.open
+    const clr = up ? '#26c281' : '#e74c3c'
+    setOHLC('o', bar.open?.toFixed(3),  '#8492a6')
+    setOHLC('h', bar.high?.toFixed(3),  '#26c281')
+    setOHLC('l', bar.low?.toFixed(3),   '#e74c3c')
+    setOHLC('c', bar.close?.toFixed(3), clr)
+  })
+
+  // Resize
+  new ResizeObserver(([e]) => {
+    chart.applyOptions({ width: e.contentRect.width, height: e.contentRect.height })
+  }).observe(wrap)
+}
+
+function showHint() {
+  document.getElementById('hint').style.display = ''
+  ;['o','h','l','c'].forEach(k => document.getElementById(`ohlc-${k}`).style.display = 'none')
+}
+function setOHLC(k, v, color) {
+  document.getElementById(`ohlc-${k}`).style.display = ''
+  const el = document.getElementById(`tv-${k}`)
+  el.textContent = v
+  el.style.color = color
+}
+
+// ── Fetch dat ────────────────────────────────────────────────────────────────
+async function loadData(isRefresh = false) {
+  setRefreshing(isRefresh)
+  if (!isRefresh) showOverlay('loading')
+
+  try {
+    const yfUrl = `https://query1.finance.yahoo.com/v8/finance/chart/` +
+      `${encodeURIComponent(TICKER)}?range=${currentRange}&interval=${currentInterval}` +
+      `&includePrePost=false`
+
+    const res  = await fetch(PROXY + encodeURIComponent(yfUrl))
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json = await res.json()
+
+    const result = json?.chart?.result?.[0]
+    if (!result) throw new Error('Žádná data od Yahoo Finance')
+
+    const ts    = result.timestamp || []
+    const q     = result.indicators?.quote?.[0] || {}
+    const meta  = result.meta || {}
+
+    const candles = ts.map((t,i) => ({
+      time:   Math.floor(t),
+      open:   q.open?.[i],
+      high:   q.high?.[i],
+      low:    q.low?.[i],
+      close:  q.close?.[i],
+      volume: q.volume?.[i] ?? 0,
+    })).filter(c => c.open != null && c.close != null)
+
+    // Seřaď vzestupně (nutné pro lightweight-charts)
+    candles.sort((a,b) => a.time - b.time)
+
+    candleSeries.setData(candles)
+    volumeSeries.setData(candles.map(c => ({
+      time:  c.time,
+      value: c.volume,
+      color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
+    })))
+    chart.timeScale().fitContent()
+
+    // Header
+    const last  = candles[candles.length - 1]
+    prevClose   = meta.chartPreviousClose ?? (candles[candles.length - 2]?.close)
+    const price = meta.regularMarketPrice ?? last.close
+    updateHeader(price, prevClose, meta.regularMarketVolume ?? last.volume)
+
+    hideOverlay()
+  } catch (err) {
+    if (!isRefresh) showOverlay('error', err.message)
+    console.error(err)
+  } finally {
+    setRefreshing(false)
+  }
+}
+
+// ── Header update ────────────────────────────────────────────────────────────
+function updateHeader(price, prev, volume) {
+  document.getElementById('price').textContent = price?.toFixed(3) ?? '—'
+  const ch   = prev != null ? price - prev : null
+  const pct  = ch != null && prev ? (ch / prev) * 100 : null
+  const up   = ch >= 0
+  const clr  = up ? '#26c281' : '#e74c3c'
+  const sign = up ? '+' : ''
+  const chEl = document.getElementById('change')
+  chEl.textContent = ch != null ? `${sign}${ch.toFixed(3)}` : '—'
+  chEl.style.color = clr
+  const pctEl = document.getElementById('changePct')
+  pctEl.textContent = pct != null ? `(${sign}${pct.toFixed(2)}%)` : ''
+  pctEl.style.color = clr
+  document.getElementById('vol').textContent     = volume ? Number(volume).toLocaleString('cs-CZ') : '—'
+  document.getElementById('updated').textContent = new Date().toLocaleTimeString('cs-CZ')
+}
+
+// ── Overlay (loading / error) ─────────────────────────────────────────────
+function showOverlay(type, msg = '') {
+  const o = document.getElementById('overlay')
+  o.style.display = 'flex'
+  if (type === 'loading') {
+    o.innerHTML = `<div id="spinner"></div>
+      <span style="color:#3d4a5c;font-size:14px;font-family:monospace">Načítám tržní data…</span>`
+  } else {
+    o.innerHTML = `<div id="err-box">
+      <p id="err-title">⚠ Chyba při načítání dat</p>
+      <p id="err-msg">${msg}</p>
+      <button id="retry-btn" onclick="loadData()">Zkusit znovu</button>
+    </div>`
+  }
+}
+function hideOverlay() { document.getElementById('overlay').style.display = 'none' }
+
+// ── Refresh indikátor ────────────────────────────────────────────────────────
+function setRefreshing(on) {
+  document.getElementById('dot').style.background    = on ? '#e7a22b' : '#26c281'
+  document.getElementById('status').textContent = on ? 'Načítám…' : 'Auto-refresh 60s'
+}
+
+// ── Timeframe buttons ────────────────────────────────────────────────────────
+document.querySelectorAll('.tf-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    currentRange    = btn.dataset.range
+    currentInterval = btn.dataset.interval
+    showHint()
+    loadData()
+  })
+})
+
+// ── Refresh button ───────────────────────────────────────────────────────────
+document.getElementById('refresh-btn').addEventListener('click', () => loadData(true))
+
+// ── Start ────────────────────────────────────────────────────────────────────
+function start() {
+  if (typeof LightweightCharts === 'undefined') {
+    setTimeout(start, 50)
+    return
+  }
+  initChart()
+  loadData()
+  refreshTimer = setInterval(() => loadData(true), REFRESH_MS)
+}
+start()
+</script>
+</body>
+</html>
