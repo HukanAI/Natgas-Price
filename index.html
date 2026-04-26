@@ -429,14 +429,15 @@ function rsiColor(v) { return v>=IND.rsi.ob?'#e74c3c':v<=IND.rsi.os?'#26c281':'#
 
 // ── View zoom ─────────────────────────────────────────────────────────────────
 function applyView(key) {
-  if(!chartMain)return;
+  if(!chartMacd)return;
   const val=VIEW_DAYS[key];
   if(val===undefined)return;
   const nowSec=Math.floor(Date.now()/1000);
   let fromSec;
   if(val==='ytd'){const yr=new Date().getFullYear();fromSec=Math.floor(new Date(`${yr}-01-01T00:00:00`).getTime()/1000);}
   else fromSec=nowSec-val*86400;
-  chartMain.timeScale().setVisibleRange({from:shiftTs(fromSec),to:shiftTs(nowSec+2*86400)});
+  // Set on MACD (visible time scale) — sync will propagate to main + RSI
+  chartMacd.timeScale().setVisibleRange({from:shiftTs(fromSec),to:shiftTs(nowSec+2*86400)});
 }
 
 // ── Update indicator visibility & style ───────────────────────────────────────
@@ -489,7 +490,7 @@ function initCharts() {
   // Main
   chartMain=makeChart('pane-main',{
     rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.06,bottom:0.20}},
-    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2,visible:false},
   });
   serCandle=chartMain.addCandlestickSeries({upColor:'#26c281',downColor:'#e74c3c',borderUpColor:'#26c281',borderDownColor:'#e74c3c',wickUpColor:'#26c281',wickDownColor:'#e74c3c',priceFormat:{type:'price',precision:3,minMove:0.001}});
   serVol=chartMain.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
@@ -507,7 +508,7 @@ function initCharts() {
   // RSI
   chartRsi=makeChart('pane-rsi',{
     rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.08,bottom:0.08}},
-    timeScale:{borderColor:'#1e2530',timeVisible:false},
+    timeScale:{borderColor:'#1e2530',timeVisible:false,visible:false},
   });
   serRsi=chartRsi.addLineSeries({color:IND.rsi.color,lineWidth:1.5,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:true,crosshairMarkerRadius:3,priceFormat:{type:'custom',formatter:v=>v.toFixed(1)}});
   const refBase={priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false};
@@ -523,7 +524,7 @@ function initCharts() {
   // MACD
   chartMacd=makeChart('pane-macd',{
     rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.08,bottom:0.08}},
-    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
   });
   serMacdLine  =chartMacd.addLineSeries({color:'#26c281',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
   serMacdSignal=chartMacd.addLineSeries({color:'#f0c040',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
@@ -536,12 +537,33 @@ function initCharts() {
     if(mh){g('ev-hist').textContent=mh.value.toFixed(4);g('ev-hist').style.color=mh.value>=0?'#26c281':'#e74c3c';}
   });
 
-  // Sync time scales
-  [chartMain,chartRsi,chartMacd].forEach(src=>{
+  // Sync time scales — bidirectional, all three charts mirror each other exactly
+  const allCharts=[chartMain,chartRsi,chartMacd];
+  allCharts.forEach(src=>{
     src.timeScale().subscribeVisibleLogicalRangeChange(range=>{
       if(!range||isSyncing)return;
       isSyncing=true;
-      [chartMain,chartRsi,chartMacd].forEach(dst=>{if(dst!==src)dst.timeScale().setVisibleLogicalRange(range);});
+      allCharts.forEach(dst=>{
+        if(dst===src)return;
+        dst.timeScale().setVisibleLogicalRange(range);
+      });
+      isSyncing=false;
+    });
+  });
+
+  // Also sync barSpacing changes (pinch/scroll on any pane)
+  allCharts.forEach(src=>{
+    src.timeScale().subscribeVisibleTimeRangeChange(()=>{
+      if(isSyncing)return;
+      const opts=src.timeScale().options();
+      isSyncing=true;
+      allCharts.forEach(dst=>{
+        if(dst===src)return;
+        dst.timeScale().applyOptions({
+          barSpacing: opts.barSpacing,
+          rightOffset: opts.rightOffset,
+        });
+      });
       isSyncing=false;
     });
   });
@@ -640,8 +662,9 @@ function renderIndicators(candles, shifted) {
 
 // ── Autofit ───────────────────────────────────────────────────────────────────
 function fitAll() {
-  if(!chartMain)return;
-  chartMain.timeScale().fitContent();
+  if(!chartMacd)return;
+  // Fit on master (MACD has visible time scale), sync propagates to others
+  chartMacd.timeScale().fitContent();
   chartMain.priceScale('right').applyOptions({autoScale:true});
 }
 
