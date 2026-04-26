@@ -37,10 +37,11 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .ol{font-size:11px;color:#3d4a5c;font-family:monospace}
 .ov{font-size:12px;font-weight:600;font-family:monospace}
 #hint{font-size:11px;color:#3d4a5c;font-family:monospace}
-#ema-legend{display:flex;gap:14px;align-items:center;margin-left:auto;flex-wrap:wrap}
-.ema-lbl{font-size:11px;font-family:monospace;display:flex;align-items:center;gap:4px}
-.ema-dot{width:22px;height:2px;border-radius:1px;display:inline-block}
-.ev{font-weight:600}
+#legend{display:flex;gap:14px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.leg{font-size:11px;font-family:monospace;display:flex;align-items:center;gap:4px}
+.leg-dot{width:22px;height:2px;border-radius:1px;display:inline-block}
+.leg-val{font-weight:600}
+.leg-sep{width:1px;background:#1e2530;height:14px;margin:0 4px}
 
 #cwrap{flex:1;position:relative;min-height:0}
 #cv{width:100%;height:100%}
@@ -57,6 +58,7 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 <body>
 <div id="app">
 
+  <!-- HEADER -->
   <div id="header">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span id="ticker-sym">NG=F</span>
@@ -75,6 +77,7 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
+  <!-- CONTROLS -->
   <div id="controls">
     <span class="grp-label">Timeframe</span>
     <div class="btn-grp">
@@ -93,19 +96,23 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     <span id="status">—</span>
   </div>
 
+  <!-- OHLC + INDICATOR BAR -->
   <div id="tbar">
     <span id="hint">Hover over chart for OHLC values</span>
     <div class="oi" id="oi-o"><span class="ol">O</span><span class="ov" id="tv-o"></span></div>
     <div class="oi" id="oi-h"><span class="ol">H</span><span class="ov" id="tv-h" style="color:#26c281"></span></div>
     <div class="oi" id="oi-l"><span class="ol">L</span><span class="ov" id="tv-l" style="color:#e74c3c"></span></div>
     <div class="oi" id="oi-c"><span class="ol">C</span><span class="ov" id="tv-c"></span></div>
-    <div id="ema-legend">
-      <span class="ema-lbl"><span class="ema-dot" style="background:#f0c040"></span>EMA 50 <span class="ev" id="ev50" style="color:#f0c040">—</span></span>
-      <span class="ema-lbl"><span class="ema-dot" style="background:#e74c3c"></span>EMA 200 <span class="ev" id="ev200" style="color:#e74c3c">—</span></span>
-      <span class="ema-lbl"><span class="ema-dot" style="background:#2196f3"></span>EMA 500 <span class="ev" id="ev500" style="color:#2196f3">—</span></span>
+    <div id="legend">
+      <span class="leg"><span class="leg-dot" style="background:#f0c040"></span>EMA 50 <span class="leg-val" id="ev50" style="color:#f0c040">—</span></span>
+      <span class="leg"><span class="leg-dot" style="background:#e74c3c"></span>EMA 200 <span class="leg-val" id="ev200" style="color:#e74c3c">—</span></span>
+      <span class="leg"><span class="leg-dot" style="background:#2196f3"></span>EMA 500 <span class="leg-val" id="ev500" style="color:#2196f3">—</span></span>
+      <span class="leg-sep"></span>
+      <span class="leg"><span class="leg-dot" style="background:#a78bfa"></span>RSI 14 <span class="leg-val" id="ev-rsi" style="color:#a78bfa">—</span></span>
     </div>
   </div>
 
+  <!-- CHART -->
   <div id="cwrap">
     <div id="cv"></div>
     <div id="overlay">
@@ -118,25 +125,16 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 <script>
 'use strict';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────────
 const TICKER     = 'NG=F';
 const TZ         = 'Europe/Prague';
 const REFRESH_MS = 10000;
+const RSI_PERIOD = 14;
 
-// Per-timeframe autofit strategy:
-//   1d, 1wk → plain autoScale (no filter — multi-dollar daily moves are legitimate)
-//   4h, 1h  → MAD filter, factor 3.5 (catches $2 spikes, used for longer intraday)
-//   15m, 5m → MAD filter, factor 4.5 (looser — shorter window, less outlier risk)
-//   1m      → MAD filter, factor 5.0 (very loose — only extreme spikes filtered)
-const FIT_CFG = {
-  '1m':  { filter: true,  madFactor: 5.0 },
-  '5m':  { filter: true,  madFactor: 4.5 },
-  '15m': { filter: true,  madFactor: 4.5 },
-  '1h':  { filter: true,  madFactor: 3.5 },
-  '4h':  { filter: true,  madFactor: 3.5 },
-  '1d':  { filter: false },
-  '1wk': { filter: false },
-};
+// Yahoo Finance limits (verified):
+//   1m=7d, 5m/15m=60d (range string only — period1/2 → HTTP 422),
+//   1h=730d, 1d/1wk=unlimited.
+// 4h is not supported natively — fetched as 1h and resampled client-side.
 const FETCH_CFG = {
   '1m':  { range: '5d',  interval: '1m',  resample: 1 },
   '5m':  { range: '1mo', interval: '5m',  resample: 1 },
@@ -155,10 +153,11 @@ const PROXIES = [
 const YF_HOSTS = ['query2.finance.yahoo.com', 'query1.finance.yahoo.com'];
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let chart, candleSeries, volSeries, ema50S, ema200S, ema500S;
+let chart, candleSeries, volSeries;
+let ema50S, ema200S, ema500S;
+let rsiSeries, rsiOB, rsiOS, rsiMid;
 let curIv       = '1h';
 let refreshTimer;
-let lastCandles = null; // raw unshifted candles, kept for Autofit button
 
 // ── Prague timezone ───────────────────────────────────────────────────────────
 function pragueNow() {
@@ -166,7 +165,6 @@ function pragueNow() {
     timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
-
 function pragueOffsetSec(ts) {
   const d = new Date(ts * 1000);
   const mins = tz => {
@@ -179,14 +177,8 @@ function pragueOffsetSec(ts) {
   if (diff < -720) diff += 1440;
   return diff * 60;
 }
-
 function shiftTs(ts) { return ts + pragueOffsetSec(ts); }
-
-function todayPrague() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
-}
-
-// Last close whose Prague date < today → previous calendar day close
+function todayPrague() { return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); }
 function getPrevDayClose(candles, fallback) {
   const today = todayPrague();
   for (let i = candles.length - 1; i >= 0; i--) {
@@ -195,26 +187,25 @@ function getPrevDayClose(candles, fallback) {
   }
   return fallback;
 }
-
 setInterval(() => { g('prg-time').textContent = pragueNow(); }, 1000);
 g('prg-time').textContent = pragueNow();
 
 // ── Resample (e.g. 1h → 4h) ──────────────────────────────────────────────────
-// Buckets align to UTC midnight so 4h = 00,04,08,12,16,20 UTC
+// Buckets aligned to UTC midnight: 4h = 00,04,08,12,16,20 UTC
 function resample(candles, n) {
   if (n <= 1) return candles;
-  const bucketSec = n * 3600;
+  const sec = n * 3600;
   const map = new Map();
   for (const c of candles) {
-    const key = Math.floor(c.time / bucketSec) * bucketSec;
+    const key = Math.floor(c.time / sec) * sec;
     if (!map.has(key)) {
       map.set(key, { time: key, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume });
     } else {
       const b = map.get(key);
       if (c.high > b.high) b.high = c.high;
       if (c.low  < b.low)  b.low  = c.low;
-      b.close    = c.close;
-      b.volume  += c.volume;
+      b.close   = c.close;
+      b.volume += c.volume;
     }
   }
   return [...map.values()].sort((a, b) => a.time - b.time);
@@ -236,93 +227,42 @@ function calcEMA(closes, period) {
   return out;
 }
 
-// ── Outlier-filtered price range (MAD method) ─────────────────────────────────
-// Uses Median Absolute Deviation — more robust than IQR for spike detection.
-// A candle is an outlier if its high or low deviates from the median by
-// more than `madFactor` × MAD. We use 3.5 which catches $2 spikes reliably
-// without hiding legitimate volatile candles.
-function cleanPriceRange(candles, madFactor) {
-  if (!candles || candles.length < 5) return null;
+// ── RSI (Wilder's smoothing, period 14) ───────────────────────────────────────
+function calcRSI(closes, period) {
+  const out = new Array(closes.length).fill(null);
+  if (closes.length < period + 1) return out;
 
-  // Use all OHLC values to compute median (not just close)
-  const prices = candles.flatMap(c => [c.open, c.high, c.low, c.close]).sort((a, b) => a - b);
-  const med    = prices[Math.floor(prices.length / 2)];
-
-  const devs = prices.map(p => Math.abs(p - med)).sort((a, b) => a - b);
-  const mad   = devs[Math.floor(devs.length / 2)];
-
-  // If MAD is 0 (very flat data) fall back to simple min/max
-  const fence = mad > 0 ? madFactor * mad : Infinity;
-  const lo    = med - fence;
-  const hi    = med + fence;
-
-  let min = Infinity, max = -Infinity;
-  let outliers = 0;
-  for (const c of candles) {
-    // A candle is an outlier if BOTH high and low are outside the fence
-    // (prevents filtering legitimate wicks)
-    if (c.high > hi && c.low < lo) { outliers++; continue; }
-    if (c.high > hi || c.low < lo) {
-      // Partial spike: clamp the offending value instead of skipping
-      const effLow  = c.low  < lo ? lo  : c.low;
-      const effHigh = c.high > hi ? hi  : c.high;
-      if (effLow  < min) min = effLow;
-      if (effHigh > max) max = effHigh;
-    } else {
-      if (c.low  < min) min = c.low;
-      if (c.high > max) max = c.high;
-    }
+  // Seed: simple average of first `period` gains/losses
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i - 1];
+    if (d > 0) avgGain += d; else avgLoss += -d;
   }
+  avgGain /= period;
+  avgLoss /= period;
+  out[period] = avgLoss === 0 ? 100 : +(100 - 100 / (1 + avgGain / avgLoss)).toFixed(2);
 
-  if (!isFinite(min) || !isFinite(max) || max <= min) return null;
-  return { min, max, outliers };
+  // Wilder's smoothing
+  for (let i = period + 1; i < closes.length; i++) {
+    const d    = closes[i] - closes[i - 1];
+    const gain = d > 0 ? d : 0;
+    const loss = d < 0 ? -d : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    out[i] = avgLoss === 0 ? 100 : +(100 - 100 / (1 + avgGain / avgLoss)).toFixed(2);
+  }
+  return out;
 }
 
-// ── Autofit — X and Y axes ───────────────────────────────────────────────────
-// Strategy:
-//   1. fitContent() resets the X axis to show all data.
-//   2. Compute a clean price range (MAD outlier filter for all timeframes).
-//   3. Use setVisiblePriceRange() — stable, immediate, no async hacks.
-//   4. Re-enable autoScale so subsequent panning/zooming works normally.
-function fitAll(candles) {
-  if (!chart) return;
-  chart.timeScale().fitContent();
-
-  const cfg = FIT_CFG[curIv];
-
-  // 1D and 1W: plain autoScale — legitimate multi-dollar moves must not be filtered
-  if (!cfg || !cfg.filter) {
-    chart.priceScale('right').applyOptions({ autoScale: true });
-    return;
-  }
-
-  // Intraday: MAD outlier filter with per-timeframe sensitivity
-  const range = cleanPriceRange(candles, cfg.madFactor);
-  if (!range) {
-    chart.priceScale('right').applyOptions({ autoScale: true });
-    return;
-  }
-
-  const pad  = (range.max - range.min) * 0.03;
-  const minP = range.min - pad;
-  const maxP = range.max + pad;
-
-  chart.priceScale('right').applyOptions({ autoScale: false });
-  candleSeries.applyOptions({
-    autoscaleInfoProvider: () => ({
-      priceRange: { minValue: minP, maxValue: maxP },
-    }),
-  });
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      candleSeries.applyOptions({ autoscaleInfoProvider: null });
-      chart.priceScale('right').applyOptions({ autoScale: true });
-    });
-  });
+// ── RSI colour helper ─────────────────────────────────────────────────────────
+function rsiColor(v) {
+  if (v == null) return '#a78bfa';
+  if (v >= 70)  return '#e74c3c';
+  if (v <= 30)  return '#26c281';
+  return '#a78bfa';
 }
 
-// ── Wait for lib ──────────────────────────────────────────────────────────────
+// ── Wait for CDN ──────────────────────────────────────────────────────────────
 function waitForLib(cb) {
   if (typeof LightweightCharts !== 'undefined') { cb(); return; }
   let n = 0;
@@ -335,65 +275,100 @@ function waitForLib(cb) {
 // ── Init chart ────────────────────────────────────────────────────────────────
 function initChart() {
   const wrap = g('cwrap');
-  chart = LightweightCharts.createChart(g('cv'), {
+  const LC   = LightweightCharts;
+
+  chart = LC.createChart(g('cv'), {
     layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
     grid:   { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
     crosshair: {
-      mode:     LightweightCharts.CrosshairMode.Normal,
+      mode:     LC.CrosshairMode.Normal,
       vertLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
       horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
     },
-    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.26 } },
-    timeScale: {
-      borderColor: '#1e2530', timeVisible: true, secondsVisible: false,
-      rightOffset: 5, barSpacing: 8, minBarSpacing: 2,
-    },
+    // Main price scale: candles occupy top 60%, leaving room for volume + RSI
+    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.38 } },
+    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2 },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
     handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
     width:  wrap.clientWidth,
     height: wrap.clientHeight,
   });
 
+  // Candlesticks
   candleSeries = chart.addCandlestickSeries({
-    upColor:        '#26c281', downColor:       '#e74c3c',
-    borderUpColor:  '#26c281', borderDownColor: '#e74c3c',
-    wickUpColor:    '#26c281', wickDownColor:   '#e74c3c',
+    upColor: '#26c281', downColor: '#e74c3c',
+    borderUpColor: '#26c281', borderDownColor: '#e74c3c',
+    wickUpColor: '#26c281', wickDownColor: '#e74c3c',
     priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
   });
 
+  // Volume — sits in the middle band
   volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
-  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.80, bottom: 0 } });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.72, bottom: 0.22 }, borderColor: '#1e2530' });
 
-  const lineBase = {
-    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
-  };
-  ema50S  = chart.addLineSeries({ ...lineBase, color: '#f0c040', lineWidth: 1.5 });
-  ema200S = chart.addLineSeries({ ...lineBase, color: '#e74c3c', lineWidth: 1.5 });
-  ema500S = chart.addLineSeries({ ...lineBase, color: '#2196f3', lineWidth: 1.5 });
+  // RSI line
+  rsiSeries = chart.addLineSeries({
+    priceScaleId: 'rsi',
+    color: '#a78bfa',
+    lineWidth: 1.5,
+    priceLineVisible: false,
+    lastValueVisible: true,
+    crosshairMarkerVisible: true,
+    crosshairMarkerRadius: 3,
+    priceFormat: { type: 'custom', formatter: v => v.toFixed(1) },
+  });
+  chart.priceScale('rsi').applyOptions({
+    scaleMargins: { top: 0.84, bottom: 0.02 },
+    borderColor: '#1e2530',
+    entireTextOnly: true,
+  });
 
+  // RSI reference lines (overbought 70, oversold 30, mid 50)
+  const refOpts = { priceScaleId: 'rsi', priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false };
+  rsiOB  = chart.addLineSeries({ ...refOpts, color: '#e74c3c55', lineWidth: 1, lineStyle: LC.LineStyle.Dashed });
+  rsiOS  = chart.addLineSeries({ ...refOpts, color: '#26c28155', lineWidth: 1, lineStyle: LC.LineStyle.Dashed });
+  rsiMid = chart.addLineSeries({ ...refOpts, color: '#33415555', lineWidth: 1, lineStyle: LC.LineStyle.Dotted });
+
+  // EMA lines
+  const emaBase = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } };
+  ema50S  = chart.addLineSeries({ ...emaBase, color: '#f0c040', lineWidth: 1.5 });
+  ema200S = chart.addLineSeries({ ...emaBase, color: '#e74c3c', lineWidth: 1.5 });
+  ema500S = chart.addLineSeries({ ...emaBase, color: '#2196f3', lineWidth: 1.5 });
+
+  // Crosshair tooltip
   chart.subscribeCrosshairMove(p => {
     if (!p.time || !p.seriesData) { clearTip(); return; }
     const b = p.seriesData.get(candleSeries);
     if (!b) { clearTip(); return; }
     g('hint').style.display = 'none';
-    const up = b.close >= b.open;
     setOI('o', b.open?.toFixed(3),  '#8492a6');
     setOI('h', b.high?.toFixed(3),  '#26c281');
     setOI('l', b.low?.toFixed(3),   '#e74c3c');
-    setOI('c', b.close?.toFixed(3), up ? '#26c281' : '#e74c3c');
+    setOI('c', b.close?.toFixed(3), b.close >= b.open ? '#26c281' : '#e74c3c');
     const e50  = p.seriesData.get(ema50S);
     const e200 = p.seriesData.get(ema200S);
     const e500 = p.seriesData.get(ema500S);
+    const rsi  = p.seriesData.get(rsiSeries);
     g('ev50').textContent  = e50  ? e50.value.toFixed(3)  : '—';
     g('ev200').textContent = e200 ? e200.value.toFixed(3) : '—';
     g('ev500').textContent = e500 ? e500.value.toFixed(3) : '—';
+    const rv = rsi ? rsi.value : null;
+    g('ev-rsi').textContent = rv != null ? rv.toFixed(1) : '—';
+    g('ev-rsi').style.color = rsiColor(rv);
   });
 
+  // Responsive resize
   new ResizeObserver(([e]) => {
     const { width, height } = e.contentRect;
     if (width > 0 && height > 0) chart.applyOptions({ width, height });
   }).observe(wrap);
+}
+
+// ── Autofit ───────────────────────────────────────────────────────────────────
+function fitAll() {
+  if (!chart) return;
+  chart.timeScale().fitContent();
+  chart.priceScale('right').applyOptions({ autoScale: true });
 }
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
@@ -414,7 +389,7 @@ async function fetchWithFallback(url) {
   throw new Error('All proxies failed: ' + errs.join(' | '));
 }
 
-function yfUrl(host, cfg) {
+function buildUrl(host, cfg) {
   return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}` +
     `?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
 }
@@ -422,7 +397,7 @@ function yfUrl(host, cfg) {
 async function fetchYF(cfg) {
   let last;
   for (const host of YF_HOSTS) {
-    try { return await fetchWithFallback(yfUrl(host, cfg)); }
+    try { return await fetchWithFallback(buildUrl(host, cfg)); }
     catch (e) { last = e; }
   }
   throw last;
@@ -433,21 +408,11 @@ function parseYF(json) {
   if (!r) throw new Error('Yahoo Finance: ' + (json?.chart?.error?.description || 'no data'));
   const ts = r.timestamp || [], q = r.indicators?.quote?.[0] || {}, m = r.meta || {};
   if (!ts.length) throw new Error('Yahoo Finance returned empty data');
-
   const candles = ts
-    .map((t, i) => ({
-      time:   Math.floor(t),
-      open:   q.open?.[i],
-      high:   q.high?.[i],
-      low:    q.low?.[i],
-      close:  q.close?.[i],
-      volume: q.volume?.[i] ?? 0,
-    }))
+    .map((t, i) => ({ time: Math.floor(t), open: q.open?.[i], high: q.high?.[i], low: q.low?.[i], close: q.close?.[i], volume: q.volume?.[i] ?? 0 }))
     .filter(c => c.open != null && c.high != null && c.low != null && c.close != null)
     .sort((a, b) => a.time - b.time);
-
   if (!candles.length) throw new Error('No valid candles after filtering');
-
   const last = candles[candles.length - 1];
   return {
     candles,
@@ -469,60 +434,78 @@ async function loadData(isRefresh) {
     const json = await fetchYF(cfg);
     let { candles, price, yfPrevClose, volume, dayHigh, dayLow } = parseYF(json);
 
+    // Resample if needed (4h = merge 4 consecutive 1h candles)
     if (cfg.resample > 1) candles = resample(candles, cfg.resample);
-    lastCandles = candles;
 
-    // Shift timestamps to Prague local time for X axis
+    // Shift timestamps to Prague local time for X axis display
     const shifted = candles.map(c => ({ ...c, time: shiftTs(c.time) }));
 
+    // ── Candles + volume ──
     candleSeries.setData(shifted);
     volSeries.setData(shifted.map(c => ({
       time: c.time, value: c.volume,
       color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
     })));
 
-    // EMA on raw closes (before tz shift)
+    // ── Indicators (computed on raw unshifted closes) ──
     const closes  = candles.map(c => c.close);
     const e50arr  = calcEMA(closes, 50);
     const e200arr = calcEMA(closes, 200);
     const e500arr = calcEMA(closes, 500);
-    const toLine  = arr =>
-      shifted.map((c, i) => arr[i] != null ? { time: c.time, value: +arr[i].toFixed(4) } : null).filter(Boolean);
+    const rsiArr  = calcRSI(closes, RSI_PERIOD);
+
+    const toLine = arr =>
+      shifted
+        .map((c, i) => arr[i] != null ? { time: c.time, value: +arr[i].toFixed(4) } : null)
+        .filter(Boolean);
+
     ema50S.setData(toLine(e50arr));
     ema200S.setData(toLine(e200arr));
     ema500S.setData(toLine(e500arr));
+    rsiSeries.setData(toLine(rsiArr));
 
+    // RSI reference lines span the full time range
+    const t0 = shifted[0].time;
+    const t1 = shifted[shifted.length - 1].time;
+    rsiOB.setData( [{ time: t0, value: 70 }, { time: t1, value: 70 }]);
+    rsiOS.setData( [{ time: t0, value: 30 }, { time: t1, value: 30 }]);
+    rsiMid.setData([{ time: t0, value: 50 }, { time: t1, value: 50 }]);
+
+    // ── Legend last values ──
     const li = candles.length - 1;
     g('ev50').textContent  = e50arr[li]  != null ? e50arr[li].toFixed(3)  : '—';
     g('ev200').textContent = e200arr[li] != null ? e200arr[li].toFixed(3) : '—';
     g('ev500').textContent = e500arr[li] != null ? e500arr[li].toFixed(3) : '—';
+    const lastRsi = rsiArr[li];
+    g('ev-rsi').textContent = lastRsi != null ? lastRsi.toFixed(1) : '—';
+    g('ev-rsi').style.color = rsiColor(lastRsi);
 
-    // Daily change vs previous calendar day close (Prague time)
+    // ── Header: daily change vs previous calendar day close ──
     const baseline = getPrevDayClose(candles, yfPrevClose);
     const ch  = baseline != null ? price - baseline : null;
     const pct = ch != null && baseline ? ch / baseline * 100 : null;
     const up  = ch == null || ch >= 0;
     const clr = up ? '#26c281' : '#e74c3c';
     const sgn = up ? '+' : '';
-    setText('price',     price.toFixed(3));
+    setText('price', price.toFixed(3));
     g('change').textContent    = ch  != null ? sgn + ch.toFixed(3)          : '—';
     g('change').style.color    = clr;
     g('changePct').textContent = pct != null ? `(${sgn}${pct.toFixed(2)}%)` : '';
     g('changePct').style.color = clr;
     setText('vol', volume ? Number(volume).toLocaleString('en-US') : '—');
 
-    // Today's high / low
-    const today    = todayPrague();
+    // Today's high/low in Prague time
+    const today     = todayPrague();
     const todayBars = candles.filter(c =>
       new Date(c.time * 1000).toLocaleDateString('en-CA', { timeZone: TZ }) === today
     );
-    const hi = todayBars.length ? todayBars.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
-    const lo = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
-    setText('dhigh', (dayHigh ?? hi ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
-    setText('dlow',  (dayLow  ?? lo ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
+    const tHigh = todayBars.length ? todayBars.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
+    const tLow  = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
+    setText('dhigh', (dayHigh ?? tHigh ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
+    setText('dlow',  (dayLow  ?? tLow  ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
 
-    // Autofit on initial load / interval change — never on auto-refresh
-    if (!isRefresh) fitAll(candles);
+    // Autofit only on initial load or timeframe change — never on auto-refresh
+    if (!isRefresh) fitAll();
 
     hideOverlay();
     resetTimer();
@@ -542,13 +525,15 @@ function resetTimer() {
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
-function g(id)         { return document.getElementById(id); }
-function setText(id, v){ g(id).textContent = v; }
+function g(id)          { return document.getElementById(id); }
+function setText(id, v) { g(id).textContent = v; }
 
 function clearTip() {
   g('hint').style.display = '';
   ['o','h','l','c'].forEach(k => g('oi-'+k).style.display = 'none');
   ['50','200','500'].forEach(p => g('ev'+p).textContent = '—');
+  g('ev-rsi').textContent = '—';
+  g('ev-rsi').style.color = '#a78bfa';
 }
 function setOI(k, v, c) {
   g('oi-'+k).style.display = 'flex';
@@ -561,13 +546,9 @@ function showLoading() {
 }
 function showErr(msg) {
   const o = g('overlay'); o.style.display = 'flex';
-  o.innerHTML = `<div class="ebox">
-    <p class="etit">⚠ Failed to load data</p>
-    <p class="emsg">${msg.replace(/\n/g,'<br>')}</p>
-    <button class="rbtn2" onclick="loadData(false)">Retry</button>
-  </div>`;
+  o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;
 }
-function hideOverlay()    { g('overlay').style.display = 'none'; }
+function hideOverlay()     { g('overlay').style.display = 'none'; }
 function setRefreshing(on) {
   g('dot').style.background = on ? '#e7a22b' : '#26c281';
   if (on) setText('status', 'Loading…');
@@ -583,8 +564,7 @@ document.querySelectorAll('.iv').forEach(btn => {
     loadData(false);
   });
 });
-
-g('fit-btn').addEventListener('click', () => fitAll(lastCandles));
+g('fit-btn').addEventListener('click', () => fitAll());
 g('rbtn').addEventListener('click',    () => loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
