@@ -10,16 +10,17 @@
 html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-ui,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column;height:100%}
 
+/* ── Header ── */
 #header{padding:10px 16px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
 .badge{font-size:11px;color:#5a6478;background:#151b26;padding:2px 7px;border-radius:4px;border:1px solid #1e2530}
-#ticker-sym{font-size:20px;font-weight:700;font-family:monospace;color:#e8eaf0}
-#price{font-size:28px;font-weight:700;font-family:monospace;letter-spacing:-0.5px;color:#e8eaf0}
-#change{font-family:monospace;font-weight:600;font-size:14px}
-#changePct{font-family:monospace;font-weight:600;font-size:12px}
-.stat{text-align:right}
-.stat-l{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
-.stat-v{font-size:12px;color:#8492a6;font-family:monospace;margin-top:1px}
+#ticker-sym{font-size:20px;font-weight:700;font-family:monospace}
+#price{font-size:28px;font-weight:700;font-family:monospace;letter-spacing:-0.5px}
+#change,#changePct{font-family:monospace;font-weight:600}
+#change{font-size:14px}#changePct{font-size:12px}
+.stat .sl{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
+.stat .sv{font-size:12px;color:#8492a6;font-family:monospace;margin-top:1px}
 
+/* ── Controls ── */
 #controls{padding:6px 16px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:7px;flex-wrap:wrap;flex-shrink:0}
 .grp-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
 .btn-grp{display:flex;gap:3px}
@@ -27,11 +28,12 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .btn:hover{color:#aab;border-color:#334}
 .btn.on{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
 .sep{width:1px;background:#1e2530;height:18px;flex-shrink:0}
-.icon-btn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 9px;cursor:pointer;font-size:12px;font-family:monospace;transition:all .12s}
-.icon-btn:hover{color:#aab;border-color:#334}
+.ibtn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 9px;cursor:pointer;font-size:12px;font-family:monospace;transition:all .12s}
+.ibtn:hover{color:#aab;border-color:#334}
 #dot{width:7px;height:7px;border-radius:50%;background:#26c281;flex-shrink:0;transition:background .3s}
 #status{font-size:11px;color:#3d4a5c;font-family:monospace}
 
+/* ── Toolbar ── */
 #tbar{padding:4px 16px;border-bottom:1px solid #1e2530;display:flex;gap:10px;align-items:center;min-height:26px;flex-wrap:wrap;flex-shrink:0}
 .oi{display:none;gap:4px;align-items:baseline}
 .ol{font-size:11px;color:#3d4a5c;font-family:monospace}
@@ -39,60 +41,61 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 #hint{font-size:11px;color:#3d4a5c;font-family:monospace}
 #legend{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}
 .leg{font-size:11px;font-family:monospace;display:flex;align-items:center;gap:3px}
-.leg-dot{width:14px;height:2px;border-radius:1px;display:inline-block}
-.leg-val{font-weight:600}
-.leg-sep{width:1px;background:#1e2530;height:12px;margin:0 2px}
+.ld{width:14px;height:2px;border-radius:1px;display:inline-block}
+.lv{font-weight:600}
+.lsep{width:1px;background:#1e2530;height:12px;margin:0 2px}
 
+/* ── Body / panes ── */
 #body{flex:1;display:flex;min-height:0;position:relative}
-#chart-wrap{flex:1;min-height:0;min-width:0;position:relative}
-#chart{width:100%;height:100%}
+#chart-area{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}
+#pane-price{flex:55;min-height:0;position:relative}
+#pane-rsi  {flex:22;min-height:0;position:relative;border-top:1px solid #1e2530}
+#pane-macd {flex:23;min-height:0;position:relative;border-top:1px solid #1e2530}
+.plabel{position:absolute;top:4px;left:8px;font-size:10px;color:#3d4a5c;font-family:monospace;z-index:3;pointer-events:none}
 
-/* Pane separator lines drawn over the chart canvas */
-#sep-rsi,#sep-macd{position:absolute;left:0;right:0;height:1px;background:#1e2530;pointer-events:none;z-index:3}
-
-/* Pane labels */
-.plabel{position:absolute;left:8px;font-size:10px;color:#3d4a5c;font-family:monospace;z-index:4;pointer-events:none}
-
+/* ── Side panel ── */
 #side-panel{width:220px;flex-shrink:0;border-left:1px solid #1e2530;background:#0a0e17;display:flex;flex-direction:column;overflow-y:auto;transition:width .2s}
 #side-panel.hidden{width:0;border-left:none;overflow:hidden}
-#panel-header{padding:8px 12px;border-bottom:1px solid #1e2530;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-#panel-header span{font-size:11px;color:#5a6478;text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
-#panel-toggle-wrap{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10}
-#panel-toggle{background:#0a0e17;border:1px solid #1e2530;border-right:none;color:#5a6478;cursor:pointer;font-size:13px;padding:6px 4px;border-radius:4px 0 0 4px}
-#panel-toggle:hover{color:#aab;background:#111620}
-
+#panel-header{padding:8px 12px;border-bottom:1px solid #1e2530;flex-shrink:0}
+#panel-header span{font-size:11px;color:#5a6478;text-transform:uppercase;letter-spacing:1px}
+#ptoggle-wrap{position:absolute;right:220px;top:50%;transform:translateY(-50%);z-index:10;transition:right .2s}
+#ptoggle{background:#0a0e17;border:1px solid #1e2530;border-right:none;color:#5a6478;cursor:pointer;font-size:13px;padding:6px 4px;border-radius:4px 0 0 4px}
+#ptoggle:hover{color:#aab;background:#111620}
 .ind-group{border-bottom:1px solid #1e2530}
-.ind-header{padding:7px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;white-space:nowrap}
-.ind-header:hover{background:#111620}
+.ind-hdr{padding:7px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.ind-hdr:hover{background:#111620}
 .ind-name{font-size:12px;color:#8492a6;flex:1}
-.ind-toggle{width:28px;height:15px;border-radius:8px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .2s}
-.ind-toggle::after{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s}
-.ind-toggle.on{background:#1a6ed8}.ind-toggle.on::after{transform:translateX(13px)}
-.ind-toggle.off{background:#2a3548}
-.ind-chevron{font-size:10px;color:#3d4a5c;transition:transform .2s;flex-shrink:0}
-.ind-chevron.open{transform:rotate(90deg)}
+.toggle{width:28px;height:15px;border-radius:8px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .2s}
+.toggle::after{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s}
+.toggle.on{background:#1a6ed8}.toggle.on::after{transform:translateX(13px)}
+.toggle.off{background:#2a3548}
+.chev{font-size:10px;color:#3d4a5c;transition:transform .2s;flex-shrink:0}
+.chev.open{transform:rotate(90deg)}
 .ind-body{padding:8px 12px;display:none;flex-direction:column;gap:8px}
 .ind-body.open{display:flex}
-.param-row{display:flex;align-items:center;gap:6px}
-.param-label{font-size:10px;color:#5a6478;flex:1;font-family:monospace}
-.param-input{width:54px;background:#111620;border:1px solid #1e2530;color:#e8eaf0;font-size:11px;font-family:monospace;padding:2px 5px;border-radius:3px;text-align:right}
-.param-input:focus{outline:none;border-color:#1a6ed8}
-.color-swatch{width:22px;height:16px;border-radius:3px;border:1px solid #1e2530;cursor:pointer;flex-shrink:0}
-.apply-btn{width:100%;padding:4px;font-size:10px;font-family:monospace;background:#1a6ed8;border:none;color:#fff;border-radius:3px;cursor:pointer;margin-top:2px}
-.apply-btn:hover{background:#1560c0}
+.prow{display:flex;align-items:center;gap:6px}
+.plbl{font-size:10px;color:#5a6478;flex:1;font-family:monospace}
+.pinp{width:54px;background:#111620;border:1px solid #1e2530;color:#e8eaf0;font-size:11px;font-family:monospace;padding:2px 5px;border-radius:3px;text-align:right}
+.pinp:focus{outline:none;border-color:#1a6ed8}
+.cswatch{width:22px;height:16px;border-radius:3px;border:1px solid #1e2530;cursor:pointer;flex-shrink:0}
+.abtn{width:100%;padding:4px;font-size:10px;font-family:monospace;background:#1a6ed8;border:none;color:#fff;border-radius:3px;cursor:pointer;margin-top:2px}
+.abtn:hover{background:#1560c0}
 
+/* ── Overlay ── */
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117;z-index:20}
-#spin{width:36px;height:36px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
+.spinner{width:36px;height:36px;border:3px solid #1e2530;border-top-color:#1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#load-msg{color:#3d4a5c;font-size:13px;font-family:monospace}
+.omsg{color:#3d4a5c;font-size:13px;font-family:monospace}
 .ebox{background:#110d10;border:1px solid #5c1a1a;border-radius:10px;padding:20px 26px;text-align:center;max-width:400px}
 .etit{color:#e74c3c;font-size:14px;margin-bottom:8px}
 .emsg{color:#5a6478;font-size:11px;font-family:monospace;margin-bottom:12px;word-break:break-word;line-height:1.6}
-.rbtn2{padding:5px 16px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:12px}
+.rbtn{padding:5px 16px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:12px}
 </style>
 </head>
 <body>
 <div id="app">
+
+  <!-- Header -->
   <div id="header">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span id="ticker-sym">NG=F</span>
@@ -104,43 +107,33 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <div><div id="change">—</div><div id="changePct"></div></div>
     </div>
     <div style="display:flex;gap:16px;margin-left:auto;flex-wrap:wrap">
-      <div class="stat"><div class="stat-l">Volume</div><div class="stat-v" id="vol">—</div></div>
-      <div class="stat"><div class="stat-l">High</div><div class="stat-v" id="dhigh" style="color:#26c281">—</div></div>
-      <div class="stat"><div class="stat-l">Low</div><div class="stat-v" id="dlow" style="color:#e74c3c">—</div></div>
-      <div class="stat"><div class="stat-l">Prague (CET/CEST)</div><div class="stat-v" id="prg-time">—</div></div>
+      <div class="stat"><div class="sl">Volume</div><div class="sv" id="s-vol">—</div></div>
+      <div class="stat"><div class="sl">High</div><div class="sv" id="s-high" style="color:#26c281">—</div></div>
+      <div class="stat"><div class="sl">Low</div><div class="sv" id="s-low" style="color:#e74c3c">—</div></div>
+      <div class="stat"><div class="sl">Prague (CET/CEST)</div><div class="sv" id="s-time">—</div></div>
     </div>
   </div>
 
+  <!-- Controls -->
   <div id="controls">
     <span class="grp-label">Timeframe</span>
-    <div class="btn-grp">
-      <button class="btn tf-btn" data-iv="1m">1m</button>
-      <button class="btn tf-btn" data-iv="5m">5m</button>
-      <button class="btn tf-btn" data-iv="15m">15m</button>
-      <button class="btn tf-btn on" data-iv="1h">1h</button>
-      <button class="btn tf-btn" data-iv="4h">4h</button>
-      <button class="btn tf-btn" data-iv="1d">1D</button>
-      <button class="btn tf-btn" data-iv="1wk">1W</button>
+    <div class="btn-grp" id="tf-grp">
+      <button class="btn" data-iv="1m">1m</button>
+      <button class="btn" data-iv="5m">5m</button>
+      <button class="btn" data-iv="15m">15m</button>
+      <button class="btn on" data-iv="1h">1h</button>
+      <button class="btn" data-iv="4h">4h</button>
+      <button class="btn" data-iv="1d">1D</button>
+      <button class="btn" data-iv="1wk">1W</button>
     </div>
     <div class="sep"></div>
-    <span class="grp-label">View</span>
-    <div class="btn-grp">
-      <button class="btn vw-btn" data-days="1">1D</button>
-      <button class="btn vw-btn" data-days="5">5D</button>
-      <button class="btn vw-btn on" data-days="14">2W</button>
-      <button class="btn vw-btn" data-days="30">1M</button>
-      <button class="btn vw-btn" data-days="180">6M</button>
-      <button class="btn vw-btn" data-days="ytd">YTD</button>
-      <button class="btn vw-btn" data-days="365">1Y</button>
-      <button class="btn vw-btn" data-days="1825">5Y</button>
-    </div>
-    <div class="sep"></div>
-    <button class="icon-btn" id="fit-btn">⤢ Fit</button>
-    <button class="icon-btn" id="rbtn">↻ Refresh</button>
+    <button class="ibtn" id="btn-fit">⤢ Fit</button>
+    <button class="ibtn" id="btn-refresh">↻ Refresh</button>
     <div id="dot"></div>
     <span id="status">—</span>
   </div>
 
+  <!-- Toolbar / legend -->
   <div id="tbar">
     <span id="hint">Hover over chart for values</span>
     <div class="oi" id="oi-o"><span class="ol">O</span><span class="ov" id="tv-o"></span></div>
@@ -148,570 +141,831 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     <div class="oi" id="oi-l"><span class="ol">L</span><span class="ov" id="tv-l" style="color:#e74c3c"></span></div>
     <div class="oi" id="oi-c"><span class="ol">C</span><span class="ov" id="tv-c"></span></div>
     <div id="legend">
-      <span class="leg" id="leg-ema50"><span class="leg-dot" id="dot-ema50" style="background:#f0c040"></span>EMA50 <span class="leg-val" id="ev50" style="color:#f0c040">—</span></span>
-      <span class="leg" id="leg-ema200"><span class="leg-dot" id="dot-ema200" style="background:#e05050"></span>EMA200 <span class="leg-val" id="ev200" style="color:#e05050">—</span></span>
-      <span class="leg" id="leg-ema500"><span class="leg-dot" id="dot-ema500" style="background:#2196f3"></span>EMA500 <span class="leg-val" id="ev500" style="color:#2196f3">—</span></span>
-      <span class="leg-sep" id="sep-bb-leg"></span>
-      <span class="leg" id="leg-bb"><span class="leg-dot" style="background:#7eb8f7"></span>BB <span class="leg-val" id="ev-bb" style="color:#7eb8f7">—</span></span>
-      <span class="leg-sep"></span>
-      <span class="leg" id="leg-rsi"><span class="leg-dot" style="background:#a78bfa"></span>RSI <span class="leg-val" id="ev-rsi" style="color:#a78bfa">—</span></span>
-      <span class="leg-sep"></span>
-      <span class="leg" id="leg-macd"><span class="leg-dot" style="background:#26c281"></span>MACD <span class="leg-val" id="ev-macd" style="color:#26c281">—</span></span>
-      <span class="leg"><span class="leg-dot" style="background:#f0c040"></span>Sig <span class="leg-val" id="ev-sig" style="color:#f0c040">—</span></span>
-      <span class="leg"><span class="leg-dot" style="background:#555"></span>Hist <span class="leg-val" id="ev-hist">—</span></span>
+      <span class="leg" id="leg-e50"><span class="ld" id="ld-e50" style="background:#f0c040"></span>EMA50 <span class="lv" id="lv-e50" style="color:#f0c040">—</span></span>
+      <span class="leg" id="leg-e200"><span class="ld" id="ld-e200" style="background:#e05050"></span>EMA200 <span class="lv" id="lv-e200" style="color:#e05050">—</span></span>
+      <span class="leg" id="leg-e500"><span class="ld" id="ld-e500" style="background:#2196f3"></span>EMA500 <span class="lv" id="lv-e500" style="color:#2196f3">—</span></span>
+      <span class="lsep" id="lsep-bb"></span>
+      <span class="leg" id="leg-bb"><span class="ld" style="background:#7eb8f7"></span>BB <span class="lv" id="lv-bb" style="color:#7eb8f7">—</span></span>
+      <span class="lsep"></span>
+      <span class="leg" id="leg-rsi"><span class="ld" style="background:#a78bfa"></span>RSI <span class="lv" id="lv-rsi" style="color:#a78bfa">—</span></span>
+      <span class="lsep"></span>
+      <span class="leg" id="leg-macd">
+        <span class="ld" style="background:#26c281"></span>MACD <span class="lv" id="lv-macd" style="color:#26c281">—</span>
+        <span class="ld" style="background:#f0c040;margin-left:6px"></span>Sig <span class="lv" id="lv-sig" style="color:#f0c040">—</span>
+        <span class="ld" style="background:#555;margin-left:6px"></span>Hist <span class="lv" id="lv-hist">—</span>
+      </span>
     </div>
   </div>
 
+  <!-- Body -->
   <div id="body">
-    <div id="chart-wrap">
-      <div id="chart"></div>
-      <!-- Visual separators between panes -->
-      <div id="sep-rsi"></div>
-      <div id="sep-macd"></div>
-      <!-- Pane labels -->
-      <div class="plabel" id="lbl-main">NG=F · USD/MMBtu</div>
-      <div class="plabel" id="lbl-rsi">RSI (14)</div>
-      <div class="plabel" id="lbl-macd">MACD (12, 26, 9)</div>
-      <div id="overlay">
-        <div id="spin"></div>
-        <div id="load-msg">Loading chart library…</div>
-      </div>
+    <div id="chart-area">
+      <div id="pane-price"><span class="plabel">NG=F · USD/MMBtu</span></div>
+      <div id="pane-rsi"><span class="plabel" id="lbl-rsi">RSI (14)</span></div>
+      <div id="pane-macd"><span class="plabel" id="lbl-macd">MACD (12,26,9)</span></div>
+      <div id="overlay"><div class="spinner"></div><div class="omsg">Loading…</div></div>
     </div>
-    <div id="panel-toggle-wrap"><button id="panel-toggle" title="Toggle panel">◀</button></div>
+
+    <div id="ptoggle-wrap"><button id="ptoggle">◀</button></div>
+
     <div id="side-panel">
       <div id="panel-header"><span>Indicators</span></div>
+
       <div class="ind-group">
-        <div class="ind-header"><button class="ind-toggle on" data-ind="ema50"></button><span class="ind-name">EMA 50</span><span class="ind-chevron">▶</span></div>
+        <div class="ind-hdr"><button class="toggle on" data-ind="ema50"></button><span class="ind-name">EMA 50</span><span class="chev">▶</span></div>
         <div class="ind-body">
-          <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-ema50-period" type="number" min="1" max="500" value="50"/></div>
-          <div class="param-row"><span class="param-label">Color</span><input class="color-swatch" id="p-ema50-color" type="color" value="#f0c040"/></div>
-          <button class="apply-btn" data-apply="ema50">Apply</button>
+          <div class="prow"><span class="plbl">Period</span><input class="pinp" id="ip-e50-p" type="number" min="1" max="500" value="50"/></div>
+          <div class="prow"><span class="plbl">Color</span><input class="cswatch" id="ip-e50-c" type="color" value="#f0c040"/></div>
+          <button class="abtn" data-apply="ema50">Apply</button>
         </div>
       </div>
+
       <div class="ind-group">
-        <div class="ind-header"><button class="ind-toggle on" data-ind="ema200"></button><span class="ind-name">EMA 200</span><span class="ind-chevron">▶</span></div>
+        <div class="ind-hdr"><button class="toggle on" data-ind="ema200"></button><span class="ind-name">EMA 200</span><span class="chev">▶</span></div>
         <div class="ind-body">
-          <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-ema200-period" type="number" min="1" max="1000" value="200"/></div>
-          <div class="param-row"><span class="param-label">Color</span><input class="color-swatch" id="p-ema200-color" type="color" value="#e05050"/></div>
-          <button class="apply-btn" data-apply="ema200">Apply</button>
+          <div class="prow"><span class="plbl">Period</span><input class="pinp" id="ip-e200-p" type="number" min="1" max="1000" value="200"/></div>
+          <div class="prow"><span class="plbl">Color</span><input class="cswatch" id="ip-e200-c" type="color" value="#e05050"/></div>
+          <button class="abtn" data-apply="ema200">Apply</button>
         </div>
       </div>
+
       <div class="ind-group">
-        <div class="ind-header"><button class="ind-toggle on" data-ind="ema500"></button><span class="ind-name">EMA 500</span><span class="ind-chevron">▶</span></div>
+        <div class="ind-hdr"><button class="toggle on" data-ind="ema500"></button><span class="ind-name">EMA 500</span><span class="chev">▶</span></div>
         <div class="ind-body">
-          <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-ema500-period" type="number" min="1" max="2000" value="500"/></div>
-          <div class="param-row"><span class="param-label">Color</span><input class="color-swatch" id="p-ema500-color" type="color" value="#2196f3"/></div>
-          <button class="apply-btn" data-apply="ema500">Apply</button>
+          <div class="prow"><span class="plbl">Period</span><input class="pinp" id="ip-e500-p" type="number" min="1" max="2000" value="500"/></div>
+          <div class="prow"><span class="plbl">Color</span><input class="cswatch" id="ip-e500-c" type="color" value="#2196f3"/></div>
+          <button class="abtn" data-apply="ema500">Apply</button>
         </div>
       </div>
+
       <div class="ind-group">
-        <div class="ind-header"><button class="ind-toggle on" data-ind="bb"></button><span class="ind-name">Bollinger Bands</span><span class="ind-chevron">▶</span></div>
+        <div class="ind-hdr"><button class="toggle on" data-ind="bb"></button><span class="ind-name">Bollinger Bands</span><span class="chev">▶</span></div>
         <div class="ind-body">
-          <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-bb-period" type="number" min="2" max="200" value="20"/></div>
-          <div class="param-row"><span class="param-label">Std Dev</span><input class="param-input" id="p-bb-mult" type="number" min="0.1" max="5" step="0.1" value="2.0"/></div>
-          <div class="param-row"><span class="param-label">Color</span><input class="color-swatch" id="p-bb-color" type="color" value="#7eb8f7"/></div>
-          <button class="apply-btn" data-apply="bb">Apply</button>
+          <div class="prow"><span class="plbl">Period</span><input class="pinp" id="ip-bb-p" type="number" min="2" max="200" value="20"/></div>
+          <div class="prow"><span class="plbl">Std Dev</span><input class="pinp" id="ip-bb-m" type="number" min="0.1" max="5" step="0.1" value="2.0"/></div>
+          <div class="prow"><span class="plbl">Color</span><input class="cswatch" id="ip-bb-c" type="color" value="#7eb8f7"/></div>
+          <button class="abtn" data-apply="bb">Apply</button>
         </div>
       </div>
+
       <div class="ind-group">
-        <div class="ind-header"><button class="ind-toggle on" data-ind="rsi"></button><span class="ind-name">RSI</span><span class="ind-chevron">▶</span></div>
+        <div class="ind-hdr"><button class="toggle on" data-ind="rsi"></button><span class="ind-name">RSI</span><span class="chev">▶</span></div>
         <div class="ind-body">
-          <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-rsi-period" type="number" min="2" max="100" value="14"/></div>
-          <div class="param-row"><span class="param-label">OB Level</span><input class="param-input" id="p-rsi-ob" type="number" min="50" max="99" value="70"/></div>
-          <div class="param-row"><span class="param-label">OS Level</span><input class="param-input" id="p-rsi-os" type="number" min="1" max="50" value="30"/></div>
-          <div class="param-row"><span class="param-label">Color</span><input class="color-swatch" id="p-rsi-color" type="color" value="#a78bfa"/></div>
-          <button class="apply-btn" data-apply="rsi">Apply</button>
+          <div class="prow"><span class="plbl">Period</span><input class="pinp" id="ip-rsi-p" type="number" min="2" max="100" value="14"/></div>
+          <div class="prow"><span class="plbl">OB Level</span><input class="pinp" id="ip-rsi-ob" type="number" min="50" max="99" value="70"/></div>
+          <div class="prow"><span class="plbl">OS Level</span><input class="pinp" id="ip-rsi-os" type="number" min="1" max="50" value="30"/></div>
+          <div class="prow"><span class="plbl">Color</span><input class="cswatch" id="ip-rsi-c" type="color" value="#a78bfa"/></div>
+          <button class="abtn" data-apply="rsi">Apply</button>
         </div>
       </div>
+
       <div class="ind-group">
-        <div class="ind-header"><button class="ind-toggle on" data-ind="macd"></button><span class="ind-name">MACD</span><span class="ind-chevron">▶</span></div>
+        <div class="ind-hdr"><button class="toggle on" data-ind="macd"></button><span class="ind-name">MACD</span><span class="chev">▶</span></div>
         <div class="ind-body">
-          <div class="param-row"><span class="param-label">Fast</span><input class="param-input" id="p-macd-fast" type="number" min="2" max="100" value="12"/></div>
-          <div class="param-row"><span class="param-label">Slow</span><input class="param-input" id="p-macd-slow" type="number" min="2" max="200" value="26"/></div>
-          <div class="param-row"><span class="param-label">Signal</span><input class="param-input" id="p-macd-signal" type="number" min="2" max="50" value="9"/></div>
-          <button class="apply-btn" data-apply="macd">Apply</button>
+          <div class="prow"><span class="plbl">Fast</span><input class="pinp" id="ip-macd-f" type="number" min="2" max="100" value="12"/></div>
+          <div class="prow"><span class="plbl">Slow</span><input class="pinp" id="ip-macd-s" type="number" min="2" max="200" value="26"/></div>
+          <div class="prow"><span class="plbl">Signal</span><input class="pinp" id="ip-macd-sig" type="number" min="2" max="50" value="9"/></div>
+          <button class="abtn" data-apply="macd">Apply</button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+
+    </div><!-- /side-panel -->
+  </div><!-- /body -->
+</div><!-- /app -->
 
 <script>
 'use strict';
 
-const TICKER     = 'NG=F';
-const TZ         = 'Europe/Prague';
-const REFRESH_MS = 10000;
-
-// Pane layout — fractions of total chart height (must sum to 1.0)
-// Recomputed when RSI/MACD are toggled
-const PANES = { main:0.55, rsi:0.22, macd:0.23 };
+// ─────────────────────────────────────────────────────────────────────────────
+// Config
+// ─────────────────────────────────────────────────────────────────────────────
+const TICKER      = 'NG=F';
+const TZ          = 'Europe/Prague';
+const REFRESH_MS  = 10000;
+const SCALE_W     = 65;
 
 const FETCH_CFG = {
-  '1m':  {range:'5d',  interval:'1m',  resample:1},
-  '5m':  {range:'1mo', interval:'5m',  resample:1},
-  '15m': {range:'1mo', interval:'15m', resample:1},
-  '1h':  {range:'1y',  interval:'1h',  resample:1},
-  '4h':  {range:'1y',  interval:'1h',  resample:4},
-  '1d':  {range:'5y',  interval:'1d',  resample:1},
-  '1wk': {range:'10y', interval:'1wk', resample:1},
+  '1m':  {range:'5d',   interval:'1m',  resample:1},
+  '5m':  {range:'1mo',  interval:'5m',  resample:1},
+  '15m': {range:'1mo',  interval:'15m', resample:1},
+  '1h':  {range:'1y',   interval:'1h',  resample:1},
+  '4h':  {range:'1y',   interval:'1h',  resample:4},
+  '1d':  {range:'5y',   interval:'1d',  resample:1},
+  '1wk': {range:'10y',  interval:'1wk', resample:1},
 };
-const VIEW_DAYS = {'1':1,'5':5,'14':14,'30':30,'180':180,'ytd':'ytd','365':365,'1825':1825};
+
+const FIT_WIN = {
+  '1m':5*3600,'5m':19*3600,'15m':2*86400,
+  '1h':7*86400,'4h':30*86400,'1d':365*86400,'1wk':5*365*86400,
+};
+
 const PROXIES = [
-  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u=>`https://proxy.cors.sh/${u}`,
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://proxy.cors.sh/${u}`,
 ];
 const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Indicator state
+// ─────────────────────────────────────────────────────────────────────────────
 const IND = {
-  ema50:  {on:true,period:50, color:'#f0c040'},
-  ema200: {on:true,period:200,color:'#e05050'},
-  ema500: {on:true,period:500,color:'#2196f3'},
-  bb:     {on:true,period:20, mult:2.0,color:'#7eb8f7'},
-  rsi:    {on:true,period:14, ob:70,os:30,color:'#a78bfa'},
-  macd:   {on:true,fast:12,slow:26,signal:9},
+  ema50:  {on:true,  period:50,  color:'#f0c040'},
+  ema200: {on:true,  period:200, color:'#e05050'},
+  ema500: {on:true,  period:500, color:'#2196f3'},
+  bb:     {on:true,  period:20,  mult:2.0, color:'#7eb8f7'},
+  rsi:    {on:true,  period:14,  ob:70, os:30, color:'#a78bfa'},
+  macd:   {on:true,  fast:12, slow:26, signal:9},
 };
 
-let curIv='1h', curViewKey='14';
-let refreshTimer=null, lastCandles=null, lastShifted=null, panelVisible=true;
+// ─────────────────────────────────────────────────────────────────────────────
+// App state
+// ─────────────────────────────────────────────────────────────────────────────
+let curIv         = '1h';
+let refreshTimer  = null;
+let lastCandles   = null;  // raw candles (UTC timestamps)
+let lastShifted   = null;  // Prague-shifted candles
+let panelVisible  = true;
+let syncLock      = false;
 
-// Single chart instance
-let chart;
-// Series
-let serCandle, serVol;
-let serEma50, serEma200, serEma500;
-let serBBUpper, serBBMid, serBBLower;
-let serRsi, serRsiOB, serRsiOS, serRsiMid;
-let serMacdLine, serMacdSignal, serMacdHist;
+// Chart instances + series — assigned in initCharts(), never touched before
+let cPrice, cRsi, cMacd;
+let sCandle, sVol;
+let sE50, sE200, sE500;
+let sBBU, sBBM, sBBL;
+let sRsi, sRsiOB, sRsiOS, sRsiMid;
+let sMacdLine, sMacdSig, sMacdHist;
 
-// ── Prague time ───────────────────────────────────────────────────────────────
-function pragueNow(){return new Date().toLocaleTimeString('cs-CZ',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+// ─────────────────────────────────────────────────────────────────────────────
+// Prague time helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function pragueNow(){
+  return new Date().toLocaleTimeString('cs-CZ',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// Compute Prague UTC offset (seconds) for a single probe timestamp.
+// Called once per data load (on the midpoint candle) — not per candle.
 function pragueOffsetSec(ts){
-  const d=new Date(ts*1000);
-  const mins=tz=>{const[,t]=d.toLocaleString('en-GB',{timeZone:tz}).split(', ');const[h,m]=t.split(':');return +h*60+ +m;};
-  let diff=mins(TZ)-mins('UTC');
-  if(diff>720)diff-=1440;if(diff<-720)diff+=1440;return diff*60;
-}
-function shiftTs(ts){return ts+pragueOffsetSec(ts);}
-function todayStr(){return new Date().toLocaleDateString('en-CA',{timeZone:TZ});}
-function dateStr(ts){return new Date(ts*1000).toLocaleDateString('en-CA',{timeZone:TZ});}
-function getPrevDayClose(candles,fb){
-  const today=todayStr();
-  for(let i=candles.length-1;i>=0;i--) if(dateStr(candles[i].time)<today) return candles[i].close;
-  return fb;
-}
-setInterval(()=>{g('prg-time').textContent=pragueNow();},1000);
-g('prg-time').textContent=pragueNow();
-
-// ── Pane margin calculation ───────────────────────────────────────────────────
-// lightweight-charts uses scaleMargins {top, bottom} where top+bottom < 1.
-// We stack three price scales using non-overlapping margin bands.
-// main:  top=0,        bottom=1-mainH
-// rsi:   top=mainH,    bottom=1-mainH-rsiH   (but we leave small gap)
-// macd:  top=mainH+rsiH, bottom=0
-// vol:   lives inside main band at the bottom
-function computeMargins(){
-  const rsiOn  = IND.rsi.on;
-  const macdOn = IND.macd.on;
-  const rsiH   = rsiOn  ? PANES.rsi  : 0;
-  const macdH  = macdOn ? PANES.macd : 0;
-  const mainH  = 1 - rsiH - macdH;
-  return {
-    main:  {top: 0.02,             bottom: rsiH + macdH + 0.02},
-    vol:   {top: mainH - 0.15,     bottom: rsiH + macdH},
-    rsi:   {top: mainH + 0.01,     bottom: macdH + 0.01},
-    macd:  {top: mainH + rsiH + 0.01, bottom: 0.01},
-    mainH, rsiH, macdH,
+  const d = new Date(ts * 1000);
+  const toMins = tz => {
+    const s = d.toLocaleString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false});
+    const [h,m] = s.split(':').map(Number);
+    return h*60 + m;
   };
+  let diff = toMins(TZ) - toMins('UTC');
+  if (diff >  720) diff -= 1440;
+  if (diff < -720) diff += 1440;
+  return diff * 60;
 }
 
-// ── Init chart ────────────────────────────────────────────────────────────────
-function initChart(){
-  const wrap = g('chart');
-  chart = LightweightCharts.createChart(wrap, {
-    layout:{background:{type:'solid',color:'#0d1117'},textColor:'#5a6478',fontFamily:'monospace',fontSize:11},
-    grid:{vertLines:{color:'#131a24'},horzLines:{color:'#131a24'}},
-    crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'},horzLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}},
-    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
-    handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:true},
-    rightPriceScale:{visible:false}, // we use named scales only
-    leftPriceScale:{visible:false},
-    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
-    width:  wrap.parentElement.clientWidth,
-    height: wrap.parentElement.clientHeight,
-  });
-
-  const m = computeMargins();
-
-  // Candles — 'main' price scale
-  serCandle = chart.addCandlestickSeries({
-    priceScaleId:'main',
-    upColor:'#26c281',downColor:'#e74c3c',borderUpColor:'#26c281',borderDownColor:'#e74c3c',wickUpColor:'#26c281',wickDownColor:'#e74c3c',
-    priceFormat:{type:'price',precision:3,minMove:0.001},
-  });
-  chart.priceScale('main').applyOptions({scaleMargins:m.main,borderColor:'#1e2530'});
-
-  // Volume — 'vol' scale (inside main band)
-  serVol = chart.addHistogramSeries({priceScaleId:'vol',priceFormat:{type:'volume'}});
-  chart.priceScale('vol').applyOptions({scaleMargins:m.vol,borderColor:'#1e2530',visible:false});
-
-  // EMA / BB — share 'main' scale
-  const emaOpts={priceScaleId:'main',priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}};
-  serEma50 =chart.addLineSeries({...emaOpts,color:IND.ema50.color, lineWidth:1.5});
-  serEma200=chart.addLineSeries({...emaOpts,color:IND.ema200.color,lineWidth:1.5});
-  serEma500=chart.addLineSeries({...emaOpts,color:IND.ema500.color,lineWidth:1.5});
-  serBBUpper=chart.addLineSeries({...emaOpts,color:'rgba(126,184,247,0.7)',lineWidth:1});
-  serBBMid  =chart.addLineSeries({...emaOpts,color:'rgba(126,184,247,0.4)',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
-  serBBLower=chart.addLineSeries({...emaOpts,color:'rgba(126,184,247,0.7)',lineWidth:1});
-
-  // RSI — 'rsi' scale
-  serRsi=chart.addLineSeries({priceScaleId:'rsi',color:IND.rsi.color,lineWidth:1.5,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:true,crosshairMarkerRadius:3,priceFormat:{type:'custom',formatter:v=>v.toFixed(1)}});
-  chart.priceScale('rsi').applyOptions({scaleMargins:m.rsi,borderColor:'#1e2530'});
-  const refOpts={priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false};
-  serRsiOB =chart.addLineSeries({priceScaleId:'rsi',...refOpts,color:'rgba(231,76,60,0.4)',  lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
-  serRsiOS =chart.addLineSeries({priceScaleId:'rsi',...refOpts,color:'rgba(38,194,129,0.4)', lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
-  serRsiMid=chart.addLineSeries({priceScaleId:'rsi',...refOpts,color:'rgba(100,120,150,0.4)',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dotted});
-
-  // MACD — 'macd' scale
-  serMacdLine  =chart.addLineSeries({priceScaleId:'macd',color:'#26c281',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
-  serMacdSignal=chart.addLineSeries({priceScaleId:'macd',color:'#f0c040',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
-  serMacdHist  =chart.addHistogramSeries({priceScaleId:'macd',priceFormat:{type:'price',precision:4,minMove:0.0001}});
-  chart.priceScale('macd').applyOptions({scaleMargins:m.macd,borderColor:'#1e2530'});
-
-  // Crosshair
-  chart.subscribeCrosshairMove(onCross);
-
-  // Resize
-  new ResizeObserver(()=>resizeChart()).observe(g('chart-wrap'));
-}
-
-// ── Recompute and apply pane margins ─────────────────────────────────────────
-function applyPaneMargins(){
-  if(!chart)return;
-  const m=computeMargins();
-  chart.priceScale('main').applyOptions({scaleMargins:m.main});
-  chart.priceScale('vol').applyOptions({scaleMargins:m.vol});
-  chart.priceScale('rsi').applyOptions({scaleMargins:m.rsi,visible:IND.rsi.on});
-  chart.priceScale('macd').applyOptions({scaleMargins:m.macd,visible:IND.macd.on});
-  [serRsi,serRsiOB,serRsiOS,serRsiMid].forEach(s=>s.applyOptions({visible:IND.rsi.on}));
-  [serMacdLine,serMacdSignal,serMacdHist].forEach(s=>s.applyOptions({visible:IND.macd.on}));
-  positionSeparators(m);
-}
-
-// Position the visual separator lines and pane labels over the canvas
-function positionSeparators(m){
-  const h=g('chart-wrap').clientHeight;
-  const rsiTop  = Math.round(m.mainH * h);
-  const macdTop = Math.round((m.mainH+m.rsiH)*h);
-  const el=id=>g(id);
-  el('sep-rsi').style.top  = IND.rsi.on  ? rsiTop+'px'  : '-2px';
-  el('sep-macd').style.top = IND.macd.on ? macdTop+'px' : '-2px';
-  el('lbl-main').style.top = '6px';
-  el('lbl-rsi').style.top  = (rsiTop+4)+'px';
-  el('lbl-rsi').style.display  = IND.rsi.on  ? '' : 'none';
-  el('lbl-macd').style.top = (macdTop+4)+'px';
-  el('lbl-macd').style.display = IND.macd.on ? '' : 'none';
-}
-
-function resizeChart(){
-  if(!chart)return;
-  const wrap=g('chart-wrap');
-  const w=wrap.clientWidth, h=wrap.clientHeight;
-  if(w>0&&h>0){
-    chart.applyOptions({width:w,height:h});
-    applyPaneMargins();
-  }
-}
-
-// ── Indicator visibility ──────────────────────────────────────────────────────
-function applyIndVisibility(){
-  if(!chart)return;
-  serEma50.applyOptions({visible:IND.ema50.on,color:IND.ema50.color});  g('leg-ema50').style.display=IND.ema50.on?'':'none';
-  serEma200.applyOptions({visible:IND.ema200.on,color:IND.ema200.color});g('leg-ema200').style.display=IND.ema200.on?'':'none';
-  serEma500.applyOptions({visible:IND.ema500.on,color:IND.ema500.color});g('leg-ema500').style.display=IND.ema500.on?'':'none';
-  [serBBUpper,serBBMid,serBBLower].forEach(s=>s.applyOptions({visible:IND.bb.on}));
-  g('leg-bb').style.display=IND.bb.on?'':'none'; g('sep-bb-leg').style.display=IND.bb.on?'':'none';
-  serRsi.applyOptions({color:IND.rsi.color});
-  g('leg-rsi').style.display=IND.rsi.on?'':'none';
-  g('leg-macd').style.display=IND.macd.on?'':'none';
-  applyPaneMargins();
-}
-
-// ── Indicators ────────────────────────────────────────────────────────────────
-function calcEMA(closes,period){
-  const out=new Array(closes.length).fill(null);
-  if(closes.length<period)return out;
-  let sum=0;for(let i=0;i<period;i++)sum+=closes[i];
-  let ema=sum/period;out[period-1]=ema;
-  const k=2/(period+1);
-  for(let i=period;i<closes.length;i++){ema=closes[i]*k+ema*(1-k);out[i]=ema;}
-  return out;
-}
-function calcBB(closes,period,mult){
-  const upper=new Array(closes.length).fill(null),mid=new Array(closes.length).fill(null),lower=new Array(closes.length).fill(null);
-  for(let i=period-1;i<closes.length;i++){
-    const sl=closes.slice(i-period+1,i+1),mean=sl.reduce((s,v)=>s+v,0)/period;
-    const sd=Math.sqrt(sl.reduce((s,v)=>s+(v-mean)**2,0)/period);
-    mid[i]=mean;upper[i]=mean+mult*sd;lower[i]=mean-mult*sd;
-  }
-  return{upper,mid,lower};
-}
-function calcRSI(closes,period){
-  const out=new Array(closes.length).fill(null);
-  if(closes.length<period+1)return out;
-  let avgG=0,avgL=0;
-  for(let i=1;i<=period;i++){const d=closes[i]-closes[i-1];if(d>0)avgG+=d;else avgL-=d;}
-  avgG/=period;avgL/=period;
-  out[period]=avgL===0?100:+(100-100/(1+avgG/avgL)).toFixed(2);
-  for(let i=period+1;i<closes.length;i++){
-    const d=closes[i]-closes[i-1];
-    avgG=(avgG*(period-1)+(d>0?d:0))/period;
-    avgL=(avgL*(period-1)+(d<0?-d:0))/period;
-    out[i]=avgL===0?100:+(100-100/(1+avgG/avgL)).toFixed(2);
+// Shift all candles by a single offset, deduplicating timestamps (DST safety).
+function shiftCandles(candles){
+  if (!candles.length) return [];
+  const mid = candles[Math.floor(candles.length / 2)].time;
+  const off = pragueOffsetSec(mid);
+  const seen = new Set(), out = [];
+  for (const c of candles){
+    const t = c.time + off;
+    if (seen.has(t)) continue;
+    seen.add(t);
+    out.push({...c, time:t});
   }
   return out;
 }
-function calcMACD(closes,fast,slow,signal){
-  const eFast=calcEMA(closes,fast),eSlow=calcEMA(closes,slow);
-  const macd=closes.map((_,i)=>eFast[i]!=null&&eSlow[i]!=null?eFast[i]-eSlow[i]:null);
-  const macdVals=macd.filter(v=>v!=null),sigEma=calcEMA(macdVals,signal);
-  const sig=new Array(closes.length).fill(null);let si=0;
-  for(let i=0;i<closes.length;i++)if(macd[i]!=null){sig[i]=sigEma[si]??null;si++;}
-  const hist=closes.map((_,i)=>macd[i]!=null&&sig[i]!=null?macd[i]-sig[i]:null);
-  return{macd,sig,hist};
-}
-function rsiColor(v){return v>=IND.rsi.ob?'#e74c3c':v<=IND.rsi.os?'#26c281':'#a78bfa';}
 
-function renderIndicators(candles,shifted){
-  const closes=candles.map(c=>c.close),li=candles.length-1;
-  const toLine=arr=>shifted.map((c,i)=>arr[i]!=null?{time:c.time,value:+arr[i].toFixed(4)}:null).filter(Boolean);
+function todayStr(){ return new Date().toLocaleDateString('en-CA',{timeZone:TZ}); }
+function dateStr(ts){ return new Date(ts*1000).toLocaleDateString('en-CA',{timeZone:TZ}); }
 
-  const e50=calcEMA(closes,IND.ema50.period),e200=calcEMA(closes,IND.ema200.period),e500=calcEMA(closes,IND.ema500.period);
-  serEma50.setData(toLine(e50));serEma200.setData(toLine(e200));serEma500.setData(toLine(e500));
-  g('ev50').textContent =e50[li] !=null?e50[li].toFixed(3) :'—';
-  g('ev200').textContent=e200[li]!=null?e200[li].toFixed(3):'—';
-  g('ev500').textContent=e500[li]!=null?e500[li].toFixed(3):'—';
-
-  const{upper,mid,lower}=calcBB(closes,IND.bb.period,IND.bb.mult);
-  serBBUpper.setData(toLine(upper));serBBMid.setData(toLine(mid));serBBLower.setData(toLine(lower));
-  if(upper[li]!=null&&lower[li]!=null)g('ev-bb').textContent=`${lower[li].toFixed(3)} – ${upper[li].toFixed(3)}`;
-
-  const rsiArr=calcRSI(closes,IND.rsi.period);
-  serRsi.setData(toLine(rsiArr));
-  const t0=shifted[0].time,t1=shifted[li].time;
-  serRsiOB.setData([{time:t0,value:IND.rsi.ob},{time:t1,value:IND.rsi.ob}]);
-  serRsiOS.setData([{time:t0,value:IND.rsi.os},{time:t1,value:IND.rsi.os}]);
-  serRsiMid.setData([{time:t0,value:50},{time:t1,value:50}]);
-  const lastRsi=rsiArr[li];
-  g('ev-rsi').textContent=lastRsi!=null?lastRsi.toFixed(1):'—';g('ev-rsi').style.color=rsiColor(lastRsi);
-
-  const{macd,sig,hist}=calcMACD(closes,IND.macd.fast,IND.macd.slow,IND.macd.signal);
-  serMacdLine.setData(toLine(macd));serMacdSignal.setData(toLine(sig));
-  serMacdHist.setData(shifted.map((c,i)=>hist[i]!=null?{time:c.time,value:+hist[i].toFixed(4),color:hist[i]>=0?'rgba(38,194,129,0.6)':'rgba(231,76,60,0.6)'}:null).filter(Boolean));
-  const lm=macd[li],ls=sig[li],lh=hist[li];
-  g('ev-macd').textContent=lm!=null?lm.toFixed(4):'—';g('ev-sig').textContent=ls!=null?ls.toFixed(4):'—';
-  g('ev-hist').textContent=lh!=null?lh.toFixed(4):'—';g('ev-hist').style.color=lh==null?'#555':lh>=0?'#26c281':'#e74c3c';
+function getPrevClose(candles, fallback){
+  const today = todayStr();
+  for (let i = candles.length-1; i >= 0; i--)
+    if (dateStr(candles[i].time) < today) return candles[i].close;
+  return fallback;
 }
 
-// ── Crosshair ─────────────────────────────────────────────────────────────────
-function onCross(p){
-  if(!p?.seriesData){clearTip();return;}
-  const b=p.seriesData.get(serCandle);
-  if(b){
-    g('hint').style.display='none';
-    setOI('o',b.open?.toFixed(3),'#8492a6');setOI('h',b.high?.toFixed(3),'#26c281');
-    setOI('l',b.low?.toFixed(3),'#e74c3c');setOI('c',b.close?.toFixed(3),b.close>=b.open?'#26c281':'#e74c3c');
-    const e50=p.seriesData.get(serEma50),e200=p.seriesData.get(serEma200),e500=p.seriesData.get(serEma500);
-    const bbu=p.seriesData.get(serBBUpper),bbl=p.seriesData.get(serBBLower);
-    if(e50) g('ev50').textContent=e50.value.toFixed(3);
-    if(e200)g('ev200').textContent=e200.value.toFixed(3);
-    if(e500)g('ev500').textContent=e500.value.toFixed(3);
-    if(bbu&&bbl)g('ev-bb').textContent=`${bbl.value.toFixed(3)} – ${bbu.value.toFixed(3)}`;
-  }
-  const rsi=p.seriesData.get(serRsi);
-  if(rsi){g('ev-rsi').textContent=rsi.value.toFixed(1);g('ev-rsi').style.color=rsiColor(rsi.value);}
-  const ml=p.seriesData.get(serMacdLine),ms=p.seriesData.get(serMacdSignal),mh=p.seriesData.get(serMacdHist);
-  if(ml)g('ev-macd').textContent=ml.value.toFixed(4);
-  if(ms)g('ev-sig').textContent=ms.value.toFixed(4);
-  if(mh){g('ev-hist').textContent=mh.value.toFixed(4);g('ev-hist').style.color=mh.value>=0?'#26c281':'#e74c3c';}
-}
+setInterval(()=>{ g('s-time').textContent = pragueNow(); }, 1000);
+g('s-time').textContent = pragueNow();
 
-// ── View / fit ────────────────────────────────────────────────────────────────
-function applyView(key){
-  if(!chart)return;
-  const val=VIEW_DAYS[key];if(val===undefined)return;
-  const now=Math.floor(Date.now()/1000);
-  const from=val==='ytd'?Math.floor(new Date(`${new Date().getFullYear()}-01-01T00:00:00`).getTime()/1000):now-val*86400;
-  chart.timeScale().setVisibleRange({from:shiftTs(from),to:shiftTs(now+2*86400)});
-}
-function fitAll(){
-  if(!chart)return;
-  chart.timeScale().fitContent();
-  chart.priceScale('main').applyOptions({autoScale:true});
-}
-
-// ── Fetch ─────────────────────────────────────────────────────────────────────
-async function fetchWithFallback(url){
-  const errs=[];
-  for(const mkP of PROXIES){
-    try{
-      const res=await fetch(mkP(url),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});
-      if(!res.ok){errs.push(`HTTP ${res.status}`);continue;}
-      const txt=await res.text();if(!txt?.trim()){errs.push('empty');continue;}
-      return JSON.parse(txt);
-    }catch(e){errs.push(e.message);}
-  }
-  throw new Error('All proxies failed: '+errs.join(' | '));
-}
-function buildUrl(h,cfg){return `https://${h}/v8/finance/chart/${encodeURIComponent(TICKER)}?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;}
-async function fetchYF(cfg){let last;for(const h of YF_HOSTS){try{return await fetchWithFallback(buildUrl(h,cfg));}catch(e){last=e;}}throw last;}
-function parseYF(json){
-  const r=json?.chart?.result?.[0];if(!r)throw new Error('Yahoo Finance: '+(json?.chart?.error?.description||'no data'));
-  const ts=r.timestamp||[],q=r.indicators?.quote?.[0]||{},m=r.meta||{};
-  if(!ts.length)throw new Error('Yahoo Finance returned empty data');
-  const candles=ts.map((t,i)=>({time:Math.floor(t),open:q.open?.[i],high:q.high?.[i],low:q.low?.[i],close:q.close?.[i],volume:q.volume?.[i]??0}))
-    .filter(c=>c.open!=null&&c.high!=null&&c.low!=null&&c.close!=null).sort((a,b)=>a.time-b.time);
-  if(!candles.length)throw new Error('No valid candles');
-  const last=candles[candles.length-1];
-  return{candles,price:m.regularMarketPrice??last.close,yfPrevClose:m.chartPreviousClose??null,volume:m.regularMarketVolume??last.volume,dayHigh:m.regularMarketDayHigh??null,dayLow:m.regularMarketDayLow??null};
-}
-
-// ── Load data ─────────────────────────────────────────────────────────────────
-async function loadData(isRefresh){
-  setRefreshing(true);
-  if(!isRefresh)showLoading();
-  const cfg=FETCH_CFG[curIv];
-  try{
-    const json=await fetchYF(cfg);
-    let{candles,price,yfPrevClose,volume,dayHigh,dayLow}=parseYF(json);
-    if(cfg.resample>1)candles=resample(candles,cfg.resample);
-    lastCandles=candles;lastShifted=candles.map(c=>({...c,time:shiftTs(c.time)}));
-    const shifted=lastShifted,li=candles.length-1;
-
-    serCandle.setData(shifted);
-    serVol.setData(shifted.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'#1a3d2b':'#3d1a1a'})));
-    renderIndicators(candles,shifted);
-
-    const baseline=getPrevDayClose(candles,yfPrevClose);
-    const ch=baseline!=null?price-baseline:null,pct=ch!=null&&baseline?ch/baseline*100:null;
-    const up=ch==null||ch>=0,clr=up?'#26c281':'#e74c3c',sgn=up?'+':'';
-    setText('price',price.toFixed(3));
-    g('change').textContent=ch!=null?sgn+ch.toFixed(3):'—';g('change').style.color=clr;
-    g('changePct').textContent=pct!=null?`(${sgn}${pct.toFixed(2)}%)`:'';g('changePct').style.color=clr;
-    setText('vol',volume?Number(volume).toLocaleString('en-US'):'—');
-    const today=todayStr(),todayBars=candles.filter(c=>dateStr(c.time)===today);
-    const tH=todayBars.length?todayBars.reduce((m,c)=>Math.max(m,c.high),-Infinity):null;
-    const tL=todayBars.length?todayBars.reduce((m,c)=>Math.min(m,c.low),Infinity):null;
-    setText('dhigh',(dayHigh??tH??candles.reduce((m,c)=>Math.max(m,c.high),-Infinity)).toFixed(3));
-    setText('dlow', (dayLow ??tL??candles.reduce((m,c)=>Math.min(m,c.low),Infinity)).toFixed(3));
-
-    if(!isRefresh){
-      chart.timeScale().fitContent();
-      chart.priceScale('main').applyOptions({autoScale:true});
-      setTimeout(()=>applyView(curViewKey),50);
+// ─────────────────────────────────────────────────────────────────────────────
+// Resample  (1h → 4h etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+function resample(candles, n){
+  if (n <= 1) return candles;
+  const sec = n * 3600, map = new Map();
+  for (const c of candles){
+    const key = Math.floor(c.time/sec)*sec;
+    if (!map.has(key)) map.set(key,{time:key,open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume});
+    else {
+      const b = map.get(key);
+      if (c.high > b.high) b.high = c.high;
+      if (c.low  < b.low)  b.low  = c.low;
+      b.close  = c.close;
+      b.volume += c.volume;
     }
-    hideOverlay();resetTimer();
-  }catch(e){
-    console.error('loadData:',e);
-    if(!isRefresh)showErr(e.message||'Unknown error');
-  }finally{setRefreshing(false);}
-}
-
-function resample(candles,n){
-  if(n<=1)return candles;
-  const sec=n*3600,map=new Map();
-  for(const c of candles){
-    const key=Math.floor(c.time/sec)*sec;
-    if(!map.has(key))map.set(key,{time:key,open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume});
-    else{const b=map.get(key);if(c.high>b.high)b.high=c.high;if(c.low<b.low)b.low=c.low;b.close=c.close;b.volume+=c.volume;}
   }
   return [...map.values()].sort((a,b)=>a.time-b.time);
 }
 
-function resetTimer(){
+// ─────────────────────────────────────────────────────────────────────────────
+// Indicator math
+// ─────────────────────────────────────────────────────────────────────────────
+function calcEMA(closes, period){
+  const out = new Array(closes.length).fill(null);
+  if (closes.length < period) return out;
+  let sum = 0;
+  for (let i = 0; i < period; i++) sum += closes[i];
+  let ema = sum / period;
+  out[period-1] = ema;
+  const k = 2/(period+1);
+  for (let i = period; i < closes.length; i++){
+    ema = closes[i]*k + ema*(1-k);
+    out[i] = ema;
+  }
+  return out;
+}
+
+function calcBB(closes, period, mult){
+  const u = new Array(closes.length).fill(null);
+  const m = new Array(closes.length).fill(null);
+  const l = new Array(closes.length).fill(null);
+  for (let i = period-1; i < closes.length; i++){
+    const sl = closes.slice(i-period+1, i+1);
+    const mean = sl.reduce((s,v)=>s+v,0) / period;
+    const sd   = Math.sqrt(sl.reduce((s,v)=>s+(v-mean)**2,0) / period);
+    m[i]=mean; u[i]=mean+mult*sd; l[i]=mean-mult*sd;
+  }
+  return {upper:u, mid:m, lower:l};
+}
+
+function calcRSI(closes, period){
+  const out = new Array(closes.length).fill(null);
+  if (closes.length < period+1) return out;
+  let ag = 0, al = 0;
+  for (let i = 1; i <= period; i++){
+    const d = closes[i]-closes[i-1];
+    if (d>0) ag+=d; else al-=d;
+  }
+  ag /= period; al /= period;
+  out[period] = al===0 ? 100 : +(100 - 100/(1+ag/al)).toFixed(2);
+  for (let i = period+1; i < closes.length; i++){
+    const d = closes[i]-closes[i-1];
+    ag = (ag*(period-1) + (d>0?d:0)) / period;
+    al = (al*(period-1) + (d<0?-d:0)) / period;
+    out[i] = al===0 ? 100 : +(100 - 100/(1+ag/al)).toFixed(2);
+  }
+  return out;
+}
+
+function calcMACD(closes, fast, slow, signal){
+  const ef = calcEMA(closes,fast), es = calcEMA(closes,slow);
+  const macd = closes.map((_,i) => ef[i]!=null&&es[i]!=null ? ef[i]-es[i] : null);
+  const vals  = macd.filter(v=>v!=null);
+  const se    = calcEMA(vals, signal);
+  const sig   = new Array(closes.length).fill(null);
+  let si = 0;
+  for (let i = 0; i < closes.length; i++) if (macd[i]!=null){ sig[i]=se[si]??null; si++; }
+  const hist = closes.map((_,i) => macd[i]!=null&&sig[i]!=null ? macd[i]-sig[i] : null);
+  return {macd, sig, hist};
+}
+
+function rsiClr(v){ return v>=IND.rsi.ob?'#e74c3c':v<=IND.rsi.os?'#26c281':'#a78bfa'; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Chart initialisation  (called once, after LightweightCharts is ready)
+// ─────────────────────────────────────────────────────────────────────────────
+function initCharts(){
+  const LC = LightweightCharts;
+
+  const base = {
+    layout:{background:{type:'solid',color:'#0d1117'},textColor:'#5a6478',fontFamily:'monospace',fontSize:11},
+    grid:{vertLines:{color:'#131a24'},horzLines:{color:'#131a24'}},
+    crosshair:{mode:LC.CrosshairMode.Normal,
+      vertLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'},
+      horzLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}},
+    rightPriceScale:{borderColor:'#1e2530',visible:true,minimumWidth:SCALE_W},
+    leftPriceScale:{visible:false},
+  };
+
+  // ── Price (master) ────────────────────────────────────────────────────────
+  const elP = g('pane-price');
+  cPrice = LC.createChart(elP, {
+    ...base,
+    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
+    handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:true},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
+    width:elP.clientWidth, height:elP.clientHeight,
+  });
+  cPrice.priceScale('right').applyOptions({scaleMargins:{top:0.05,bottom:0.20}});
+
+  sCandle = cPrice.addCandlestickSeries({
+    upColor:'#26c281',downColor:'#e74c3c',
+    borderUpColor:'#26c281',borderDownColor:'#e74c3c',
+    wickUpColor:'#26c281',wickDownColor:'#e74c3c',
+    priceFormat:{type:'price',precision:3,minMove:0.001},
+  });
+  sVol = cPrice.addHistogramSeries({priceScaleId:'vol',priceFormat:{type:'volume'}});
+  cPrice.priceScale('vol').applyOptions({scaleMargins:{top:0.82,bottom:0},visible:false});
+
+  const eBase = {priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,
+                 priceFormat:{type:'price',precision:3,minMove:0.001}};
+  sE50  = cPrice.addLineSeries({...eBase, color:IND.ema50.color,  lineWidth:1.5});
+  sE200 = cPrice.addLineSeries({...eBase, color:IND.ema200.color, lineWidth:1.5});
+  sE500 = cPrice.addLineSeries({...eBase, color:IND.ema500.color, lineWidth:1.5});
+  sBBU  = cPrice.addLineSeries({...eBase, color:'rgba(126,184,247,0.7)', lineWidth:1});
+  sBBM  = cPrice.addLineSeries({...eBase, color:'rgba(126,184,247,0.4)', lineWidth:1, lineStyle:LC.LineStyle.Dashed});
+  sBBL  = cPrice.addLineSeries({...eBase, color:'rgba(126,184,247,0.7)', lineWidth:1});
+
+  // crosshair → mirror to slaves + update toolbar
+  cPrice.subscribeCrosshairMove(p => {
+    onPriceCross(p);
+    if (p?.time != null){
+      try{ if(IND.rsi.on)  cRsi.setCrosshairPosition(0,p.time,sRsi); }catch(_){}
+      try{ if(IND.macd.on) cMacd.setCrosshairPosition(0,p.time,sMacdLine); }catch(_){}
+    } else {
+      try{ cRsi.clearCrosshairPosition(); }catch(_){}
+      try{ cMacd.clearCrosshairPosition(); }catch(_){}
+    }
+  });
+
+  // scroll/zoom → sync slaves
+  cPrice.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (!range || syncLock) return;
+    syncLock = true;
+    try{ if(IND.rsi.on)  cRsi.timeScale().setVisibleLogicalRange(range); }catch(_){}
+    try{ if(IND.macd.on) cMacd.timeScale().setVisibleLogicalRange(range); }catch(_){}
+    syncLock = false;
+  });
+
+  // ── RSI (slave) ───────────────────────────────────────────────────────────
+  const elR = g('pane-rsi');
+  cRsi = LC.createChart(elR, {
+    ...base,
+    handleScroll:{mouseWheel:false,pressedMouseMove:false,horzTouchDrag:false,vertTouchDrag:false},
+    handleScale:{mouseWheel:false,pinch:false,axisPressedMouseMove:{time:false,price:true}},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false},
+    width:elR.clientWidth, height:elR.clientHeight,
+  });
+  cRsi.priceScale('right').applyOptions({scaleMargins:{top:0.08,bottom:0.08}});
+
+  sRsi = cRsi.addLineSeries({
+    color:IND.rsi.color, lineWidth:1.5, priceLineVisible:false,
+    lastValueVisible:true, crosshairMarkerVisible:true, crosshairMarkerRadius:3,
+    priceFormat:{type:'custom',formatter:v=>v.toFixed(1)},
+  });
+  const rb = {priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false};
+  sRsiOB  = cRsi.addLineSeries({...rb, color:'rgba(231,76,60,0.4)',   lineWidth:1, lineStyle:LC.LineStyle.Dashed});
+  sRsiOS  = cRsi.addLineSeries({...rb, color:'rgba(38,194,129,0.4)',  lineWidth:1, lineStyle:LC.LineStyle.Dashed});
+  sRsiMid = cRsi.addLineSeries({...rb, color:'rgba(100,120,150,0.35)',lineWidth:1, lineStyle:LC.LineStyle.Dotted});
+
+  cRsi.subscribeCrosshairMove(p => {
+    const s = p?.seriesData?.get(sRsi);
+    if (s){ g('lv-rsi').textContent=s.value.toFixed(1); g('lv-rsi').style.color=rsiClr(s.value); }
+  });
+
+  // ── MACD (slave) ──────────────────────────────────────────────────────────
+  const elM = g('pane-macd');
+  cMacd = LC.createChart(elM, {
+    ...base,
+    handleScroll:{mouseWheel:false,pressedMouseMove:false,horzTouchDrag:false,vertTouchDrag:false},
+    handleScale:{mouseWheel:false,pinch:false,axisPressedMouseMove:{time:false,price:true}},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false},
+    width:elM.clientWidth, height:elM.clientHeight,
+  });
+  cMacd.priceScale('right').applyOptions({scaleMargins:{top:0.08,bottom:0.08}});
+
+  const mb = {priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false};
+  sMacdLine = cMacd.addLineSeries({...mb, color:'#26c281', lineWidth:1.5, priceFormat:{type:'price',precision:4,minMove:0.0001}});
+  sMacdSig  = cMacd.addLineSeries({...mb, color:'#f0c040', lineWidth:1.5, priceFormat:{type:'price',precision:4,minMove:0.0001}});
+  sMacdHist = cMacd.addHistogramSeries({priceFormat:{type:'price',precision:4,minMove:0.0001}});
+
+  cMacd.subscribeCrosshairMove(p => {
+    const ml=p?.seriesData?.get(sMacdLine), ms=p?.seriesData?.get(sMacdSig), mh=p?.seriesData?.get(sMacdHist);
+    if (ml) g('lv-macd').textContent=ml.value.toFixed(4);
+    if (ms) g('lv-sig').textContent=ms.value.toFixed(4);
+    if (mh){ g('lv-hist').textContent=mh.value.toFixed(4); g('lv-hist').style.color=mh.value>=0?'#26c281':'#e74c3c'; }
+  });
+
+  // ── Resize observer ───────────────────────────────────────────────────────
+  new ResizeObserver(() => resizeAll()).observe(g('chart-area'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Resize
+// ─────────────────────────────────────────────────────────────────────────────
+function resizeAll(){
+  requestAnimationFrame(() => {
+    [[cPrice,'pane-price'],[cRsi,'pane-rsi'],[cMacd,'pane-macd']].forEach(([ch,id])=>{
+      const el=g(id); if(!el||!ch) return;
+      const w=el.clientWidth, h=el.clientHeight;
+      if(w>0&&h>0) ch.applyOptions({width:w,height:h});
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pane / indicator visibility
+// ─────────────────────────────────────────────────────────────────────────────
+function applyPaneVisibility(){
+  const show = (paneId, lblId, on) => {
+    const el = g(paneId);
+    el.style.flex        = on ? (paneId==='pane-rsi'?'22':'23') : '0';
+    el.style.overflow    = 'hidden';
+    el.style.borderTop   = on ? '1px solid #1e2530' : 'none';
+    g(lblId).style.display = on ? '' : 'none';
+  };
+  show('pane-rsi',  'lbl-rsi',  IND.rsi.on);
+  show('pane-macd', 'lbl-macd', IND.macd.on);
+  resizeAll();
+}
+
+function applyIndVisibility(){
+  sE50.applyOptions({visible:IND.ema50.on,  color:IND.ema50.color});
+  sE200.applyOptions({visible:IND.ema200.on, color:IND.ema200.color});
+  sE500.applyOptions({visible:IND.ema500.on, color:IND.ema500.color});
+  [sBBU,sBBM,sBBL].forEach(s=>s.applyOptions({visible:IND.bb.on}));
+  sRsi.applyOptions({color:IND.rsi.color});
+
+  g('leg-e50').style.display   = IND.ema50.on  ? '' : 'none';
+  g('leg-e200').style.display  = IND.ema200.on ? '' : 'none';
+  g('leg-e500').style.display  = IND.ema500.on ? '' : 'none';
+  g('leg-bb').style.display    = IND.bb.on   ? '' : 'none';
+  g('lsep-bb').style.display   = IND.bb.on   ? '' : 'none';
+  g('leg-rsi').style.display   = IND.rsi.on  ? '' : 'none';
+  g('leg-macd').style.display  = IND.macd.on ? '' : 'none';
+
+  // re-render with current data if available
+  if (lastCandles && lastShifted) renderIndicators(lastCandles, lastShifted);
+  applyPaneVisibility();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Render indicators
+// ─────────────────────────────────────────────────────────────────────────────
+function renderIndicators(candles, shifted){
+  const closes = candles.map(c=>c.close);
+  const li     = candles.length - 1;
+
+  // Helper: map array of nulls/values onto shifted timestamps
+  // NaN for nulls → LightweightCharts skips gaps correctly
+  const toLine = arr => shifted.map((c,i)=>({time:c.time, value:arr[i]!=null ? +arr[i].toFixed(4) : NaN}));
+  const toHist = (arr,clrFn) => shifted.map((c,i)=>({
+    time:c.time,
+    value:arr[i]!=null ? +arr[i].toFixed(4) : 0,
+    color:arr[i]!=null ? clrFn(arr[i]) : 'rgba(0,0,0,0)',
+  }));
+
+  // EMA
+  const e50  = calcEMA(closes, IND.ema50.period);
+  const e200 = calcEMA(closes, IND.ema200.period);
+  const e500 = calcEMA(closes, IND.ema500.period);
+  sE50.setData( IND.ema50.on  ? toLine(e50)  : []);
+  sE200.setData(IND.ema200.on ? toLine(e200) : []);
+  sE500.setData(IND.ema500.on ? toLine(e500) : []);
+  g('lv-e50').textContent  = e50[li]  != null ? e50[li].toFixed(3)  : '—';
+  g('lv-e200').textContent = e200[li] != null ? e200[li].toFixed(3) : '—';
+  g('lv-e500').textContent = e500[li] != null ? e500[li].toFixed(3) : '—';
+
+  // Bollinger Bands
+  const {upper,mid,lower} = calcBB(closes, IND.bb.period, IND.bb.mult);
+  sBBU.setData(IND.bb.on ? toLine(upper) : []);
+  sBBM.setData(IND.bb.on ? toLine(mid)   : []);
+  sBBL.setData(IND.bb.on ? toLine(lower) : []);
+  if (upper[li]!=null && lower[li]!=null)
+    g('lv-bb').textContent = `${lower[li].toFixed(3)} – ${upper[li].toFixed(3)}`;
+
+  // RSI
+  const rsiArr = calcRSI(closes, IND.rsi.period);
+  if (IND.rsi.on){
+    sRsi.setData(toLine(rsiArr));
+    // full-width reference lines (one point per candle, so they never clip when scrolling)
+    sRsiOB.setData( shifted.map(c=>({time:c.time, value:IND.rsi.ob})));
+    sRsiOS.setData( shifted.map(c=>({time:c.time, value:IND.rsi.os})));
+    sRsiMid.setData(shifted.map(c=>({time:c.time, value:50})));
+  } else {
+    [sRsi,sRsiOB,sRsiOS,sRsiMid].forEach(s=>s.setData([]));
+  }
+  const lr = rsiArr[li];
+  g('lv-rsi').textContent = lr!=null ? lr.toFixed(1) : '—';
+  g('lv-rsi').style.color = rsiClr(lr ?? 50);
+
+  // MACD
+  const {macd,sig,hist} = calcMACD(closes, IND.macd.fast, IND.macd.slow, IND.macd.signal);
+  if (IND.macd.on){
+    sMacdLine.setData(toLine(macd));
+    sMacdSig.setData(toLine(sig));
+    sMacdHist.setData(toHist(hist, v=>v>=0?'rgba(38,194,129,0.6)':'rgba(231,76,60,0.6)'));
+  } else {
+    [sMacdLine,sMacdSig,sMacdHist].forEach(s=>s.setData([]));
+  }
+  const lm=macd[li], ls=sig[li], lh=hist[li];
+  g('lv-macd').textContent = lm!=null ? lm.toFixed(4) : '—';
+  g('lv-sig').textContent  = ls!=null ? ls.toFixed(4) : '—';
+  g('lv-hist').textContent = lh!=null ? lh.toFixed(4) : '—';
+  g('lv-hist').style.color = lh==null ? '#555' : lh>=0 ? '#26c281' : '#e74c3c';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Crosshair handler (price chart)
+// ─────────────────────────────────────────────────────────────────────────────
+function onPriceCross(p){
+  if (!p?.seriesData){ clearTip(); return; }
+  const b = p.seriesData.get(sCandle);
+  if (!b){ clearTip(); return; }
+
+  g('hint').style.display = 'none';
+  setOI('o', b.open?.toFixed(3),  '#8492a6');
+  setOI('h', b.high?.toFixed(3),  '#26c281');
+  setOI('l', b.low?.toFixed(3),   '#e74c3c');
+  setOI('c', b.close?.toFixed(3), b.close>=b.open?'#26c281':'#e74c3c');
+
+  const e50d=p.seriesData.get(sE50), e200d=p.seriesData.get(sE200), e500d=p.seriesData.get(sE500);
+  const bbud=p.seriesData.get(sBBU), bbld=p.seriesData.get(sBBL);
+  if(e50d)  g('lv-e50').textContent  = e50d.value.toFixed(3);
+  if(e200d) g('lv-e200').textContent = e200d.value.toFixed(3);
+  if(e500d) g('lv-e500').textContent = e500d.value.toFixed(3);
+  if(bbud&&bbld) g('lv-bb').textContent = `${bbld.value.toFixed(3)} – ${bbud.value.toFixed(3)}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fit visible range
+// ─────────────────────────────────────────────────────────────────────────────
+function fitToTimeframe(){
+  if (!cPrice || !lastShifted?.length) return;
+  const win = FIT_WIN[curIv] ?? 7*86400;
+  const lastT = lastShifted[lastShifted.length-1].time;
+  cPrice.timeScale().setVisibleRange({from: lastT-win, to: lastT+3600*2});
+  cPrice.priceScale('right').applyOptions({autoScale:true});
+  // immediately push range to slaves
+  requestAnimationFrame(()=>{
+    const range = cPrice.timeScale().getVisibleLogicalRange();
+    if (!range) return;
+    syncLock = true;
+    try{ if(IND.rsi.on)  cRsi.timeScale().setVisibleLogicalRange(range); }catch(_){}
+    try{ if(IND.macd.on) cMacd.timeScale().setVisibleLogicalRange(range); }catch(_){}
+    syncLock = false;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Data fetching
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchWithFallback(url){
+  const errs = [];
+  for (const mkProxy of PROXIES){
+    try {
+      const res = await fetch(mkProxy(url),{
+        headers:{Accept:'application/json'},
+        signal:AbortSignal.timeout(12000),
+      });
+      if (!res.ok){ errs.push(`HTTP ${res.status}`); continue; }
+      const txt = await res.text();
+      if (!txt?.trim()){ errs.push('empty response'); continue; }
+      return JSON.parse(txt);
+    } catch(e){ errs.push(e.message); }
+  }
+  throw new Error('All proxies failed:\n' + errs.join('\n'));
+}
+
+function buildYfUrl(host, cfg){
+  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}`
+       + `?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
+}
+
+async function fetchYF(cfg){
+  let last;
+  for (const host of YF_HOSTS){
+    try { return await fetchWithFallback(buildYfUrl(host,cfg)); }
+    catch(e){ last=e; }
+  }
+  throw last;
+}
+
+function parseYF(json){
+  const r = json?.chart?.result?.[0];
+  if (!r) throw new Error('Yahoo Finance: ' + (json?.chart?.error?.description ?? 'no data'));
+  const ts=r.timestamp??[], q=r.indicators?.quote?.[0]??{}, m=r.meta??{};
+  if (!ts.length) throw new Error('Yahoo Finance returned empty data');
+  const candles = ts
+    .map((t,i)=>({time:Math.floor(t),open:q.open?.[i],high:q.high?.[i],low:q.low?.[i],close:q.close?.[i],volume:q.volume?.[i]??0}))
+    .filter(c=>c.open!=null&&c.high!=null&&c.low!=null&&c.close!=null)
+    .sort((a,b)=>a.time-b.time);
+  if (!candles.length) throw new Error('No valid candles after filtering');
+  const last = candles[candles.length-1];
+  return {
+    candles,
+    price:    m.regularMarketPrice   ?? last.close,
+    prevClose:m.chartPreviousClose   ?? null,
+    volume:   m.regularMarketVolume  ?? last.volume,
+    dayHigh:  m.regularMarketDayHigh ?? null,
+    dayLow:   m.regularMarketDayLow  ?? null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main load
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadData(isRefresh){
+  setRefreshing(true);
+  if (!isRefresh) showLoading();
+
+  try {
+    const cfg = FETCH_CFG[curIv];
+    const json = await fetchYF(cfg);
+    let {candles, price, prevClose, volume, dayHigh, dayLow} = parseYF(json);
+    if (cfg.resample > 1) candles = resample(candles, cfg.resample);
+
+    lastCandles = candles;
+    lastShifted = shiftCandles(candles);
+    const li = candles.length - 1;
+
+    // Candles + volume
+    sCandle.setData(lastShifted);
+    sVol.setData(lastShifted.map(c=>({
+      time:c.time, value:c.volume,
+      color: c.close>=c.open ? '#1a3d2b' : '#3d1a1a',
+    })));
+
+    // Indicators
+    renderIndicators(candles, lastShifted);
+
+    // Header stats
+    const baseline = getPrevClose(candles, prevClose);
+    const ch  = baseline!=null ? price-baseline : null;
+    const pct = ch!=null && baseline ? ch/baseline*100 : null;
+    const up  = ch==null||ch>=0;
+    const clr = up?'#26c281':'#e74c3c', sgn=up?'+':'';
+
+    g('price').textContent    = price.toFixed(3);
+    g('change').textContent   = ch!=null ? sgn+ch.toFixed(3) : '—';
+    g('change').style.color   = clr;
+    g('changePct').textContent= pct!=null ? `(${sgn}${pct.toFixed(2)}%)` : '';
+    g('changePct').style.color= clr;
+    g('s-vol').textContent    = volume ? Number(volume).toLocaleString('en-US') : '—';
+
+    const today = todayStr();
+    const tb    = candles.filter(c=>dateStr(c.time)===today);
+    const tH    = tb.length ? tb.reduce((m,c)=>Math.max(m,c.high),-Infinity) : null;
+    const tL    = tb.length ? tb.reduce((m,c)=>Math.min(m,c.low),  Infinity) : null;
+    g('s-high').textContent = (dayHigh??tH??candles.reduce((m,c)=>Math.max(m,c.high),-Infinity)).toFixed(3);
+    g('s-low').textContent  = (dayLow??tL??candles.reduce((m,c)=>Math.min(m,c.low),  Infinity)).toFixed(3);
+
+    if (!isRefresh) setTimeout(fitToTimeframe, 50);
+    hideOverlay();
+    scheduleRefresh();
+  } catch(e){
+    console.error('loadData error:', e);
+    if (!isRefresh) showErr(e.message ?? 'Unknown error');
+  } finally {
+    setRefreshing(false);
+  }
+}
+
+function scheduleRefresh(){
   clearInterval(refreshTimer);
-  refreshTimer=setInterval(()=>loadData(true),REFRESH_MS);
-  setText('status',`Auto-refresh ${REFRESH_MS/1000}s`);
+  refreshTimer = setInterval(()=>loadData(true), REFRESH_MS);
+  g('status').textContent = `Auto-refresh ${REFRESH_MS/1000}s`;
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
-function g(id){return document.getElementById(id);}
-function setText(id,v){g(id).textContent=v;}
+// ─────────────────────────────────────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function g(id){ return document.getElementById(id); }
+
 function clearTip(){
-  g('hint').style.display='';
-  ['o','h','l','c'].forEach(k=>g('oi-'+k).style.display='none');
-  ['50','200','500'].forEach(p=>g('ev'+p).textContent='—');
-  g('ev-bb').textContent='—';g('ev-rsi').textContent='—';g('ev-rsi').style.color='#a78bfa';
-  g('ev-macd').textContent=g('ev-sig').textContent=g('ev-hist').textContent='—';g('ev-hist').style.color='#555';
+  g('hint').style.display = '';
+  ['o','h','l','c'].forEach(k=>{ g('oi-'+k).style.display='none'; });
+  ['lv-e50','lv-e200','lv-e500','lv-bb','lv-rsi','lv-macd','lv-sig','lv-hist'].forEach(id=>{
+    const el=g(id); if(el) el.textContent='—';
+  });
+  g('lv-rsi').style.color  = '#a78bfa';
+  g('lv-hist').style.color = '#555';
 }
-function setOI(k,v,c){g('oi-'+k).style.display='flex';g('tv-'+k).textContent=v;g('tv-'+k).style.color=c;}
-function showLoading(){const o=g('overlay');o.style.display='flex';o.innerHTML='<div id="spin"></div><div id="load-msg">Loading market data…</div>';}
-function showErr(msg){const o=g('overlay');o.style.display='flex';o.innerHTML=`<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;}
-function hideOverlay(){g('overlay').style.display='none';}
-function setRefreshing(on){g('dot').style.background=on?'#e7a22b':'#26c281';if(on)setText('status','Loading…');}
+function setOI(k,v,c){ g('oi-'+k).style.display='flex'; g('tv-'+k).textContent=v; g('tv-'+k).style.color=c; }
+function setRefreshing(on){ g('dot').style.background=on?'#e7a22b':'#26c281'; if(on) g('status').textContent='Loading…'; }
 
-// ── Side panel ────────────────────────────────────────────────────────────────
-document.querySelectorAll('.ind-toggle').forEach(btn=>{
-  btn.addEventListener('click',e=>{
+function showLoading(){
+  const o=g('overlay');
+  o.style.display='flex';
+  o.innerHTML='<div class="spinner"></div><div class="omsg">Loading market data…</div>';
+}
+function showErr(msg){
+  const o=g('overlay');
+  o.style.display='flex';
+  o.innerHTML=`<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn" onclick="loadData(false)">Retry</button></div>`;
+}
+function hideOverlay(){ g('overlay').style.display='none'; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Side panel interactions
+// ─────────────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.toggle').forEach(btn=>{
+  btn.addEventListener('click', e=>{
     e.stopPropagation();
-    const ind=btn.dataset.ind;IND[ind].on=!IND[ind].on;
-    btn.classList.toggle('on',IND[ind].on);btn.classList.toggle('off',!IND[ind].on);
+    const ind = btn.dataset.ind;
+    IND[ind].on = !IND[ind].on;
+    btn.classList.toggle('on',  IND[ind].on);
+    btn.classList.toggle('off', !IND[ind].on);
     applyIndVisibility();
   });
 });
-document.querySelectorAll('.ind-header').forEach(hdr=>{
-  hdr.addEventListener('click',e=>{
-    if(e.target.classList.contains('ind-toggle'))return;
-    const body=hdr.nextElementSibling,ch=hdr.querySelector('.ind-chevron');
-    ch.classList.toggle('open',body.classList.toggle('open'));
+
+document.querySelectorAll('.ind-hdr').forEach(hdr=>{
+  hdr.addEventListener('click', e=>{
+    if (e.target.classList.contains('toggle')) return;
+    const body = hdr.nextElementSibling;
+    const ch   = hdr.querySelector('.chev');
+    const open = body.classList.toggle('open');
+    ch.classList.toggle('open', open);
   });
 });
-document.querySelectorAll('.apply-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    const ind=btn.dataset.apply;
-    if(ind==='ema50'){IND.ema50.period=+g('p-ema50-period').value||50;IND.ema50.color=g('p-ema50-color').value;serEma50.applyOptions({color:IND.ema50.color});g('dot-ema50').style.background=IND.ema50.color;g('ev50').style.color=IND.ema50.color;}
-    else if(ind==='ema200'){IND.ema200.period=+g('p-ema200-period').value||200;IND.ema200.color=g('p-ema200-color').value;serEma200.applyOptions({color:IND.ema200.color});g('dot-ema200').style.background=IND.ema200.color;g('ev200').style.color=IND.ema200.color;}
-    else if(ind==='ema500'){IND.ema500.period=+g('p-ema500-period').value||500;IND.ema500.color=g('p-ema500-color').value;serEma500.applyOptions({color:IND.ema500.color});g('dot-ema500').style.background=IND.ema500.color;g('ev500').style.color=IND.ema500.color;}
-    else if(ind==='bb'){IND.bb.period=+g('p-bb-period').value||20;IND.bb.mult=+g('p-bb-mult').value||2.0;IND.bb.color=g('p-bb-color').value;}
-    else if(ind==='rsi'){IND.rsi.period=+g('p-rsi-period').value||14;IND.rsi.ob=+g('p-rsi-ob').value||70;IND.rsi.os=+g('p-rsi-os').value||30;IND.rsi.color=g('p-rsi-color').value;}
-    else if(ind==='macd'){IND.macd.fast=+g('p-macd-fast').value||12;IND.macd.slow=+g('p-macd-slow').value||26;IND.macd.signal=+g('p-macd-signal').value||9;}
-    if(lastCandles&&lastShifted)renderIndicators(lastCandles,lastShifted);
+
+document.querySelectorAll('.abtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const ind = btn.dataset.apply;
+    switch(ind){
+      case 'ema50':
+        IND.ema50.period = +g('ip-e50-p').value  || 50;
+        IND.ema50.color  =  g('ip-e50-c').value;
+        sE50.applyOptions({color:IND.ema50.color});
+        g('ld-e50').style.background = IND.ema50.color;
+        g('lv-e50').style.color      = IND.ema50.color;
+        break;
+      case 'ema200':
+        IND.ema200.period = +g('ip-e200-p').value || 200;
+        IND.ema200.color  =  g('ip-e200-c').value;
+        sE200.applyOptions({color:IND.ema200.color});
+        g('ld-e200').style.background = IND.ema200.color;
+        g('lv-e200').style.color      = IND.ema200.color;
+        break;
+      case 'ema500':
+        IND.ema500.period = +g('ip-e500-p').value || 500;
+        IND.ema500.color  =  g('ip-e500-c').value;
+        sE500.applyOptions({color:IND.ema500.color});
+        g('ld-e500').style.background = IND.ema500.color;
+        g('lv-e500').style.color      = IND.ema500.color;
+        break;
+      case 'bb':
+        IND.bb.period =  +g('ip-bb-p').value || 20;
+        IND.bb.mult   =  +g('ip-bb-m').value || 2.0;
+        IND.bb.color  =   g('ip-bb-c').value;
+        break;
+      case 'rsi':
+        IND.rsi.period = +g('ip-rsi-p').value  || 14;
+        IND.rsi.ob     = +g('ip-rsi-ob').value || 70;
+        IND.rsi.os     = +g('ip-rsi-os').value || 30;
+        IND.rsi.color  =  g('ip-rsi-c').value;
+        break;
+      case 'macd':
+        IND.macd.fast   = +g('ip-macd-f').value   || 12;
+        IND.macd.slow   = +g('ip-macd-s').value   || 26;
+        IND.macd.signal = +g('ip-macd-sig').value || 9;
+        break;
+    }
+    if (lastCandles && lastShifted) renderIndicators(lastCandles, lastShifted);
     applyIndVisibility();
   });
 });
-g('panel-toggle').addEventListener('click',()=>{
-  panelVisible=!panelVisible;
-  g('side-panel').classList.toggle('hidden',!panelVisible);
-  g('panel-toggle').textContent=panelVisible?'◀':'▶';
-  g('panel-toggle-wrap').style.right=panelVisible?'220px':'0';
-  setTimeout(resizeChart,210);
+
+g('ptoggle').addEventListener('click', ()=>{
+  panelVisible = !panelVisible;
+  g('side-panel').classList.toggle('hidden', !panelVisible);
+  g('ptoggle').textContent = panelVisible ? '◀' : '▶';
+  g('ptoggle-wrap').style.right = panelVisible ? '220px' : '0';
+  setTimeout(resizeAll, 210);
 });
 
-// ── Controls ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tf-btn').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');curIv=btn.dataset.iv;clearTip();loadData(false);
-}));
-document.querySelectorAll('.vw-btn').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.vw-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');curViewKey=btn.dataset.days;applyView(curViewKey);
-}));
-g('fit-btn').addEventListener('click',()=>fitAll());
-g('rbtn').addEventListener('click',()=>loadData(false));
+// ─────────────────────────────────────────────────────────────────────────────
+// Timeframe buttons + toolbar controls
+// ─────────────────────────────────────────────────────────────────────────────
+g('tf-grp').addEventListener('click', e=>{
+  const btn = e.target.closest('.btn');
+  if (!btn) return;
+  document.querySelectorAll('#tf-grp .btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  curIv = btn.dataset.iv;
+  clearTip();
+  loadData(false);
+});
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
+g('btn-fit').addEventListener('click',     ()=>fitToTimeframe());
+g('btn-refresh').addEventListener('click', ()=>loadData(false));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boot — wait for LightweightCharts, then init everything in order
+// ─────────────────────────────────────────────────────────────────────────────
 function waitForLib(cb){
-  if(typeof LightweightCharts!=='undefined'){cb();return;}
-  let n=0;const id=setInterval(()=>{
-    if(typeof LightweightCharts!=='undefined'){clearInterval(id);cb();return;}
-    if(++n>100){clearInterval(id);showErr('Failed to load chart library.');}
-  },100);
+  if (typeof LightweightCharts !== 'undefined'){ cb(); return; }
+  let n=0;
+  const id = setInterval(()=>{
+    if (typeof LightweightCharts !== 'undefined'){ clearInterval(id); cb(); return; }
+    if (++n > 100){ clearInterval(id); showErr('Failed to load chart library.'); }
+  }, 100);
 }
+
 waitForLib(()=>{
-  initChart();
-  g('panel-toggle-wrap').style.right='220px';
-  setTimeout(()=>{applyIndVisibility();loadData(false);},0);
+  initCharts();        // all series created here
+  applyIndVisibility(); // safe: series exist, lastCandles is null → renderIndicators is a no-op
+  loadData(false);     // first real fetch
 });
 </script>
 </body>
