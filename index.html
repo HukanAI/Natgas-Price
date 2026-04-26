@@ -59,7 +59,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 <body>
 <div id="app">
 
-  <!-- HEADER -->
   <div id="header">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span id="ticker-sym">NG=F</span>
@@ -78,7 +77,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
-  <!-- CONTROLS -->
   <div id="controls">
     <span class="grp-label">Interval</span>
     <div class="btn-grp">
@@ -86,6 +84,7 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <button class="iv" data-iv="5m">5m</button>
       <button class="iv" data-iv="15m">15m</button>
       <button class="iv on" data-iv="1h">1h</button>
+      <button class="iv" data-iv="4h">4h</button>
       <button class="iv" data-iv="1d">1D</button>
       <button class="iv" data-iv="1wk">1W</button>
     </div>
@@ -96,7 +95,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     <span id="status">—</span>
   </div>
 
-  <!-- OHLC + EMA BAR -->
   <div id="tbar">
     <span id="hint">Hover over chart for OHLC values</span>
     <div class="oi" id="oi-o"><span class="ol">O</span><span class="ov" id="tv-o"></span></div>
@@ -110,7 +108,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
-  <!-- CHART -->
   <div id="cwrap">
     <div id="cv"></div>
     <div id="overlay">
@@ -119,117 +116,172 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
-  <!-- FOOTER -->
   <div id="footer">
     <span>NG=F · NYMEX · USD/MMBtu · Source: Yahoo Finance · Time: Europe/Prague (CET/CEST auto) · Daily change vs prev-day close</span>
-    <span>Scroll = zoom · Drag = pan · ⤢ Autofit = fit all data to screen</span>
+    <span>Scroll = zoom · Drag = pan · ⤢ Autofit = fit all data · 4h = resampled from 1h</span>
   </div>
 
 </div>
-
 <script>
 'use strict';
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 const TICKER = 'NG=F';
 const TZ     = 'Europe/Prague';
+const REFRESH_MS = 10000;
 
-// Yahoo Finance fetch config (verified hard limits):
-//   1m  → range=5d   (7d absolute limit)
-//   5m  → range=1mo  (60d limit; period1/period2 returns HTTP 422 for 5m/15m)
-//   15m → range=1mo  (60d limit)
-//   1h  → range=1y   (730d limit)
-//   1d  → range=5y
-//   1wk → range=10y
+// Yahoo Finance fetch config per interval.
+// 4h is not natively supported — we fetch 1h and resample client-side.
+// Verified limits: 1m=7d, 5m/15m=60d (range string only, period1/2 → HTTP 422),
+//                 1h=730d, 1d/1wk=unlimited.
 const FETCH_CFG = {
-  '1m':  { range: '5d',  interval: '1m'  },
-  '5m':  { range: '1mo', interval: '5m'  },
-  '15m': { range: '1mo', interval: '15m' },
-  '1h':  { range: '1y',  interval: '1h'  },
-  '1d':  { range: '5y',  interval: '1d'  },
-  '1wk': { range: '10y', interval: '1wk' },
+  '1m':  { range: '5d',  interval: '1m',  resample: 1 },
+  '5m':  { range: '1mo', interval: '5m',  resample: 1 },
+  '15m': { range: '1mo', interval: '15m', resample: 1 },
+  '1h':  { range: '1y',  interval: '1h',  resample: 1 },
+  '4h':  { range: '1y',  interval: '1h',  resample: 4 }, // built from 1h
+  '1d':  { range: '5y',  interval: '1d',  resample: 1 },
+  '1wk': { range: '10y', interval: '1wk', resample: 1 },
 };
 
-const REFRESH_INTERVAL_MS = 10000; // 10 seconds for all intervals
+// Intraday intervals — outlier-filtered Y axis on autofit
+const INTRADAY = new Set(['1m','5m','15m','1h','4h']);
 
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://proxy.cors.sh/${u}`,
 ];
-const YF_HOSTS = ['query2.finance.yahoo.com', 'query1.finance.yahoo.com'];
+const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let chart, candleSeries, volSeries, ema50S, ema200S, ema500S;
 let curIv = '1h';
 let refreshTimer;
+let lastCandles = null; // raw (unshifted) candles, cached for Autofit
 
-// ── Prague time helpers ───────────────────────────────────────────────────────
+// ── Prague timezone helpers ───────────────────────────────────────────────────
 function pragueNow() {
   return new Date().toLocaleTimeString('cs-CZ', {
-    timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit'
+    timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
 
-// Returns Prague UTC offset in seconds for a given unix timestamp (handles DST)
-function pragueOffsetSec(unixTs) {
-  const d = new Date(unixTs * 1000);
-  const toMins = tz => {
-    const s = d.toLocaleString('en-GB', { timeZone: tz });
-    const [, t] = s.split(', ');
+// UTC offset of Prague in seconds for a given unix timestamp (DST-aware)
+function pragueOffsetSec(ts) {
+  const d = new Date(ts * 1000);
+  const mins = tz => {
+    const [, t] = d.toLocaleString('en-GB', { timeZone: tz }).split(', ');
     const [h, m] = t.split(':');
     return +h * 60 + +m;
   };
-  let diff = toMins(TZ) - toMins('UTC');
+  let diff = mins(TZ) - mins('UTC');
   if (diff > 720)  diff -= 1440;
   if (diff < -720) diff += 1440;
   return diff * 60;
 }
 
-// Shift unix timestamp so lightweight-charts shows Prague local time on X axis
-function shiftTs(ts) {
-  return ts + pragueOffsetSec(ts);
-}
+// Shift unix timestamp so chart X axis displays Prague local time
+function shiftTs(ts) { return ts + pragueOffsetSec(ts); }
 
-// Returns "YYYY-MM-DD" string for today in Prague timezone
+// Today's date string in Prague timezone, e.g. "2025-04-26"
 function todayPrague() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); // "2025-04-26"
+  return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
 }
 
-// Returns the close of the last candle whose date (in Prague time) is BEFORE today.
-// This gives us the previous calendar day's closing price for daily change calc.
-// Falls back to `fallback` if no such candle exists (e.g. very short range).
+// Close of the last candle whose Prague date < today (= previous calendar day close)
 function getPrevDayClose(candles, fallback) {
-  const today = todayPrague(); // "YYYY-MM-DD"
+  const today = todayPrague();
   for (let i = candles.length - 1; i >= 0; i--) {
-    const candleDatePrague = new Date(candles[i].time * 1000)
-      .toLocaleDateString('en-CA', { timeZone: TZ });
-    if (candleDatePrague < today) {
-      return candles[i].close;
+    const d = new Date(candles[i].time * 1000).toLocaleDateString('en-CA', { timeZone: TZ });
+    if (d < today) return candles[i].close;
+  }
+  return fallback;
+}
+
+// Live Prague clock
+setInterval(() => { g('prg-time').textContent = pragueNow(); }, 1000);
+g('prg-time').textContent = pragueNow();
+
+// ── Resample candles (e.g. 1h → 4h) ─────────────────────────────────────────
+// Buckets are aligned to UTC midnight so 4h candles always start
+// at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC.
+function resample(candles, n) {
+  if (n <= 1) return candles;
+  const bucketSec = n * 3600;
+  const map = new Map();
+  for (const c of candles) {
+    const key = Math.floor(c.time / bucketSec) * bucketSec;
+    if (!map.has(key)) {
+      map.set(key, { time: key, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume });
+    } else {
+      const b = map.get(key);
+      if (c.high > b.high) b.high = c.high;
+      if (c.low  < b.low)  b.low  = c.low;
+      b.close   = c.close;
+      b.volume += c.volume;
     }
   }
-  return fallback; // fallback: use Yahoo's chartPreviousClose
+  return [...map.values()].sort((a, b) => a.time - b.time);
 }
 
-// Live Prague clock in header
-setInterval(() => { el('prg-time').textContent = pragueNow(); }, 1000);
-el('prg-time').textContent = pragueNow();
-
-// ── EMA calculation ───────────────────────────────────────────────────────────
+// ── EMA ───────────────────────────────────────────────────────────────────────
 function calcEMA(closes, period) {
-  const k   = 2 / (period + 1);
-  const out  = new Array(closes.length).fill(null);
-  let sum    = 0, started = false, prev = 0;
-  for (let i = 0; i < closes.length; i++) {
-    if (!started) {
-      sum += closes[i];
-      if (i === period - 1) { prev = sum / period; out[i] = prev; started = true; }
-    } else {
-      prev  = closes[i] * k + prev * (1 - k);
-      out[i] = prev;
-    }
+  if (closes.length < period) return new Array(closes.length).fill(null);
+  const k = 2 / (period + 1);
+  const out = new Array(closes.length).fill(null);
+  let sum = 0;
+  for (let i = 0; i < period; i++) sum += closes[i];
+  let prev = sum / period;
+  out[period - 1] = prev;
+  for (let i = period; i < closes.length; i++) {
+    prev = closes[i] * k + prev * (1 - k);
+    out[i] = prev;
   }
   return out;
+}
+
+// ── Autofit (both X and Y, outlier-filtered for intraday) ────────────────────
+function fitAll(candles) {
+  chart.timeScale().fitContent();
+
+  if (candles && INTRADAY.has(curIv)) {
+    const range = cleanRange(candles);
+    if (range) {
+      const pad = (range.max - range.min) * 0.02;
+      candleSeries.applyOptions({
+        autoscaleInfoProvider: () => ({
+          priceRange: { minValue: range.min - pad, maxValue: range.max + pad },
+        }),
+      });
+      // Re-enable normal autoscale after a tick so user panning works correctly
+      setTimeout(() => {
+        candleSeries.applyOptions({ autoscaleInfoProvider: null });
+        chart.priceScale('right').applyOptions({ autoScale: true });
+      }, 150);
+      return;
+    }
+  }
+  chart.priceScale('right').applyOptions({ autoScale: true });
+}
+
+// IQR-based outlier filter: exclude candles whose high/low exceed 3×IQR fence
+function cleanRange(candles) {
+  if (candles.length < 10) return null;
+  const closes = candles.map(c => c.close).slice().sort((a, b) => a - b);
+  const q1  = closes[Math.floor(closes.length * 0.25)];
+  const q3  = closes[Math.floor(closes.length * 0.75)];
+  const iqr = q3 - q1;
+  if (iqr === 0) return null;
+  const lo = q1 - 3 * iqr;
+  const hi = q3 + 3 * iqr;
+  let min = Infinity, max = -Infinity;
+  for (const c of candles) {
+    if (c.high > hi || c.low < lo) continue;
+    if (c.low  < min) min = c.low;
+    if (c.high > max) max = c.high;
+  }
+  return isFinite(min) && isFinite(max) ? { min, max } : null;
 }
 
 // ── Wait for LightweightCharts CDN ───────────────────────────────────────────
@@ -238,24 +290,15 @@ function waitForLib(cb) {
   let n = 0;
   const id = setInterval(() => {
     if (typeof LightweightCharts !== 'undefined') { clearInterval(id); cb(); return; }
-    if (++n > 100) { clearInterval(id); showErr('Failed to load chart library. Check your connection.'); }
+    if (++n > 100) { clearInterval(id); showErr('Failed to load chart library.'); }
   }, 100);
-}
-
-// ── Fit both X and Y axes ─────────────────────────────────────────────────────
-function fitAll() {
-  chart.timeScale().fitContent();
-  chart.priceScale('right').applyOptions({ autoScale: true });
 }
 
 // ── Init chart ────────────────────────────────────────────────────────────────
 function initChart() {
-  const wrap = el('cwrap');
-  chart = LightweightCharts.createChart(el('cv'), {
-    layout: {
-      background: { type: 'solid', color: '#0d1117' },
-      textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11,
-    },
+  const wrap = g('cwrap');
+  chart = LightweightCharts.createChart(g('cv'), {
+    layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
     grid: { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
@@ -263,13 +306,11 @@ function initChart() {
       horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
     },
     rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.26 } },
-    timeScale: {
-      borderColor: '#1e2530', timeVisible: true, secondsVisible: false,
-      rightOffset: 5, barSpacing: 8, minBarSpacing: 2,
-    },
+    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2 },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
     handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
-    width: wrap.clientWidth, height: wrap.clientHeight,
+    width: wrap.clientWidth,
+    height: wrap.clientHeight,
   });
 
   candleSeries = chart.addCandlestickSeries({
@@ -282,28 +323,16 @@ function initChart() {
   volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
   chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.80, bottom: 0 } });
 
-  ema50S  = chart.addLineSeries({
-    color: '#f0c040', lineWidth: 1.5,
-    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
-  });
-  ema200S = chart.addLineSeries({
-    color: '#e74c3c', lineWidth: 1.5,
-    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
-  });
-  ema500S = chart.addLineSeries({
-    color: '#2196f3', lineWidth: 1.5,
-    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
-    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
-  });
+  const lineOpts = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } };
+  ema50S  = chart.addLineSeries({ ...lineOpts, color: '#f0c040', lineWidth: 1.5 });
+  ema200S = chart.addLineSeries({ ...lineOpts, color: '#e74c3c', lineWidth: 1.5 });
+  ema500S = chart.addLineSeries({ ...lineOpts, color: '#2196f3', lineWidth: 1.5 });
 
-  // Crosshair → OHLC + EMA tooltip
   chart.subscribeCrosshairMove(p => {
-    if (!p.time || !p.seriesData) { clearTooltip(); return; }
+    if (!p.time || !p.seriesData) { clearTip(); return; }
     const b = p.seriesData.get(candleSeries);
-    if (!b) { clearTooltip(); return; }
-    el('hint').style.display = 'none';
+    if (!b) { clearTip(); return; }
+    g('hint').style.display = 'none';
     const up = b.close >= b.open;
     setOI('o', b.open?.toFixed(3),  '#8492a6');
     setOI('h', b.high?.toFixed(3),  '#26c281');
@@ -312,12 +341,11 @@ function initChart() {
     const e50  = p.seriesData.get(ema50S);
     const e200 = p.seriesData.get(ema200S);
     const e500 = p.seriesData.get(ema500S);
-    el('ev50').textContent  = e50  ? e50.value.toFixed(3)  : '—';
-    el('ev200').textContent = e200 ? e200.value.toFixed(3) : '—';
-    el('ev500').textContent = e500 ? e500.value.toFixed(3) : '—';
+    g('ev50').textContent  = e50  ? e50.value.toFixed(3)  : '—';
+    g('ev200').textContent = e200 ? e200.value.toFixed(3) : '—';
+    g('ev500').textContent = e500 ? e500.value.toFixed(3) : '—';
   });
 
-  // Responsive resize
   new ResizeObserver(([e]) => {
     const { width, height } = e.contentRect;
     if (width > 0 && height > 0) chart.applyOptions({ width, height });
@@ -325,11 +353,11 @@ function initChart() {
 }
 
 // ── Fetch helpers ─────────────────────────────────────────────────────────────
-async function fetchWithFallback(yfUrl) {
+async function fetchWithFallback(url) {
   const errs = [];
   for (const mkP of PROXIES) {
     try {
-      const res = await fetch(mkP(yfUrl), {
+      const res = await fetch(mkP(url), {
         headers: { Accept: 'application/json' },
         signal: AbortSignal.timeout(12000),
       });
@@ -342,65 +370,65 @@ async function fetchWithFallback(yfUrl) {
   throw new Error('All proxies failed: ' + errs.join(' | '));
 }
 
-function buildYFUrl(host, cfg) {
+function yfUrl(host, cfg) {
   return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}` +
     `?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
 }
 
 async function fetchYF(cfg) {
-  let lastErr;
+  let last;
   for (const host of YF_HOSTS) {
-    try { return await fetchWithFallback(buildYFUrl(host, cfg)); }
-    catch (e) { lastErr = e; }
+    try { return await fetchWithFallback(yfUrl(host, cfg)); }
+    catch (e) { last = e; }
   }
-  throw lastErr;
+  throw last;
 }
 
-function parseCandles(json) {
+function parseYF(json) {
   const r = json?.chart?.result?.[0];
-  if (!r) {
-    const msg = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'No data returned';
-    throw new Error(`Yahoo Finance: ${msg}`);
-  }
+  if (!r) throw new Error('Yahoo Finance: ' + (json?.chart?.error?.description || 'no data'));
   const ts = r.timestamp || [], q = r.indicators?.quote?.[0] || {}, m = r.meta || {};
-  if (!ts.length) throw new Error('Yahoo Finance returned an empty data array');
+  if (!ts.length) throw new Error('Yahoo Finance returned empty data');
 
-  const candles = ts.map((t, i) => ({
-    time:   Math.floor(t),
-    open:   q.open?.[i],
-    high:   q.high?.[i],
-    low:    q.low?.[i],
-    close:  q.close?.[i],
-    volume: q.volume?.[i] ?? 0,
-  }))
-  .filter(c => c.open != null && c.close != null)
-  .sort((a, b) => a.time - b.time);
+  const candles = ts
+    .map((t, i) => ({
+      time:   Math.floor(t),
+      open:   q.open?.[i],
+      high:   q.high?.[i],
+      low:    q.low?.[i],
+      close:  q.close?.[i],
+      volume: q.volume?.[i] ?? 0,
+    }))
+    .filter(c => c.open != null && c.high != null && c.low != null && c.close != null)
+    .sort((a, b) => a.time - b.time);
 
-  if (!candles.length) throw new Error('No valid OHLC bars after filtering');
-
+  if (!candles.length) throw new Error('No valid OHLC candles after filtering');
   const last = candles[candles.length - 1];
   return {
     candles,
-    price:     m.regularMarketPrice  ?? last.close,
-    yfPrevClose: m.chartPreviousClose ?? null, // Yahoo's own prev close as fallback
-    volume:    m.regularMarketVolume  ?? last.volume,
-    dayHigh:   m.regularMarketDayHigh ?? null,
-    dayLow:    m.regularMarketDayLow  ?? null,
+    price:       m.regularMarketPrice  ?? last.close,
+    yfPrevClose: m.chartPreviousClose  ?? null,
+    volume:      m.regularMarketVolume ?? last.volume,
+    dayHigh:     m.regularMarketDayHigh ?? null,
+    dayLow:      m.regularMarketDayLow  ?? null,
   };
 }
 
 // ── Main load ─────────────────────────────────────────────────────────────────
-async function loadData(isRefresh = false) {
+async function loadData(isRefresh) {
   setRefreshing(true);
   if (!isRefresh) showLoading();
 
   const cfg = FETCH_CFG[curIv];
-
   try {
     const json = await fetchYF(cfg);
-    const { candles, price, yfPrevClose, volume, dayHigh, dayLow } = parseCandles(json);
+    let { candles, price, yfPrevClose, volume, dayHigh, dayLow } = parseYF(json);
 
-    // Shift candle timestamps to Prague timezone for X axis
+    // Resample if needed (4h = resample 4 × 1h candles into one)
+    if (cfg.resample > 1) candles = resample(candles, cfg.resample);
+    lastCandles = candles;
+
+    // Shift timestamps to Prague local time for X axis display
     const shifted = candles.map(c => ({ ...c, time: shiftTs(c.time) }));
 
     candleSeries.setData(shifted);
@@ -409,55 +437,53 @@ async function loadData(isRefresh = false) {
       color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
     })));
 
-    // EMA — calculated on raw (unshifted) closes
+    // EMA — computed on raw closes (before timezone shift)
     const closes  = candles.map(c => c.close);
     const e50arr  = calcEMA(closes, 50);
     const e200arr = calcEMA(closes, 200);
     const e500arr = calcEMA(closes, 500);
 
-    ema50S.setData( shifted.map((c, i) => e50arr[i]  != null ? { time: c.time, value: +e50arr[i].toFixed(4)  } : null).filter(Boolean));
-    ema200S.setData(shifted.map((c, i) => e200arr[i] != null ? { time: c.time, value: +e200arr[i].toFixed(4) } : null).filter(Boolean));
-    ema500S.setData(shifted.map((c, i) => e500arr[i] != null ? { time: c.time, value: +e500arr[i].toFixed(4) } : null).filter(Boolean));
+    const toEmaData = (arr) =>
+      shifted.map((c, i) => arr[i] != null ? { time: c.time, value: +arr[i].toFixed(4) } : null).filter(Boolean);
+    ema50S.setData(toEmaData(e50arr));
+    ema200S.setData(toEmaData(e200arr));
+    ema500S.setData(toEmaData(e500arr));
 
-    // EMA legend — current last values
+    // EMA legend — last values
     const li = candles.length - 1;
-    el('ev50').textContent  = e50arr[li]  != null ? e50arr[li].toFixed(3)  : '—';
-    el('ev200').textContent = e200arr[li] != null ? e200arr[li].toFixed(3) : '—';
-    el('ev500').textContent = e500arr[li] != null ? e500arr[li].toFixed(3) : '—';
+    g('ev50').textContent  = e50arr[li]  != null ? (+e50arr[li]).toFixed(3)  : '—';
+    g('ev200').textContent = e200arr[li] != null ? (+e200arr[li]).toFixed(3) : '—';
+    g('ev500').textContent = e500arr[li] != null ? (+e500arr[li]).toFixed(3) : '—';
 
-    // Daily change: compare current price to last close of PREVIOUS calendar day
-    // (in Prague time). Falls back to Yahoo's chartPreviousClose if not found.
-    const prevDayClose = getPrevDayClose(candles, yfPrevClose);
-    const ch   = prevDayClose != null ? price - prevDayClose : null;
-    const pct  = ch != null && prevDayClose ? ch / prevDayClose * 100 : null;
-    const up   = ch >= 0;
-    const sign = up ? '+' : '';
-    const clr  = up ? '#26c281' : '#e74c3c';
-
+    // Daily change vs previous calendar day close (Prague time)
+    const baseline = getPrevDayClose(candles, yfPrevClose);
+    const ch  = baseline != null ? price - baseline : null;
+    const pct = ch != null && baseline ? ch / baseline * 100 : null;
+    const up  = ch == null || ch >= 0;
+    const clr = up ? '#26c281' : '#e74c3c';
+    const sgn = up ? '+' : '';
     setText('price', price.toFixed(3));
-    el('change').textContent    = ch  != null ? sign + ch.toFixed(3)          : '—';
-    el('change').style.color    = clr;
-    el('changePct').textContent = pct != null ? `(${sign}${pct.toFixed(2)}%)` : '';
-    el('changePct').style.color = clr;
+    g('change').textContent    = ch  != null ? sgn + ch.toFixed(3)          : '—';
+    g('change').style.color    = clr;
+    g('changePct').textContent = pct != null ? `(${sgn}${pct.toFixed(2)}%)` : '';
+    g('changePct').style.color = clr;
+    setText('vol', volume ? Number(volume).toLocaleString('en-US') : '—');
 
-    // High / Low / Volume
-    const allHighs = candles.filter(c => {
-      const d = new Date(c.time * 1000).toLocaleDateString('en-CA', { timeZone: TZ });
-      return d === todayPrague();
-    });
-    const todayHigh = allHighs.length ? allHighs.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
-    const todayLow  = allHighs.length ? allHighs.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
+    // Today's high/low (Prague date)
+    const today = todayPrague();
+    const todayBars = candles.filter(c =>
+      new Date(c.time * 1000).toLocaleDateString('en-CA', { timeZone: TZ }) === today
+    );
+    const computedHigh = todayBars.length ? todayBars.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
+    const computedLow  = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
+    setText('dhigh', (dayHigh ?? computedHigh ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
+    setText('dlow',  (dayLow  ?? computedLow  ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
 
-    setText('dhigh', (dayHigh ?? todayHigh ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
-    setText('dlow',  (dayLow  ?? todayLow  ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
-    setText('vol',   volume ? Number(volume).toLocaleString('en-US') : '—');
-
-    // Fit both axes on initial load or interval change — NOT on auto-refresh
-    if (!isRefresh) fitAll();
+    // Autofit only on initial load or interval change, NOT on auto-refresh
+    if (!isRefresh) fitAll(candles);
 
     hideOverlay();
     resetTimer();
-
   } catch (e) {
     console.error(e);
     if (!isRefresh) showErr(e.message || 'Unknown error');
@@ -466,56 +492,57 @@ async function loadData(isRefresh = false) {
   }
 }
 
-// ── Auto-refresh timer ────────────────────────────────────────────────────────
+// ── Timer ─────────────────────────────────────────────────────────────────────
 function resetTimer() {
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => loadData(true), REFRESH_INTERVAL_MS);
-  el('status').textContent = `Auto-refresh ${REFRESH_INTERVAL_MS / 1000}s`;
+  refreshTimer = setInterval(() => loadData(true), REFRESH_MS);
+  setText('status', `Auto-refresh ${REFRESH_MS / 1000}s`);
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
-function el(id) { return document.getElementById(id); }
-function setText(id, v) { el(id).textContent = v; }
+function g(id)        { return document.getElementById(id); }
+function setText(id,v){ g(id).textContent = v; }
 
-function clearTooltip() {
-  el('hint').style.display = '';
-  ['o', 'h', 'l', 'c'].forEach(k => el('oi-' + k).style.display = 'none');
-  ['50', '200', '500'].forEach(p => el('ev' + p).textContent = '—');
+function clearTip() {
+  g('hint').style.display = '';
+  ['o','h','l','c'].forEach(k => g('oi-'+k).style.display = 'none');
+  ['50','200','500'].forEach(p => g('ev'+p).textContent = '—');
 }
 function setOI(k, v, c) {
-  el('oi-' + k).style.display = 'flex';
-  el('tv-' + k).textContent = v;
-  el('tv-' + k).style.color = c;
+  g('oi-'+k).style.display = 'flex';
+  g('tv-'+k).textContent = v;
+  g('tv-'+k).style.color = c;
 }
 function showLoading() {
-  const o = el('overlay'); o.style.display = 'flex';
+  const o = g('overlay'); o.style.display = 'flex';
   o.innerHTML = '<div id="spin"></div><div id="load-msg">Loading market data…</div>';
 }
 function showErr(msg) {
-  const o = el('overlay'); o.style.display = 'flex';
-  o.innerHTML = `<div class="ebox">
-    <p class="etit">⚠ Failed to load data</p>
-    <p class="emsg">${msg.replace(/\n/g, '<br>')}</p>
-    <button class="rbtn2" onclick="loadData()">Retry</button>
-  </div>`;
+  const o = g('overlay'); o.style.display = 'flex';
+  o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;
 }
-function hideOverlay() { el('overlay').style.display = 'none'; }
+function hideOverlay() { g('overlay').style.display = 'none'; }
 function setRefreshing(on) {
-  el('dot').style.background = on ? '#e7a22b' : '#26c281';
+  g('dot').style.background = on ? '#e7a22b' : '#26c281';
   if (on) setText('status', 'Loading…');
 }
 
-// ── Button handlers ───────────────────────────────────────────────────────────
-document.querySelectorAll('.iv').forEach(btn => btn.addEventListener('click', () => {
-  document.querySelectorAll('.iv').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  curIv = btn.dataset.iv;
-  clearTooltip();
-  loadData(false); // false = fit axes after load
-}));
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.iv').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.iv').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    curIv = btn.dataset.iv;
+    clearTip();
+    loadData(false);
+  });
+});
 
-el('fit-btn').addEventListener('click', () => { if (chart) fitAll(); });
-el('rbtn').addEventListener('click',   () => loadData(false));
+g('fit-btn').addEventListener('click', () => {
+  if (chart) fitAll(lastCandles);
+});
+
+g('rbtn').addEventListener('click', () => loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 waitForLib(() => { initChart(); loadData(false); });
