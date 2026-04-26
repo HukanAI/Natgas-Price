@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -10,32 +10,31 @@
 html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-ui,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column}
 
+/* ── Header ── */
 #header{padding:11px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .badge{font-size:11px;color:#5a6478;background:#151b26;padding:2px 8px;border-radius:4px;border:1px solid #1e2530}
 #ticker-sym{font-size:21px;font-weight:700;font-family:monospace;color:#e8eaf0}
 #price{font-size:30px;font-weight:700;font-family:monospace;letter-spacing:-0.5px;color:#e8eaf0}
-#change,#changePct{font-family:monospace;font-weight:600}
-#change{font-size:15px}#changePct{font-size:12px}
+#change{font-family:monospace;font-weight:600;font-size:15px}
+#changePct{font-family:monospace;font-weight:600;font-size:12px}
 .stat{text-align:right}
 .stat-l{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
 .stat-v{font-size:12px;color:#8492a6;font-family:monospace;margin-top:1px}
 
-#controls{padding:7px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.group-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px;margin-right:2px}
-.btn-group{display:flex;gap:3px}
-/* Zoom buttons — tyto NEZMĚNÍ fetch, jen přiblíží pohled */
-.zb{padding:3px 11px;font-size:11px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .12s}
-.zb.on{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
-/* Interval buttons — tyto MĚNÍ fetch */
-.iv{padding:3px 11px;font-size:11px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .12s}
+/* ── Controls ── */
+#controls{padding:7px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grp-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
+.btn-grp{display:flex;gap:3px}
+.iv{padding:3px 12px;font-size:11px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .12s}
+.iv:hover{color:#aab;border-color:#334}
 .iv.on{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
-.iv.warn{border-color:#7a5500;color:#c8900a}
-.iv.warn.on{background:#7a4400;border-color:#c8700a;color:#ffc04a}
-.sep{width:1px;background:#1e2530;height:18px;margin:0 4px}
-#rbtn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 9px;cursor:pointer;font-size:14px}
-#dot{width:7px;height:7px;border-radius:50%;background:#26c281;flex-shrink:0}
+.sep{width:1px;background:#1e2530;height:18px;flex-shrink:0}
+.icon-btn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 9px;cursor:pointer;font-size:13px;transition:all .12s}
+.icon-btn:hover{color:#aab;border-color:#334}
+#dot{width:7px;height:7px;border-radius:50%;background:#26c281;flex-shrink:0;transition:background .3s}
 #status{font-size:11px;color:#3d4a5c;font-family:monospace}
 
+/* ── OHLC + EMA bar ── */
 #tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:14px;align-items:center;min-height:28px;flex-wrap:wrap}
 .oi{display:none;gap:5px;align-items:baseline}
 .ol{font-size:11px;color:#3d4a5c;font-family:monospace}
@@ -46,23 +45,28 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .ema-dot{width:22px;height:2px;border-radius:1px;display:inline-block}
 .ev{font-weight:600}
 
+/* ── Chart wrapper ── */
 #cwrap{flex:1;position:relative;min-height:0}
 #cv{width:100%;height:100%}
+
+/* ── Overlay (loading / error) ── */
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117;z-index:10}
 #spin{width:36px;height:36px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#load-msg{color:#3d4a5c;font-size:13px;font-family:monospace;text-align:center;line-height:1.8}
+#load-msg{color:#3d4a5c;font-size:13px;font-family:monospace;text-align:center}
 .ebox{background:#110d10;border:1px solid #5c1a1a;border-radius:10px;padding:22px 28px;text-align:center;max-width:440px}
 .etit{color:#e74c3c;font-size:14px;margin-bottom:8px}
 .emsg{color:#5a6478;font-size:11px;font-family:monospace;margin-bottom:14px;word-break:break-word;line-height:1.6}
 .rbtn2{padding:5px 18px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:12px}
 
+/* ── Footer ── */
 #footer{padding:4px 18px;border-top:1px solid #1e2530;display:flex;justify-content:space-between;font-size:10px;color:#2a3548;font-family:monospace;flex-wrap:wrap;gap:4px}
 </style>
 </head>
 <body>
 <div id="app">
 
+  <!-- HEADER -->
   <div id="header">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span id="ticker-sym">NG=F</span>
@@ -77,39 +81,31 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <div class="stat"><div class="stat-l">Volume</div><div class="stat-v" id="vol">—</div></div>
       <div class="stat"><div class="stat-l">High</div><div class="stat-v" id="dhigh" style="color:#26c281">—</div></div>
       <div class="stat"><div class="stat-l">Low</div><div class="stat-v" id="dlow" style="color:#e74c3c">—</div></div>
-      <div class="stat"><div class="stat-l">Praha (CET/CEST)</div><div class="stat-v" id="prg-time">—</div></div>
+      <div class="stat"><div class="stat-l">Prague (CET/CEST)</div><div class="stat-v" id="prg-time">—</div></div>
     </div>
   </div>
 
+  <!-- CONTROLS -->
   <div id="controls">
-    <!-- ZOOM VIEW — mění jen zobrazené okno, ne fetch -->
-    <span class="group-label">Zobrazit</span>
-    <div class="btn-group" id="zoom-grp">
-      <button class="zb" data-days="7">7D</button>
-      <button class="zb" data-days="30">1M</button>
-      <button class="zb" data-days="90">3M</button>
-      <button class="zb on" data-days="365">1Y</button>
-      <button class="zb" data-days="730">2Y</button>
-      <button class="zb" data-days="1825">Max</button>    </div>
-    <div class="sep"></div>
-    <!-- INTERVAL — mění fetch -->
-    <span class="group-label">Interval</span>
-    <div class="btn-group">
-      <button class="iv warn" data-iv="1m">1m</button>
-      <button class="iv warn" data-iv="5m">5m</button>
-      <button class="iv warn" data-iv="15m">15m</button>
+    <span class="grp-label">Interval</span>
+    <div class="btn-grp">
+      <button class="iv" data-iv="1m">1m</button>
+      <button class="iv" data-iv="5m">5m</button>
+      <button class="iv" data-iv="15m">15m</button>
       <button class="iv on" data-iv="1h">1h</button>
       <button class="iv" data-iv="1d">1D</button>
       <button class="iv" data-iv="1wk">1W</button>
     </div>
     <div class="sep"></div>
-    <button id="rbtn" title="Obnovit data">↻</button>
+    <button class="icon-btn" id="fit-btn" title="Fit all data to screen">⤢ Autofit</button>
+    <button class="icon-btn" id="rbtn" title="Refresh now">↻ Refresh</button>
     <div id="dot"></div>
     <span id="status">—</span>
   </div>
 
+  <!-- OHLC + EMA BAR -->
   <div id="tbar">
-    <span id="hint">Přejeďte myší přes graf pro OHLC hodnoty</span>
+    <span id="hint">Hover over chart for OHLC values</span>
     <div class="oi" id="oi-o"><span class="ol">O</span><span class="ov" id="tv-o"></span></div>
     <div class="oi" id="oi-h"><span class="ol">H</span><span class="ov" id="tv-h" style="color:#26c281"></span></div>
     <div class="oi" id="oi-l"><span class="ol">L</span><span class="ov" id="tv-l" style="color:#e74c3c"></span></div>
@@ -121,19 +117,22 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
+  <!-- CHART -->
   <div id="cwrap">
     <div id="cv"></div>
     <div id="overlay">
       <div id="spin"></div>
-      <div id="load-msg">Načítám knihovnu…</div>
+      <div id="load-msg">Loading chart library…</div>
     </div>
   </div>
 
+  <!-- FOOTER -->
   <div id="footer">
-    <span>NG=F · NYMEX · USD/MMBtu · Data: 5 let · EMA: plná historie · Čas: Europe/Prague</span>
-    <span>Scroll = zoom · Táhni doleva = starší data · Dvojklik osy X = fit all</span>
+    <span>NG=F · NYMEX · USD/MMBtu · Source: Yahoo Finance · Time: Europe/Prague (CET/CEST auto)</span>
+    <span>Scroll = zoom · Drag = pan · ⤢ Autofit = fit all data</span>
   </div>
-</div>
+
+</div><!-- #app -->
 
 <script>
 'use strict';
@@ -142,327 +141,325 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 const TICKER = 'NG=F';
 const TZ     = 'Europe/Prague';
 
-// Yahoo Finance přesné limity (ověřeno z chybových hlášek API):
-//
-//  interval │ max historie │ metoda        │ poznámka
-//  ─────────┼──────────────┼───────────────┼─────────────────────────────────
-//  1m       │ 7 dní        │ range=5d      │ jediný validní range < 7d
-//  5m       │ 60 dní       │ range=1mo     │ period1/period2 → HTTP 422 pro 5m!
-//  15m      │ 60 dní       │ range=1mo     │ period1/period2 → HTTP 422 pro 15m!
-//  1h       │ 730 dní      │ period1/p2    │ range string nefunguje pro 2y+, musí být ts
-//  1d       │ neomezeno    │ range=5y      │
-//  1wk      │ neomezeno    │ range=10y     │
-//
-// POZOR: pro 5m a 15m Yahoo Finance odmítá period1/period2 s HTTP 422.
-// Jedině validní range stringy (1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max) fungují.
-// Pro 1h naopak range=2y nefunguje → nutný period1/period2.
-const FETCH_CONFIG_BY_IV = {
-  '1m':  { usePeriod: false, range: '5d',   interval: '1m'  },
-  '5m':  { usePeriod: false, range: '1mo',  interval: '5m'  },
-  '15m': { usePeriod: false, range: '1mo',  interval: '15m' },
-  '1h':  { usePeriod: false, range: '1y',   interval: '1h'  },
-  '1d':  { usePeriod: false, range: '5y',   interval: '1d'  },
-  '1wk': { usePeriod: false, range: '10y',  interval: '1wk' },
+// Yahoo Finance fetch config per interval (verified limits):
+//   1m  → range=5d   (7d hard limit)
+//   5m  → range=1mo  (60d hard limit, range string required — period1/2 returns 422)
+//   15m → range=1mo  (60d hard limit, range string required)
+//   1h  → range=1y   (730d hard limit)
+//   1d  → range=5y
+//   1wk → range=10y
+const FETCH_CFG = {
+  '1m':  { usePeriod: false, range: '5d',  interval: '1m'  },
+  '5m':  { usePeriod: false, range: '1mo', interval: '5m'  },
+  '15m': { usePeriod: false, range: '1mo', interval: '15m' },
+  '1h':  { usePeriod: false, range: '1y',  interval: '1h'  },
+  '1d':  { usePeriod: false, range: '5y',  interval: '1d'  },
+  '1wk': { usePeriod: false, range: '10y', interval: '1wk' },
 };
 
-const REFRESH_BY_IV = {'1m':10000,'5m':15000,'15m':20000,'1h':120000,'1d':300000,'1wk':600000};
+const REFRESH_MS = {
+  '1m': 10000, '5m': 10000, '15m': 10000,
+  '1h': 10000, '1d': 10000, '1wk': 10000,
+};
 
-const PROXIES  = [
-  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u=>`https://proxy.cors.sh/${u}`,
+const PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://proxy.cors.sh/${u}`,
 ];
-const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
+const YF_HOSTS = ['query2.finance.yahoo.com', 'query1.finance.yahoo.com'];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let chart, candleSeries, volSeries, ema50S, ema200S, ema500S;
+let curIv = '1h';
+let refreshTimer;
 
 // ── Prague time ───────────────────────────────────────────────────────────────
-function pragueNow(){
-  return new Date().toLocaleTimeString('cs-CZ',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function pragueNow() {
+  return new Date().toLocaleTimeString('cs-CZ', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
-function pragueOffsetSec(ts){
-  const d=new Date(ts*1000);
-  const utc=d.toLocaleString('en-GB',{timeZone:'UTC'});
-  const prg=d.toLocaleString('en-GB',{timeZone:TZ});
-  const mins=s=>{const[,t]=s.split(', ');const[h,m]=t.split(':');return +h*60+ +m;};
-  let diff=mins(prg)-mins(utc);
-  if(diff>720)diff-=1440;if(diff<-720)diff+=1440;
-  return diff*60;
+function pragueOffsetSec(ts) {
+  const d = new Date(ts * 1000);
+  const toMins = tz => {
+    const s = d.toLocaleString('en-GB', { timeZone: tz });
+    const [, t] = s.split(', ');
+    const [h, m] = t.split(':');
+    return +h * 60 + +m;
+  };
+  let diff = toMins(TZ) - toMins('UTC');
+  if (diff > 720) diff -= 1440;
+  if (diff < -720) diff += 1440;
+  return diff * 60;
 }
-function shiftTs(ts){return ts+pragueOffsetSec(ts);}
+function shiftTs(ts) { return ts + pragueOffsetSec(ts); }
 
-setInterval(()=>{document.getElementById('prg-time').textContent=pragueNow();},1000);
-document.getElementById('prg-time').textContent=pragueNow();
+setInterval(() => { el('prg-time').textContent = pragueNow(); }, 1000);
+el('prg-time').textContent = pragueNow();
 
 // ── EMA ───────────────────────────────────────────────────────────────────────
-function calcEMA(closes,period){
-  const k=2/(period+1);
-  const out=new Array(closes.length).fill(null);
-  let sum=0,started=false,prev=0;
-  for(let i=0;i<closes.length;i++){
-    if(!started){sum+=closes[i];if(i===period-1){prev=sum/period;out[i]=prev;started=true;}}
-    else{prev=closes[i]*k+prev*(1-k);out[i]=prev;}
+function calcEMA(closes, period) {
+  const k = 2 / (period + 1);
+  const out = new Array(closes.length).fill(null);
+  let sum = 0, started = false, prev = 0;
+  for (let i = 0; i < closes.length; i++) {
+    if (!started) {
+      sum += closes[i];
+      if (i === period - 1) { prev = sum / period; out[i] = prev; started = true; }
+    } else {
+      prev = closes[i] * k + prev * (1 - k);
+      out[i] = prev;
+    }
   }
   return out;
 }
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let chart,candleSeries,volSeries,ema50S,ema200S,ema500S;
-let curIv='1h';
-let curZoomDays=365;   // jen pro zoom view, nemění fetch
-let refreshTimer;
-
-// ── Wait for lib ──────────────────────────────────────────────────────────────
-function waitForLib(cb){
-  if(typeof LightweightCharts!=='undefined'){cb();return;}
-  let n=0;
-  const id=setInterval(()=>{
-    if(typeof LightweightCharts!=='undefined'){clearInterval(id);cb();return;}
-    if(++n>80){clearInterval(id);showErr('Nepodařilo se načíst charting knihovnu.');}
-  },100);
+// ── Wait for LightweightCharts ────────────────────────────────────────────────
+function waitForLib(cb) {
+  if (typeof LightweightCharts !== 'undefined') { cb(); return; }
+  let n = 0;
+  const id = setInterval(() => {
+    if (typeof LightweightCharts !== 'undefined') { clearInterval(id); cb(); return; }
+    if (++n > 100) { clearInterval(id); showErr('Failed to load chart library. Check your connection.'); }
+  }, 100);
 }
 
 // ── Init chart ────────────────────────────────────────────────────────────────
-function initChart(){
-  const wrap=document.getElementById('cwrap');
-  chart=LightweightCharts.createChart(document.getElementById('cv'),{
-    layout:{background:{type:'solid',color:'#0d1117'},textColor:'#5a6478',fontFamily:'monospace',fontSize:11},
-    grid:{vertLines:{color:'#131a24'},horzLines:{color:'#131a24'}},
-    crosshair:{mode:LightweightCharts.CrosshairMode.Normal,
-      vertLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'},
-      horzLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}},
-    rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.06,bottom:0.26}},
-    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
-    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
-    handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:true},
-    width:wrap.clientWidth,height:wrap.clientHeight,
+function initChart() {
+  const wrap = el('cwrap');
+  chart = LightweightCharts.createChart(el('cv'), {
+    layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
+    grid: { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
+      horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
+    },
+    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.26 } },
+    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2 },
+    handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+    handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+    width: wrap.clientWidth,
+    height: wrap.clientHeight,
   });
 
-  candleSeries=chart.addCandlestickSeries({
-    upColor:'#26c281',downColor:'#e74c3c',
-    borderUpColor:'#26c281',borderDownColor:'#e74c3c',
-    wickUpColor:'#26c281',wickDownColor:'#e74c3c',
-    priceFormat:{type:'price',precision:3,minMove:0.001},
-  });
-  volSeries=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
-  chart.priceScale('vol').applyOptions({scaleMargins:{top:0.80,bottom:0}});
-
-  ema50S =chart.addLineSeries({color:'#f0c040',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
-  ema200S=chart.addLineSeries({color:'#e74c3c',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
-  ema500S=chart.addLineSeries({color:'#2196f3',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
-
-  chart.subscribeCrosshairMove(p=>{
-    if(!p.time||!p.seriesData){clearTooltip();return;}
-    const b=p.seriesData.get(candleSeries);
-    if(!b){clearTooltip();return;}
-    el('hint').style.display='none';
-    const up=b.close>=b.open;
-    setOI('o',b.open?.toFixed(3),'#8492a6');
-    setOI('h',b.high?.toFixed(3),'#26c281');
-    setOI('l',b.low?.toFixed(3),'#e74c3c');
-    setOI('c',b.close?.toFixed(3),up?'#26c281':'#e74c3c');
-    const e50=p.seriesData.get(ema50S),e200=p.seriesData.get(ema200S),e500=p.seriesData.get(ema500S);
-    el('ev50').textContent =e50  ?e50.value.toFixed(3)  :'—';
-    el('ev200').textContent=e200 ?e200.value.toFixed(3) :'—';
-    el('ev500').textContent=e500 ?e500.value.toFixed(3) :'—';
+  candleSeries = chart.addCandlestickSeries({
+    upColor: '#26c281', downColor: '#e74c3c',
+    borderUpColor: '#26c281', borderDownColor: '#e74c3c',
+    wickUpColor: '#26c281', wickDownColor: '#e74c3c',
+    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
   });
 
-  new ResizeObserver(([e])=>{
-    const{width,height}=e.contentRect;
-    if(width>0&&height>0)chart.applyOptions({width,height});
+  volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
+  chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.80, bottom: 0 } });
+
+  ema50S  = chart.addLineSeries({ color: '#f0c040', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } });
+  ema200S = chart.addLineSeries({ color: '#e74c3c', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } });
+  ema500S = chart.addLineSeries({ color: '#2196f3', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } });
+
+  // Crosshair OHLC + EMA tooltip
+  chart.subscribeCrosshairMove(p => {
+    if (!p.time || !p.seriesData) { clearTooltip(); return; }
+    const b = p.seriesData.get(candleSeries);
+    if (!b) { clearTooltip(); return; }
+    el('hint').style.display = 'none';
+    const up = b.close >= b.open;
+    setOI('o', b.open?.toFixed(3),  '#8492a6');
+    setOI('h', b.high?.toFixed(3),  '#26c281');
+    setOI('l', b.low?.toFixed(3),   '#e74c3c');
+    setOI('c', b.close?.toFixed(3), up ? '#26c281' : '#e74c3c');
+    const e50  = p.seriesData.get(ema50S);
+    const e200 = p.seriesData.get(ema200S);
+    const e500 = p.seriesData.get(ema500S);
+    el('ev50').textContent  = e50  ? e50.value.toFixed(3)  : '—';
+    el('ev200').textContent = e200 ? e200.value.toFixed(3) : '—';
+    el('ev500').textContent = e500 ? e500.value.toFixed(3) : '—';
+  });
+
+  // Resize observer
+  new ResizeObserver(([e]) => {
+    const { width, height } = e.contentRect;
+    if (width > 0 && height > 0) chart.applyOptions({ width, height });
   }).observe(wrap);
 }
 
-// ── Zoom view (bez fetchování) ────────────────────────────────────────────────
-// Posune timeScale tak, aby bylo vidět posledních N dní.
-// Uživatel pak může táhnout doleva do celé 5leté historie.
-function applyZoom(days){
-  const now=Math.floor(Date.now()/1000);
-  const from=now - days*86400;
-  // Posuneme oba timestamps do pražského času (stejně jako svíčky)
-  chart.timeScale().setVisibleRange({
-    from: shiftTs(from),
-    to:   shiftTs(now + 2*86400),  // +2 dny buffer vpravo
-  });
-}
-
 // ── Fetch helpers ─────────────────────────────────────────────────────────────
-async function fetchWithFallback(yfUrl){
-  const errs=[];
-  for(const mkP of PROXIES){
-    try{
-      const res=await fetch(mkP(yfUrl),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});
-      if(!res.ok){errs.push(`HTTP ${res.status}`);continue;}
-      const txt=await res.text();
-      if(!txt?.trim()){errs.push('prázdná odpověď');continue;}
+async function fetchWithFallback(yfUrl) {
+  const errs = [];
+  for (const mkP of PROXIES) {
+    try {
+      const res = await fetch(mkP(yfUrl), {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
+      const txt = await res.text();
+      if (!txt?.trim()) { errs.push('empty response'); continue; }
       return JSON.parse(txt);
-    }catch(e){errs.push(e.message);}
+    } catch (e) { errs.push(e.message); }
   }
-  throw new Error('Proxy selhaly: '+errs.join(' | '));
+  throw new Error('All proxies failed: ' + errs.join(' | '));
 }
 
-function buildYFUrl(host, cfg){
+function buildYFUrl(host, cfg) {
   const base = `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
-  if(cfg.usePeriod){
-    const p2 = Math.floor(Date.now()/1000);
+  if (cfg.usePeriod) {
+    const p2 = Math.floor(Date.now() / 1000);
     const p1 = p2 - cfg.days * 86400;
     return `${base}&period1=${p1}&period2=${p2}`;
   }
   return `${base}&range=${cfg.range}`;
 }
 
-function parseCandles(json){
-  const r=json?.chart?.result?.[0];
-  if(!r){
-    const yfErr = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'Žádná data';
-    throw new Error(`Yahoo Finance: ${yfErr}`);
-  }
-  const ts=r.timestamp||[],q=r.indicators?.quote?.[0]||{},m=r.meta||{};
-  if(!ts.length) throw new Error('Prázdná data od Yahoo Finance');
-  const candles=ts.map((t,i)=>({
-    time:Math.floor(t),open:q.open?.[i],high:q.high?.[i],low:q.low?.[i],close:q.close?.[i],volume:q.volume?.[i]??0,
-  })).filter(c=>c.open!=null&&c.close!=null).sort((a,b)=>a.time-b.time);
-  if(!candles.length) throw new Error('Žádné platné svíčky po filtrování');
-  const last=candles[candles.length-1];
-  return{candles,meta:{
-    price:    m.regularMarketPrice  ??last.close,
-    prevClose:m.chartPreviousClose  ??candles[candles.length-2]?.close,
-    volume:   m.regularMarketVolume ??last.volume,
-    dayHigh:  m.regularMarketDayHigh,
-    dayLow:   m.regularMarketDayLow,
-  }};
-}
-
-async function fetchYF(cfg){
+async function fetchYF(cfg) {
   let lastErr;
-  for(const host of YF_HOSTS){
-    try{return await fetchWithFallback(buildYFUrl(host,cfg));}
-    catch(e){lastErr=e;}
+  for (const host of YF_HOSTS) {
+    try { return await fetchWithFallback(buildYFUrl(host, cfg)); }
+    catch (e) { lastErr = e; }
   }
   throw lastErr;
 }
 
+function parseCandles(json) {
+  const r = json?.chart?.result?.[0];
+  if (!r) {
+    const yfErr = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'No data';
+    throw new Error(`Yahoo Finance: ${yfErr}`);
+  }
+  const ts = r.timestamp || [], q = r.indicators?.quote?.[0] || {}, m = r.meta || {};
+  if (!ts.length) throw new Error('Yahoo Finance returned empty data array');
+  const candles = ts.map((t, i) => ({
+    time: Math.floor(t),
+    open: q.open?.[i], high: q.high?.[i], low: q.low?.[i], close: q.close?.[i],
+    volume: q.volume?.[i] ?? 0,
+  })).filter(c => c.open != null && c.close != null).sort((a, b) => a.time - b.time);
+  if (!candles.length) throw new Error('No valid OHLC bars after filtering');
+  const last = candles[candles.length - 1];
+  return {
+    candles,
+    price:     m.regularMarketPrice     ?? last.close,
+    prevClose: m.chartPreviousClose     ?? candles[candles.length - 2]?.close,
+    volume:    m.regularMarketVolume    ?? last.volume,
+    dayHigh:   m.regularMarketDayHigh,
+    dayLow:    m.regularMarketDayLow,
+  };
+}
+
 // ── Main load ─────────────────────────────────────────────────────────────────
-async function loadData(isRefresh=false){
+async function loadData(isRefresh = false) {
   setRefreshing(true);
-  if(!isRefresh) showLoading('Načítám data…');
+  if (!isRefresh) showLoading();
 
-  const cfg = FETCH_CONFIG_BY_IV[curIv];
-  const descr = cfg.usePeriod
-    ? `~730 dní / ${cfg.interval}`
-    : `${cfg.range} / ${cfg.interval}`;
+  const cfg = FETCH_CFG[curIv];
 
-  try{
-    setLoadMsg(`Načítám ${descr}…`);
-    const json=await fetchYF(cfg);
-    const{candles,meta}=parseCandles(json);
+  try {
+    const json = await fetchYF(cfg);
+    const { candles, price, prevClose, volume, dayHigh, dayLow } = parseCandles(json);
 
-    // Svíčky + volume — všechna data (5 let)
-    const shifted=candles.map(c=>({...c,time:shiftTs(c.time)}));
+    // Shift timestamps to Prague timezone for X axis display
+    const shifted = candles.map(c => ({ ...c, time: shiftTs(c.time) }));
+
     candleSeries.setData(shifted);
-    volSeries.setData(shifted.map(c=>({
-      time:c.time,value:c.volume,color:c.close>=c.open?'#1a3d2b':'#3d1a1a'
+    volSeries.setData(shifted.map(c => ({
+      time: c.time, value: c.volume,
+      color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
     })));
 
-    // EMA z celé dostupné historie
-    const closes=candles.map(c=>c.close);
-    const e50arr =calcEMA(closes,50);
-    const e200arr=calcEMA(closes,200);
-    const e500arr=calcEMA(closes,500);
+    // EMA (calculated on raw closes for accuracy)
+    const closes = candles.map(c => c.close);
+    const e50arr  = calcEMA(closes, 50);
+    const e200arr = calcEMA(closes, 200);
+    const e500arr = calcEMA(closes, 500);
+    ema50S.setData( shifted.map((c, i) => e50arr[i]  != null ? { time: c.time, value: +e50arr[i].toFixed(4)  } : null).filter(Boolean));
+    ema200S.setData(shifted.map((c, i) => e200arr[i] != null ? { time: c.time, value: +e200arr[i].toFixed(4) } : null).filter(Boolean));
+    ema500S.setData(shifted.map((c, i) => e500arr[i] != null ? { time: c.time, value: +e500arr[i].toFixed(4) } : null).filter(Boolean));
 
-    ema50S.setData( shifted.map((c,i)=>e50arr[i] !=null?{time:c.time,value:+e50arr[i].toFixed(4)} :null).filter(Boolean));
-    ema200S.setData(shifted.map((c,i)=>e200arr[i]!=null?{time:c.time,value:+e200arr[i].toFixed(4)}:null).filter(Boolean));
-    ema500S.setData(shifted.map((c,i)=>e500arr[i]!=null?{time:c.time,value:+e500arr[i].toFixed(4)}:null).filter(Boolean));
+    // EMA legend — last values
+    const li = candles.length - 1;
+    el('ev50').textContent  = e50arr[li]  != null ? e50arr[li].toFixed(3)  : '—';
+    el('ev200').textContent = e200arr[li] != null ? e200arr[li].toFixed(3) : '—';
+    el('ev500').textContent = e500arr[li] != null ? e500arr[li].toFixed(3) : '—';
 
-    // Poslední EMA hodnoty do legendy
-    const lastIdx=candles.length-1;
-    el('ev50').textContent =e50arr[lastIdx] !=null?e50arr[lastIdx].toFixed(3) :'—';
-    el('ev200').textContent=e200arr[lastIdx]!=null?e200arr[lastIdx].toFixed(3):'—';
-    el('ev500').textContent=e500arr[lastIdx]!=null?e500arr[lastIdx].toFixed(3):'—';
+    // Fit all data on initial load
+    chart.timeScale().fitContent();
 
-    // Zoom na zvolené okno (neomezuje scroll doleva!)
-    applyZoom(curZoomDays);
-
-    // Header
-    const{price,prevClose,volume,dayHigh,dayLow}=meta;
-    const ch=prevClose!=null?price-prevClose:null;
-    const pct=ch!=null&&prevClose?ch/prevClose*100:null;
-    const up=ch>=0,sign=up?'+':'',clr=up?'#26c281':'#e74c3c';
-    setText('price',price.toFixed(3));
-    el('change').textContent=ch!=null?sign+ch.toFixed(3):'—'; el('change').style.color=clr;
-    el('changePct').textContent=pct!=null?`(${sign}${pct.toFixed(2)}%)`:''; el('changePct').style.color=clr;
-    setText('vol',volume?Number(volume).toLocaleString('cs-CZ'):'—');
-    setText('dhigh',dayHigh?dayHigh.toFixed(3):candles.reduce((m,c)=>Math.max(m,c.high),0).toFixed(3));
-    setText('dlow', dayLow ?dayLow.toFixed(3) :candles.reduce((m,c)=>Math.min(m,c.low),Infinity).toFixed(3));
+    // Header stats
+    const ch  = prevClose != null ? price - prevClose : null;
+    const pct = ch != null && prevClose ? ch / prevClose * 100 : null;
+    const up  = ch >= 0, sign = up ? '+' : '', clr = up ? '#26c281' : '#e74c3c';
+    setText('price', price.toFixed(3));
+    el('change').textContent = ch != null ? sign + ch.toFixed(3) : '—';
+    el('change').style.color = clr;
+    el('changePct').textContent = pct != null ? `(${sign}${pct.toFixed(2)}%)` : '';
+    el('changePct').style.color = clr;
+    setText('vol',   volume ? Number(volume).toLocaleString('en-US') : '—');
+    setText('dhigh', (dayHigh ?? candles.reduce((m, c) => Math.max(m, c.high), 0)).toFixed(3));
+    setText('dlow',  (dayLow  ?? candles.reduce((m, c) => Math.min(m, c.low), Infinity)).toFixed(3));
 
     hideOverlay();
-    setRefreshing(false);
     resetTimer();
 
-  }catch(e){
+  } catch (e) {
+    console.error(e);
+    if (!isRefresh) showErr(e.message || 'Unknown error');
+  } finally {
     setRefreshing(false);
-    if(!isRefresh) showErr(e.message||'Neznámá chyba');
-    else console.error('Refresh selhal:',e);
   }
 }
 
-// ── Reset timer ───────────────────────────────────────────────────────────────
-function resetTimer(){
+// ── Timer ─────────────────────────────────────────────────────────────────────
+function resetTimer() {
   clearInterval(refreshTimer);
-  const ms=REFRESH_BY_IV[curIv]||60000;
-  refreshTimer=setInterval(()=>loadData(true),ms);
-  const s=ms/1000;
-  el('status').textContent=s<60?`Auto-refresh ${s}s`:`Auto-refresh ${s/60}min`;
+  const ms = REFRESH_MS[curIv] || 60000;
+  refreshTimer = setInterval(() => loadData(true), ms);
+  const s = ms / 1000;
+  el('status').textContent = `Auto-refresh ${s}s`;
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
-const el=id=>document.getElementById(id);
-const setText=(id,v)=>{el(id).textContent=v;};
-function setLoadMsg(msg){const m=el('load-msg');if(m)m.textContent=msg;}
+function el(id) { return document.getElementById(id); }
+function setText(id, v) { el(id).textContent = v; }
 
-function clearTooltip(){
-  el('hint').style.display='';
-  ['o','h','l','c'].forEach(k=>el('oi-'+k).style.display='none');
-  ['50','200','500'].forEach(p=>el('ev'+p).textContent='—');
+function clearTooltip() {
+  el('hint').style.display = '';
+  ['o', 'h', 'l', 'c'].forEach(k => el('oi-' + k).style.display = 'none');
+  ['50', '200', '500'].forEach(p => el('ev' + p).textContent = '—');
 }
-function setOI(k,v,c){
-  el('oi-'+k).style.display='flex';
-  el('tv-'+k).textContent=v;el('tv-'+k).style.color=c;
+function setOI(k, v, c) {
+  el('oi-' + k).style.display = 'flex';
+  el('tv-' + k).textContent = v;
+  el('tv-' + k).style.color = c;
 }
-function showLoading(msg){
-  const o=el('overlay');o.style.display='flex';
-  o.innerHTML=`<div id="spin"></div><div id="load-msg">${msg}</div>`;
+function showLoading() {
+  const o = el('overlay'); o.style.display = 'flex';
+  o.innerHTML = '<div id="spin"></div><div id="load-msg">Loading market data…</div>';
 }
-function showErr(msg){
-  const o=el('overlay');o.style.display='flex';
-  o.innerHTML=`<div class="ebox"><p class="etit">⚠ Chyba při načítání</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData()">Zkusit znovu</button></div>`;
+function showErr(msg) {
+  const o = el('overlay'); o.style.display = 'flex';
+  o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g, '<br>')}</p><button class="rbtn2" onclick="loadData()">Retry</button></div>`;
 }
-function hideOverlay(){el('overlay').style.display='none';}
-function setRefreshing(on){
-  el('dot').style.background=on?'#e7a22b':'#26c281';
-  if(on)setText('status','Načítám…');
+function hideOverlay() { el('overlay').style.display = 'none'; }
+function setRefreshing(on) {
+  el('dot').style.background = on ? '#e7a22b' : '#26c281';
+  if (on) setText('status', 'Loading…');
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────────
-// Zoom buttons — jen posunout pohled, NE refetch
-document.querySelectorAll('.zb').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.zb').forEach(b=>b.classList.remove('on'));
+document.querySelectorAll('.iv').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.iv').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  curZoomDays=+btn.dataset.days;
-  applyZoom(curZoomDays);   // okamžitý zoom, bez načítání
-}));
-
-// Interval buttons — změna intervalu = nový fetch
-document.querySelectorAll('.iv').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.iv').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  curIv=btn.dataset.iv;
+  curIv = btn.dataset.iv;
   clearTooltip();
   loadData();
 }));
 
-el('rbtn').addEventListener('click',()=>loadData(false));
+el('fit-btn').addEventListener('click', () => {
+  if (chart) chart.timeScale().fitContent();
+});
+
+el('rbtn').addEventListener('click', () => loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-waitForLib(()=>{initChart();loadData();});
+waitForLib(() => { initChart(); loadData(); });
 </script>
 </body>
 </html>
