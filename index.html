@@ -318,6 +318,9 @@ function initCharts() {
   chartMain.subscribeCrosshairMove(syncCrosshair);
   chartMain.subscribeCrosshairMove(p => updateOhlcBar(p));
 
+  // Initialise zone series after chartMain exists
+  initZoneSeries();
+
   // ── RSI chart ─────────────────────────────────────────────────────────────
   chartRsi = makeChart('pane-rsi', {
     rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 60 },
@@ -516,6 +519,9 @@ async function loadData(isRefresh) {
     g('ev-sig').textContent  = lastSig  != null ? lastSig.toFixed(4)  : '—';
     g('ev-hist').textContent = lastHist != null ? lastHist.toFixed(4) : '—';
     g('ev-hist').style.color = lastHist == null ? '#334155' : lastHist >= 0 ? '#26c281' : '#e74c3c';
+
+    // ── Premium / Discount zones ──────────────────────────────────────────────
+    drawZones(candles, shifted);
 
     // ── Header ────────────────────────────────────────────────────────────────
     const baseline = getPrevDayClose(candles, yfPrevClose);
