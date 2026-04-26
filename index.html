@@ -442,31 +442,30 @@ function applyView(key) {
 // ── Update indicator visibility & style ───────────────────────────────────────
 function applyIndVisibility() {
   if(!serEma50)return;
-  // EMA 50
   serEma50.applyOptions({visible:IND.ema50.on,color:IND.ema50.color});
   g('leg-ema50').style.display=IND.ema50.on?'':'none';
-  // EMA 200
   serEma200.applyOptions({visible:IND.ema200.on,color:IND.ema200.color});
   g('leg-ema200').style.display=IND.ema200.on?'':'none';
-  // EMA 500
   serEma500.applyOptions({visible:IND.ema500.on,color:IND.ema500.color});
   g('leg-ema500').style.display=IND.ema500.on?'':'none';
-  // BB
-  [serBBUpper,serBBMid,serBBLower].forEach(s=>{
-    const c=IND.bb.color;
-    s.applyOptions({visible:IND.bb.on,color:c.replace('#','rgba(').slice(0,-1)+',0.7)'});
-  });
-  serBBMid.applyOptions({visible:IND.bb.on,color:IND.bb.color+'99'});
+  [serBBUpper,serBBLower].forEach(s=>s.applyOptions({visible:IND.bb.on}));
+  serBBMid.applyOptions({visible:IND.bb.on});
   g('leg-bb').style.display=IND.bb.on?'':'none';
   g('sep-bb').style.display=IND.bb.on?'':'none';
-  // RSI pane
-  g('pane-rsi').style.display=IND.rsi.on?'':'none';
+
+  // RSI pane: use flex:0 / flex:22 to hide/show without display:none
+  const rsiPane=g('pane-rsi');
+  rsiPane.style.flex=IND.rsi.on?'22':'0';
+  rsiPane.style.overflow='hidden';
   serRsi.applyOptions({color:IND.rsi.color});
   g('leg-rsi').style.display=IND.rsi.on?'':'none';
-  // MACD pane
-  g('pane-macd').style.display=IND.macd.on?'':'none';
+
+  // MACD pane: same approach
+  const macdPane=g('pane-macd');
+  macdPane.style.flex=IND.macd.on?'23':'0';
+  macdPane.style.overflow='hidden';
   g('leg-macd').style.display=IND.macd.on?'':'none';
-  // Resize panes after visibility change
+
   resizeCharts();
 }
 
@@ -489,12 +488,12 @@ function makeChart(elId,extra) {
 function initCharts() {
   // Main
   chartMain=makeChart('pane-main',{
-    rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.06,bottom:0.22}},
+    rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.06,bottom:0.20}},
     timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
   });
   serCandle=chartMain.addCandlestickSeries({upColor:'#26c281',downColor:'#e74c3c',borderUpColor:'#26c281',borderDownColor:'#e74c3c',wickUpColor:'#26c281',wickDownColor:'#e74c3c',priceFormat:{type:'price',precision:3,minMove:0.001}});
   serVol=chartMain.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
-  chartMain.priceScale('vol').applyOptions({scaleMargins:{top:0.80,bottom:0},borderColor:'#1e2530'});
+  chartMain.priceScale('vol').applyOptions({scaleMargins:{top:0.85,bottom:0},borderColor:'#1e2530'});
   const emaBase={priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}};
   serEma50 =chartMain.addLineSeries({...emaBase,color:IND.ema50.color, lineWidth:1.5});
   serEma200=chartMain.addLineSeries({...emaBase,color:IND.ema200.color,lineWidth:1.5});
@@ -552,11 +551,14 @@ function initCharts() {
 }
 
 function resizeCharts() {
-  [[chartMain,'pane-main'],[chartRsi,'pane-rsi'],[chartMacd,'pane-macd']].forEach(([ch,id])=>{
-    const el=g(id);
-    if(!el||el.style.display==='none')return;
-    const w=el.clientWidth,h=el.clientHeight;
-    if(w>0&&h>0)ch.applyOptions({width:w,height:h});
+  // Use requestAnimationFrame to ensure DOM has updated after display changes
+  requestAnimationFrame(()=>{
+    [[chartMain,'pane-main'],[chartRsi,'pane-rsi'],[chartMacd,'pane-macd']].forEach(([ch,id])=>{
+      const el=g(id);
+      if(!el||el.style.display==='none')return;
+      const w=el.clientWidth,h=el.clientHeight;
+      if(w>0&&h>0)ch.applyOptions({width:w,height:h});
+    });
   });
 }
 
@@ -855,7 +857,15 @@ function waitForLib(cb){
     if(++n>100){clearInterval(id);showErr('Failed to load chart library.');}
   },100);
 }
-waitForLib(()=>{initCharts();applyIndVisibility();loadData(false);});
+waitForLib(()=>{
+  initCharts();
+  // Apply visibility AFTER charts are fully initialised
+  // Small timeout ensures layout is computed before resize
+  setTimeout(()=>{
+    applyIndVisibility();
+    loadData(false);
+  }, 0);
+});
 </script>
 </body>
 </html>
