@@ -456,9 +456,9 @@ function initCharts() {
   serMacdSignal=chartMacd.addLineSeries({color:'#f0c040',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
   serMacdHist  =chartMacd.addHistogramSeries({priceFormat:{type:'price',precision:4,minMove:0.0001}});
 
-  // ── Time sync: use chartMain as master ────────────────────────────────────
-  // After data is loaded we call forceSyncRange() once to align all charts.
-  // Thereafter, logical range changes on ANY chart propagate to the others.
+  // ── Time sync: chartMain is the ONLY master ───────────────────────────────
+  // RSI and MACD are slaves — they never propagate back.
+  // This prevents the oscillation where slave charts overwrite the correct range.
   chartMain.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (syncLock || !range) return;
     syncLock = true;
@@ -468,22 +468,19 @@ function initCharts() {
     } catch(_){}
     syncLock = false;
   });
+  // Allow scrolling initiated from RSI/MACD panes to drive chartMain,
+  // but immediately re-broadcast from main so slaves stay in sync.
   chartRsi.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (syncLock || !range) return;
     syncLock = true;
-    try {
-      chartMain.timeScale().setVisibleLogicalRange(range);
-      if (IND.macd.on) chartMacd.timeScale().setVisibleLogicalRange(range);
-    } catch(_){}
+    try { chartMain.timeScale().setVisibleLogicalRange(range); } catch(_){}
+    // Re-broadcast from main (which will trigger the main subscription above)
     syncLock = false;
   });
   chartMacd.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (syncLock || !range) return;
     syncLock = true;
-    try {
-      chartMain.timeScale().setVisibleLogicalRange(range);
-      if (IND.rsi.on) chartRsi.timeScale().setVisibleLogicalRange(range);
-    } catch(_){}
+    try { chartMain.timeScale().setVisibleLogicalRange(range); } catch(_){}
     syncLock = false;
   });
 
@@ -523,8 +520,9 @@ function syncCrossTo(param, chart, active) {
   } catch(_){}
 }
 
-// After ALL data is set on all three charts, force them to the same logical range.
-// This is the key fix: we call this ONCE after setData() on all series.
+// After ALL data is set on all three charts, force RSI and MACD to exactly
+// match chartMain's logical range. Called multiple times to catch LW's
+// internal post-render adjustments that can shift the range slightly.
 function forceSyncRange() {
   try {
     const range = chartMain.timeScale().getVisibleLogicalRange();
@@ -533,7 +531,17 @@ function forceSyncRange() {
     if (IND.rsi.on)  chartRsi.timeScale().setVisibleLogicalRange(range);
     if (IND.macd.on) chartMacd.timeScale().setVisibleLogicalRange(range);
     syncLock = false;
-  } catch(_){ syncLock=false; }
+  } catch(_){ syncLock = false; }
+}
+
+// Repeatedly sync for N ms to catch all LW internal render callbacks
+function forceSyncFor(ms) {
+  const end = Date.now() + ms;
+  const tick = () => {
+    forceSyncRange();
+    if (Date.now() < end) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 // ── Resize ────────────────────────────────────────────────────────────────────
@@ -544,7 +552,7 @@ function resizeAll() {
     if(IND.rsi.on)  resize(chartRsi,'pane-rsi');
     if(IND.macd.on) resize(chartMacd,'pane-macd');
     // Re-sync logical range after resize so bars stay aligned
-    setTimeout(forceSyncRange,30);
+    setTimeout(()=>forceSyncFor(300),30);
   });
 }
 
@@ -630,15 +638,14 @@ function applyView(key) {
     ? Math.floor(new Date(`${new Date().getFullYear()}-01-01T00:00:00`).getTime()/1000)
     : nowSec - val*86400;
   chartMain.timeScale().setVisibleRange({from:shiftTs(fromSec),to:shiftTs(nowSec+2*86400)});
-  // Sync RSI/MACD after view change — give chartMain time to update logical range
-  setTimeout(forceSyncRange, 50);
+  setTimeout(()=>forceSyncFor(400), 50);
 }
 
 function fitAll() {
   if(!chartMain)return;
   chartMain.timeScale().fitContent();
   chartMain.priceScale('right').applyOptions({autoScale:true});
-  setTimeout(forceSyncRange,50);
+  setTimeout(()=>forceSyncFor(400),50);
 }
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
@@ -701,10 +708,12 @@ async function loadData(isRefresh) {
     if(!isRefresh){
       chartMain.timeScale().fitContent();
       chartMain.priceScale('right').applyOptions({autoScale:true});
-      // Wait for fitContent to settle, then apply view, then force-sync RSI/MACD
-      setTimeout(()=>{ applyView(curViewKey); setTimeout(forceSyncRange,50); },80);
+      setTimeout(()=>{
+        applyView(curViewKey);
+        setTimeout(()=>forceSyncFor(600), 80);
+      },80);
     } else {
-      setTimeout(forceSyncRange,50);
+      setTimeout(()=>forceSyncFor(300), 50);
     }
 
     hideOverlay();
