@@ -10,7 +10,6 @@
 html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-ui,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column}
 
-/* ── Header ── */
 #header{padding:11px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .badge{font-size:11px;color:#5a6478;background:#151b26;padding:2px 8px;border-radius:4px;border:1px solid #1e2530}
 #ticker-sym{font-size:21px;font-weight:700;font-family:monospace;color:#e8eaf0}
@@ -21,7 +20,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .stat-l{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
 .stat-v{font-size:12px;color:#8492a6;font-family:monospace;margin-top:1px}
 
-/* ── Controls ── */
 #controls{padding:7px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .grp-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
 .btn-grp{display:flex;gap:3px}
@@ -29,12 +27,11 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .iv:hover{color:#aab;border-color:#334}
 .iv.on{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
 .sep{width:1px;background:#1e2530;height:18px;flex-shrink:0}
-.icon-btn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 9px;cursor:pointer;font-size:13px;transition:all .12s}
+.icon-btn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 10px;cursor:pointer;font-size:12px;font-family:monospace;transition:all .12s}
 .icon-btn:hover{color:#aab;border-color:#334}
 #dot{width:7px;height:7px;border-radius:50%;background:#26c281;flex-shrink:0;transition:background .3s}
 #status{font-size:11px;color:#3d4a5c;font-family:monospace}
 
-/* ── OHLC + EMA bar ── */
 #tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:14px;align-items:center;min-height:28px;flex-wrap:wrap}
 .oi{display:none;gap:5px;align-items:baseline}
 .ol{font-size:11px;color:#3d4a5c;font-family:monospace}
@@ -45,11 +42,8 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .ema-dot{width:22px;height:2px;border-radius:1px;display:inline-block}
 .ev{font-weight:600}
 
-/* ── Chart wrapper ── */
 #cwrap{flex:1;position:relative;min-height:0}
 #cv{width:100%;height:100%}
-
-/* ── Overlay (loading / error) ── */
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117;z-index:10}
 #spin{width:36px;height:36px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -59,7 +53,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .emsg{color:#5a6478;font-size:11px;font-family:monospace;margin-bottom:14px;word-break:break-word;line-height:1.6}
 .rbtn2{padding:5px 18px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:12px}
 
-/* ── Footer ── */
 #footer{padding:4px 18px;border-top:1px solid #1e2530;display:flex;justify-content:space-between;font-size:10px;color:#2a3548;font-family:monospace;flex-wrap:wrap;gap:4px}
 </style>
 </head>
@@ -128,11 +121,11 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 
   <!-- FOOTER -->
   <div id="footer">
-    <span>NG=F · NYMEX · USD/MMBtu · Source: Yahoo Finance · Time: Europe/Prague (CET/CEST auto)</span>
-    <span>Scroll = zoom · Drag = pan · ⤢ Autofit = fit all data</span>
+    <span>NG=F · NYMEX · USD/MMBtu · Source: Yahoo Finance · Time: Europe/Prague (CET/CEST auto) · Daily change vs prev-day close</span>
+    <span>Scroll = zoom · Drag = pan · ⤢ Autofit = fit all data to screen</span>
   </div>
 
-</div><!-- #app -->
+</div>
 
 <script>
 'use strict';
@@ -141,26 +134,23 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 const TICKER = 'NG=F';
 const TZ     = 'Europe/Prague';
 
-// Yahoo Finance fetch config per interval (verified limits):
-//   1m  → range=5d   (7d hard limit)
-//   5m  → range=1mo  (60d hard limit, range string required — period1/2 returns 422)
-//   15m → range=1mo  (60d hard limit, range string required)
-//   1h  → range=1y   (730d hard limit)
+// Yahoo Finance fetch config (verified hard limits):
+//   1m  → range=5d   (7d absolute limit)
+//   5m  → range=1mo  (60d limit; period1/period2 returns HTTP 422 for 5m/15m)
+//   15m → range=1mo  (60d limit)
+//   1h  → range=1y   (730d limit)
 //   1d  → range=5y
 //   1wk → range=10y
 const FETCH_CFG = {
-  '1m':  { usePeriod: false, range: '5d',  interval: '1m'  },
-  '5m':  { usePeriod: false, range: '1mo', interval: '5m'  },
-  '15m': { usePeriod: false, range: '1mo', interval: '15m' },
-  '1h':  { usePeriod: false, range: '1y',  interval: '1h'  },
-  '1d':  { usePeriod: false, range: '5y',  interval: '1d'  },
-  '1wk': { usePeriod: false, range: '10y', interval: '1wk' },
+  '1m':  { range: '5d',  interval: '1m'  },
+  '5m':  { range: '1mo', interval: '5m'  },
+  '15m': { range: '1mo', interval: '15m' },
+  '1h':  { range: '1y',  interval: '1h'  },
+  '1d':  { range: '5y',  interval: '1d'  },
+  '1wk': { range: '10y', interval: '1wk' },
 };
 
-const REFRESH_MS = {
-  '1m': 10000, '5m': 10000, '15m': 10000,
-  '1h': 10000, '1d': 10000, '1wk': 10000,
-};
+const REFRESH_INTERVAL_MS = 10000; // 10 seconds for all intervals
 
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
@@ -174,12 +164,16 @@ let chart, candleSeries, volSeries, ema50S, ema200S, ema500S;
 let curIv = '1h';
 let refreshTimer;
 
-// ── Prague time ───────────────────────────────────────────────────────────────
+// ── Prague time helpers ───────────────────────────────────────────────────────
 function pragueNow() {
-  return new Date().toLocaleTimeString('cs-CZ', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date().toLocaleTimeString('cs-CZ', {
+    timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
 }
-function pragueOffsetSec(ts) {
-  const d = new Date(ts * 1000);
+
+// Returns Prague UTC offset in seconds for a given unix timestamp (handles DST)
+function pragueOffsetSec(unixTs) {
+  const d = new Date(unixTs * 1000);
   const toMins = tz => {
     const s = d.toLocaleString('en-GB', { timeZone: tz });
     const [, t] = s.split(', ');
@@ -187,33 +181,58 @@ function pragueOffsetSec(ts) {
     return +h * 60 + +m;
   };
   let diff = toMins(TZ) - toMins('UTC');
-  if (diff > 720) diff -= 1440;
+  if (diff > 720)  diff -= 1440;
   if (diff < -720) diff += 1440;
   return diff * 60;
 }
-function shiftTs(ts) { return ts + pragueOffsetSec(ts); }
 
+// Shift unix timestamp so lightweight-charts shows Prague local time on X axis
+function shiftTs(ts) {
+  return ts + pragueOffsetSec(ts);
+}
+
+// Returns "YYYY-MM-DD" string for today in Prague timezone
+function todayPrague() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); // "2025-04-26"
+}
+
+// Returns the close of the last candle whose date (in Prague time) is BEFORE today.
+// This gives us the previous calendar day's closing price for daily change calc.
+// Falls back to `fallback` if no such candle exists (e.g. very short range).
+function getPrevDayClose(candles, fallback) {
+  const today = todayPrague(); // "YYYY-MM-DD"
+  for (let i = candles.length - 1; i >= 0; i--) {
+    const candleDatePrague = new Date(candles[i].time * 1000)
+      .toLocaleDateString('en-CA', { timeZone: TZ });
+    if (candleDatePrague < today) {
+      return candles[i].close;
+    }
+  }
+  return fallback; // fallback: use Yahoo's chartPreviousClose
+}
+
+// Live Prague clock in header
 setInterval(() => { el('prg-time').textContent = pragueNow(); }, 1000);
 el('prg-time').textContent = pragueNow();
 
-// ── EMA ───────────────────────────────────────────────────────────────────────
+// ── EMA calculation ───────────────────────────────────────────────────────────
 function calcEMA(closes, period) {
-  const k = 2 / (period + 1);
-  const out = new Array(closes.length).fill(null);
-  let sum = 0, started = false, prev = 0;
+  const k   = 2 / (period + 1);
+  const out  = new Array(closes.length).fill(null);
+  let sum    = 0, started = false, prev = 0;
   for (let i = 0; i < closes.length; i++) {
     if (!started) {
       sum += closes[i];
       if (i === period - 1) { prev = sum / period; out[i] = prev; started = true; }
     } else {
-      prev = closes[i] * k + prev * (1 - k);
+      prev  = closes[i] * k + prev * (1 - k);
       out[i] = prev;
     }
   }
   return out;
 }
 
-// ── Wait for LightweightCharts ────────────────────────────────────────────────
+// ── Wait for LightweightCharts CDN ───────────────────────────────────────────
 function waitForLib(cb) {
   if (typeof LightweightCharts !== 'undefined') { cb(); return; }
   let n = 0;
@@ -223,11 +242,20 @@ function waitForLib(cb) {
   }, 100);
 }
 
+// ── Fit both X and Y axes ─────────────────────────────────────────────────────
+function fitAll() {
+  chart.timeScale().fitContent();
+  chart.priceScale('right').applyOptions({ autoScale: true });
+}
+
 // ── Init chart ────────────────────────────────────────────────────────────────
 function initChart() {
   const wrap = el('cwrap');
   chart = LightweightCharts.createChart(el('cv'), {
-    layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
+    layout: {
+      background: { type: 'solid', color: '#0d1117' },
+      textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11,
+    },
     grid: { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
@@ -235,11 +263,13 @@ function initChart() {
       horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
     },
     rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.26 } },
-    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2 },
+    timeScale: {
+      borderColor: '#1e2530', timeVisible: true, secondsVisible: false,
+      rightOffset: 5, barSpacing: 8, minBarSpacing: 2,
+    },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
-    handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
-    width: wrap.clientWidth,
-    height: wrap.clientHeight,
+    handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+    width: wrap.clientWidth, height: wrap.clientHeight,
   });
 
   candleSeries = chart.addCandlestickSeries({
@@ -252,11 +282,23 @@ function initChart() {
   volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
   chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.80, bottom: 0 } });
 
-  ema50S  = chart.addLineSeries({ color: '#f0c040', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } });
-  ema200S = chart.addLineSeries({ color: '#e74c3c', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } });
-  ema500S = chart.addLineSeries({ color: '#2196f3', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } });
+  ema50S  = chart.addLineSeries({
+    color: '#f0c040', lineWidth: 1.5,
+    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
+  });
+  ema200S = chart.addLineSeries({
+    color: '#e74c3c', lineWidth: 1.5,
+    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
+  });
+  ema500S = chart.addLineSeries({
+    color: '#2196f3', lineWidth: 1.5,
+    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
+  });
 
-  // Crosshair OHLC + EMA tooltip
+  // Crosshair → OHLC + EMA tooltip
   chart.subscribeCrosshairMove(p => {
     if (!p.time || !p.seriesData) { clearTooltip(); return; }
     const b = p.seriesData.get(candleSeries);
@@ -275,7 +317,7 @@ function initChart() {
     el('ev500').textContent = e500 ? e500.value.toFixed(3) : '—';
   });
 
-  // Resize observer
+  // Responsive resize
   new ResizeObserver(([e]) => {
     const { width, height } = e.contentRect;
     if (width > 0 && height > 0) chart.applyOptions({ width, height });
@@ -301,13 +343,8 @@ async function fetchWithFallback(yfUrl) {
 }
 
 function buildYFUrl(host, cfg) {
-  const base = `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
-  if (cfg.usePeriod) {
-    const p2 = Math.floor(Date.now() / 1000);
-    const p1 = p2 - cfg.days * 86400;
-    return `${base}&period1=${p1}&period2=${p2}`;
-  }
-  return `${base}&range=${cfg.range}`;
+  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}` +
+    `?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
 }
 
 async function fetchYF(cfg) {
@@ -322,25 +359,33 @@ async function fetchYF(cfg) {
 function parseCandles(json) {
   const r = json?.chart?.result?.[0];
   if (!r) {
-    const yfErr = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'No data';
-    throw new Error(`Yahoo Finance: ${yfErr}`);
+    const msg = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'No data returned';
+    throw new Error(`Yahoo Finance: ${msg}`);
   }
   const ts = r.timestamp || [], q = r.indicators?.quote?.[0] || {}, m = r.meta || {};
-  if (!ts.length) throw new Error('Yahoo Finance returned empty data array');
+  if (!ts.length) throw new Error('Yahoo Finance returned an empty data array');
+
   const candles = ts.map((t, i) => ({
-    time: Math.floor(t),
-    open: q.open?.[i], high: q.high?.[i], low: q.low?.[i], close: q.close?.[i],
+    time:   Math.floor(t),
+    open:   q.open?.[i],
+    high:   q.high?.[i],
+    low:    q.low?.[i],
+    close:  q.close?.[i],
     volume: q.volume?.[i] ?? 0,
-  })).filter(c => c.open != null && c.close != null).sort((a, b) => a.time - b.time);
+  }))
+  .filter(c => c.open != null && c.close != null)
+  .sort((a, b) => a.time - b.time);
+
   if (!candles.length) throw new Error('No valid OHLC bars after filtering');
+
   const last = candles[candles.length - 1];
   return {
     candles,
-    price:     m.regularMarketPrice     ?? last.close,
-    prevClose: m.chartPreviousClose     ?? candles[candles.length - 2]?.close,
-    volume:    m.regularMarketVolume    ?? last.volume,
-    dayHigh:   m.regularMarketDayHigh,
-    dayLow:    m.regularMarketDayLow,
+    price:     m.regularMarketPrice  ?? last.close,
+    yfPrevClose: m.chartPreviousClose ?? null, // Yahoo's own prev close as fallback
+    volume:    m.regularMarketVolume  ?? last.volume,
+    dayHigh:   m.regularMarketDayHigh ?? null,
+    dayLow:    m.regularMarketDayLow  ?? null,
   };
 }
 
@@ -353,9 +398,9 @@ async function loadData(isRefresh = false) {
 
   try {
     const json = await fetchYF(cfg);
-    const { candles, price, prevClose, volume, dayHigh, dayLow } = parseCandles(json);
+    const { candles, price, yfPrevClose, volume, dayHigh, dayLow } = parseCandles(json);
 
-    // Shift timestamps to Prague timezone for X axis display
+    // Shift candle timestamps to Prague timezone for X axis
     const shifted = candles.map(c => ({ ...c, time: shiftTs(c.time) }));
 
     candleSeries.setData(shifted);
@@ -364,36 +409,51 @@ async function loadData(isRefresh = false) {
       color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
     })));
 
-    // EMA (calculated on raw closes for accuracy)
-    const closes = candles.map(c => c.close);
+    // EMA — calculated on raw (unshifted) closes
+    const closes  = candles.map(c => c.close);
     const e50arr  = calcEMA(closes, 50);
     const e200arr = calcEMA(closes, 200);
     const e500arr = calcEMA(closes, 500);
+
     ema50S.setData( shifted.map((c, i) => e50arr[i]  != null ? { time: c.time, value: +e50arr[i].toFixed(4)  } : null).filter(Boolean));
     ema200S.setData(shifted.map((c, i) => e200arr[i] != null ? { time: c.time, value: +e200arr[i].toFixed(4) } : null).filter(Boolean));
     ema500S.setData(shifted.map((c, i) => e500arr[i] != null ? { time: c.time, value: +e500arr[i].toFixed(4) } : null).filter(Boolean));
 
-    // EMA legend — last values
+    // EMA legend — current last values
     const li = candles.length - 1;
     el('ev50').textContent  = e50arr[li]  != null ? e50arr[li].toFixed(3)  : '—';
     el('ev200').textContent = e200arr[li] != null ? e200arr[li].toFixed(3) : '—';
     el('ev500').textContent = e500arr[li] != null ? e500arr[li].toFixed(3) : '—';
 
-    // Fit all data on initial load
-    chart.timeScale().fitContent();
+    // Daily change: compare current price to last close of PREVIOUS calendar day
+    // (in Prague time). Falls back to Yahoo's chartPreviousClose if not found.
+    const prevDayClose = getPrevDayClose(candles, yfPrevClose);
+    const ch   = prevDayClose != null ? price - prevDayClose : null;
+    const pct  = ch != null && prevDayClose ? ch / prevDayClose * 100 : null;
+    const up   = ch >= 0;
+    const sign = up ? '+' : '';
+    const clr  = up ? '#26c281' : '#e74c3c';
 
-    // Header stats
-    const ch  = prevClose != null ? price - prevClose : null;
-    const pct = ch != null && prevClose ? ch / prevClose * 100 : null;
-    const up  = ch >= 0, sign = up ? '+' : '', clr = up ? '#26c281' : '#e74c3c';
     setText('price', price.toFixed(3));
-    el('change').textContent = ch != null ? sign + ch.toFixed(3) : '—';
-    el('change').style.color = clr;
+    el('change').textContent    = ch  != null ? sign + ch.toFixed(3)          : '—';
+    el('change').style.color    = clr;
     el('changePct').textContent = pct != null ? `(${sign}${pct.toFixed(2)}%)` : '';
     el('changePct').style.color = clr;
+
+    // High / Low / Volume
+    const allHighs = candles.filter(c => {
+      const d = new Date(c.time * 1000).toLocaleDateString('en-CA', { timeZone: TZ });
+      return d === todayPrague();
+    });
+    const todayHigh = allHighs.length ? allHighs.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
+    const todayLow  = allHighs.length ? allHighs.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
+
+    setText('dhigh', (dayHigh ?? todayHigh ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
+    setText('dlow',  (dayLow  ?? todayLow  ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
     setText('vol',   volume ? Number(volume).toLocaleString('en-US') : '—');
-    setText('dhigh', (dayHigh ?? candles.reduce((m, c) => Math.max(m, c.high), 0)).toFixed(3));
-    setText('dlow',  (dayLow  ?? candles.reduce((m, c) => Math.min(m, c.low), Infinity)).toFixed(3));
+
+    // Fit both axes on initial load or interval change — NOT on auto-refresh
+    if (!isRefresh) fitAll();
 
     hideOverlay();
     resetTimer();
@@ -406,13 +466,11 @@ async function loadData(isRefresh = false) {
   }
 }
 
-// ── Timer ─────────────────────────────────────────────────────────────────────
+// ── Auto-refresh timer ────────────────────────────────────────────────────────
 function resetTimer() {
   clearInterval(refreshTimer);
-  const ms = REFRESH_MS[curIv] || 60000;
-  refreshTimer = setInterval(() => loadData(true), ms);
-  const s = ms / 1000;
-  el('status').textContent = `Auto-refresh ${s}s`;
+  refreshTimer = setInterval(() => loadData(true), REFRESH_INTERVAL_MS);
+  el('status').textContent = `Auto-refresh ${REFRESH_INTERVAL_MS / 1000}s`;
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
@@ -435,7 +493,11 @@ function showLoading() {
 }
 function showErr(msg) {
   const o = el('overlay'); o.style.display = 'flex';
-  o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g, '<br>')}</p><button class="rbtn2" onclick="loadData()">Retry</button></div>`;
+  o.innerHTML = `<div class="ebox">
+    <p class="etit">⚠ Failed to load data</p>
+    <p class="emsg">${msg.replace(/\n/g, '<br>')}</p>
+    <button class="rbtn2" onclick="loadData()">Retry</button>
+  </div>`;
 }
 function hideOverlay() { el('overlay').style.display = 'none'; }
 function setRefreshing(on) {
@@ -443,23 +505,20 @@ function setRefreshing(on) {
   if (on) setText('status', 'Loading…');
 }
 
-// ── Controls ──────────────────────────────────────────────────────────────────
+// ── Button handlers ───────────────────────────────────────────────────────────
 document.querySelectorAll('.iv').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('.iv').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   curIv = btn.dataset.iv;
   clearTooltip();
-  loadData();
+  loadData(false); // false = fit axes after load
 }));
 
-el('fit-btn').addEventListener('click', () => {
-  if (chart) chart.timeScale().fitContent();
-});
-
-el('rbtn').addEventListener('click', () => loadData(false));
+el('fit-btn').addEventListener('click', () => { if (chart) fitAll(); });
+el('rbtn').addEventListener('click',   () => loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-waitForLib(() => { initChart(); loadData(); });
+waitForLib(() => { initChart(); loadData(false); });
 </script>
 </body>
 </html>
