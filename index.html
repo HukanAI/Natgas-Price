@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -7,121 +7,109 @@
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden}
+html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-ui,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column}
 
-/* ── Header ── */
-#header{padding:10px 16px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0}
-#ticker-sym{font-size:20px;font-weight:700;font-family:monospace;color:#e8eaf0}
-.badge{font-size:10px;color:#5a6478;background:#151b26;padding:2px 7px;border-radius:4px;border:1px solid #1e2530}
-#price{font-size:28px;font-weight:700;font-family:monospace;letter-spacing:-0.5px;color:#e8eaf0}
+#header{padding:11px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.badge{font-size:11px;color:#5a6478;background:#151b26;padding:2px 8px;border-radius:4px;border:1px solid #1e2530}
+#ticker-sym{font-size:21px;font-weight:700;font-family:monospace;color:#e8eaf0}
+#price{font-size:30px;font-weight:700;font-family:monospace;letter-spacing:-0.5px;color:#e8eaf0}
 #change,#changePct{font-family:monospace;font-weight:600}
-#change{font-size:14px}#changePct{font-size:11px}
-.stat{text-align:right}.stat-l{font-size:9px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
-.stat-v{font-size:11px;color:#8492a6;font-family:monospace;margin-top:1px}
+#change{font-size:15px}#changePct{font-size:12px}
+.stat{text-align:right}
+.stat-l{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
+.stat-v{font-size:12px;color:#8492a6;font-family:monospace;margin-top:1px}
 
-/* ── Controls bar ── */
-#controls{padding:6px 16px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
-.group-label{font-size:9px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px}
+#controls{padding:7px 18px;border-bottom:1px solid #1e2530;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.group-label{font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px;margin-right:2px}
 .btn-group{display:flex;gap:3px}
-.iv{padding:3px 10px;font-size:11px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .12s}
+/* Zoom buttons — tyto NEZMĚNÍ fetch, jen přiblíží pohled */
+.zb{padding:3px 11px;font-size:11px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .12s}
+.zb.on{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
+/* Interval buttons — tyto MĚNÍ fetch */
+.iv{padding:3px 11px;font-size:11px;font-family:monospace;border-radius:4px;border:1px solid #1e2530;cursor:pointer;background:transparent;color:#5a6478;transition:all .12s}
 .iv.on{background:#1a6ed8;color:#fff;border-color:#1a6ed8}
-.sep{width:1px;background:#1e2530;height:16px;margin:0 2px}
-#rbtn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:13px}
-#dot{width:6px;height:6px;border-radius:50%;background:#26c281;flex-shrink:0}
-#status-txt{font-size:10px;color:#3d4a5c;font-family:monospace}
+.iv.warn{border-color:#7a5500;color:#c8900a}
+.iv.warn.on{background:#7a4400;border-color:#c8700a;color:#ffc04a}
+.sep{width:1px;background:#1e2530;height:18px;margin:0 4px}
+#rbtn{background:transparent;border:1px solid #1e2530;color:#5a6478;border-radius:4px;padding:2px 9px;cursor:pointer;font-size:14px}
+#dot{width:7px;height:7px;border-radius:50%;background:#26c281;flex-shrink:0}
+#status{font-size:11px;color:#3d4a5c;font-family:monospace}
 
-/* ── OHLC bar ── */
-#tbar{padding:3px 16px;border-bottom:1px solid #1e2530;display:flex;gap:12px;align-items:center;min-height:26px;flex-wrap:wrap;flex-shrink:0}
-.oi{display:none;gap:4px;align-items:baseline}
-.ol{font-size:10px;color:#3d4a5c;font-family:monospace}
-.ov{font-size:11px;font-weight:600;font-family:monospace}
-#hint{font-size:10px;color:#3d4a5c;font-family:monospace}
-#ema-legend{display:flex;gap:12px;align-items:center;margin-left:auto;flex-wrap:wrap}
-.ema-lbl{font-size:10px;font-family:monospace;display:flex;align-items:center;gap:3px}
-.ema-dot{width:18px;height:2px;border-radius:1px;display:inline-block}
+#tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:14px;align-items:center;min-height:28px;flex-wrap:wrap}
+.oi{display:none;gap:5px;align-items:baseline}
+.ol{font-size:11px;color:#3d4a5c;font-family:monospace}
+.ov{font-size:12px;font-weight:600;font-family:monospace}
+#hint{font-size:11px;color:#3d4a5c;font-family:monospace}
+#ema-legend{display:flex;gap:14px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.ema-lbl{font-size:11px;font-family:monospace;display:flex;align-items:center;gap:4px}
+.ema-dot{width:22px;height:2px;border-radius:1px;display:inline-block}
 .ev{font-weight:600}
 
-/* ── Main area ── */
-#main{flex:1;display:flex;min-height:0}
 #cwrap{flex:1;position:relative;min-height:0}
 #cv{width:100%;height:100%}
-
-/* ── Sidebar ── */
-#sidebar{width:200px;flex-shrink:0;border-left:1px solid #1e2530;background:#0d1117;overflow-y:auto;display:flex;flex-direction:column}
-#sidebar-header{padding:8px 12px;font-size:10px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e2530;flex-shrink:0}
-.sb-section{border-bottom:1px solid #1e2530;padding:6px 12px}
-.sb-section-title{font-size:9px;color:#3d4a5c;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
-.toggle-label{font-size:11px;color:#8492a6;user-select:none;cursor:pointer}
-.toggle{position:relative;width:32px;height:16px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0;position:absolute}
-.toggle-slider{position:absolute;inset:0;border-radius:8px;background:#1e2530;cursor:pointer;transition:.2s}
-.toggle-slider:before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:#5a6478;border-radius:50%;transition:.2s}
-input:checked+.toggle-slider{background:#1a6ed8}
-input:checked+.toggle-slider:before{transform:translateX(16px);background:#fff}
-.sb-param{display:flex;align-items:center;justify-content:space-between;padding:2px 0}
-.sb-param-label{font-size:10px;color:#5a6478}
-.sb-param-val{font-size:10px;font-family:monospace;color:#8492a6;background:#11161f;border:1px solid #1e2530;border-radius:3px;width:52px;text-align:right;padding:1px 4px;cursor:default}
-
-/* ── Overlay ── */
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117;z-index:10}
-#spin{width:32px;height:32px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
+#spin{width:36px;height:36px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#load-msg{color:#3d4a5c;font-size:12px;font-family:monospace;text-align:center;line-height:1.8}
-.ebox{background:#110d10;border:1px solid #5c1a1a;border-radius:8px;padding:20px 24px;text-align:center;max-width:400px}
-.etit{color:#e74c3c;font-size:13px;margin-bottom:8px}
-.emsg{color:#5a6478;font-size:10px;font-family:monospace;margin-bottom:12px;word-break:break-word;line-height:1.6}
-.rbtn2{padding:4px 16px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:11px}
+#load-msg{color:#3d4a5c;font-size:13px;font-family:monospace;text-align:center;line-height:1.8}
+.ebox{background:#110d10;border:1px solid #5c1a1a;border-radius:10px;padding:22px 28px;text-align:center;max-width:440px}
+.etit{color:#e74c3c;font-size:14px;margin-bottom:8px}
+.emsg{color:#5a6478;font-size:11px;font-family:monospace;margin-bottom:14px;word-break:break-word;line-height:1.6}
+.rbtn2{padding:5px 18px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:12px}
 
-/* ── Canvas overlays ── */
-#smc-canvas{position:absolute;inset:0;pointer-events:none;z-index:2}
-
-#footer{padding:3px 16px;border-top:1px solid #1e2530;display:flex;justify-content:space-between;font-size:9px;color:#2a3548;font-family:monospace;flex-wrap:wrap;gap:4px;flex-shrink:0}
+#footer{padding:4px 18px;border-top:1px solid #1e2530;display:flex;justify-content:space-between;font-size:10px;color:#2a3548;font-family:monospace;flex-wrap:wrap;gap:4px}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- HEADER -->
   <div id="header">
-    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span id="ticker-sym">NG=F</span>
       <span class="badge">Natural Gas Futures · NYMEX</span>
       <span class="badge" style="color:#3d4a5c;border-color:transparent;background:transparent">USD/MMBtu</span>
     </div>
-    <div style="display:flex;align-items:baseline;gap:9px">
+    <div style="display:flex;align-items:baseline;gap:10px">
       <span id="price">—</span>
       <div><div id="change">—</div><div id="changePct"></div></div>
     </div>
-    <div style="display:flex;gap:16px;margin-left:auto;flex-wrap:wrap">
+    <div style="display:flex;gap:18px;margin-left:auto;flex-wrap:wrap">
       <div class="stat"><div class="stat-l">Volume</div><div class="stat-v" id="vol">—</div></div>
       <div class="stat"><div class="stat-l">High</div><div class="stat-v" id="dhigh" style="color:#26c281">—</div></div>
       <div class="stat"><div class="stat-l">Low</div><div class="stat-v" id="dlow" style="color:#e74c3c">—</div></div>
-      <div class="stat"><div class="stat-l">Prague (CET/CEST)</div><div class="stat-v" id="prg-time">—</div></div>
+      <div class="stat"><div class="stat-l">Praha (CET/CEST)</div><div class="stat-v" id="prg-time">—</div></div>
     </div>
   </div>
 
-  <!-- CONTROLS -->
   <div id="controls">
+    <!-- ZOOM VIEW — mění jen zobrazené okno, ne fetch -->
+    <span class="group-label">Zobrazit</span>
+    <div class="btn-group" id="zoom-grp">
+      <button class="zb" data-days="7">7D</button>
+      <button class="zb" data-days="30">1M</button>
+      <button class="zb" data-days="90">3M</button>
+      <button class="zb on" data-days="365">1Y</button>
+      <button class="zb" data-days="730">2Y</button>
+      <button class="zb" data-days="1825">Max</button>    </div>
+    <div class="sep"></div>
+    <!-- INTERVAL — mění fetch -->
     <span class="group-label">Interval</span>
     <div class="btn-group">
-      <button class="iv" data-iv="1m">1m</button>
-      <button class="iv" data-iv="5m">5m</button>
-      <button class="iv" data-iv="15m">15m</button>
+      <button class="iv warn" data-iv="1m">1m</button>
+      <button class="iv warn" data-iv="5m">5m</button>
+      <button class="iv warn" data-iv="15m">15m</button>
       <button class="iv on" data-iv="1h">1h</button>
       <button class="iv" data-iv="1d">1D</button>
       <button class="iv" data-iv="1wk">1W</button>
     </div>
     <div class="sep"></div>
-    <button id="rbtn" title="Refresh now">↻</button>
+    <button id="rbtn" title="Obnovit data">↻</button>
     <div id="dot"></div>
-    <span id="status-txt">—</span>
+    <span id="status">—</span>
   </div>
 
-  <!-- OHLC + EMA bar -->
   <div id="tbar">
-    <span id="hint">Hover over chart for OHLC values</span>
+    <span id="hint">Přejeďte myší přes graf pro OHLC hodnoty</span>
     <div class="oi" id="oi-o"><span class="ol">O</span><span class="ov" id="tv-o"></span></div>
     <div class="oi" id="oi-h"><span class="ol">H</span><span class="ov" id="tv-h" style="color:#26c281"></span></div>
     <div class="oi" id="oi-l"><span class="ol">L</span><span class="ov" id="tv-l" style="color:#e74c3c"></span></div>
@@ -133,120 +121,19 @@ input:checked+.toggle-slider:before{transform:translateX(16px);background:#fff}
     </div>
   </div>
 
-  <!-- MAIN: chart + sidebar -->
-  <div id="main">
-    <div id="cwrap">
-      <div id="cv"></div>
-      <div id="overlay">
-        <div id="spin"></div>
-        <div id="load-msg">Loading chart library…</div>
-      </div>
+  <div id="cwrap">
+    <div id="cv"></div>
+    <div id="overlay">
+      <div id="spin"></div>
+      <div id="load-msg">Načítám knihovnu…</div>
     </div>
-
-    <!-- SIDEBAR -->
-    <div id="sidebar">
-      <div id="sidebar-header">Indicators</div>
-
-      <!-- EMA -->
-      <div class="sb-section">
-        <div class="sb-section-title">Moving Averages</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-ema50">EMA 50</label>
-          <label class="toggle"><input type="checkbox" id="tog-ema50" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-ema200">EMA 200</label>
-          <label class="toggle"><input type="checkbox" id="tog-ema200" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-ema500">EMA 500</label>
-          <label class="toggle"><input type="checkbox" id="tog-ema500" checked><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-      <!-- Sigmoid Trailing Stop -->
-      <div class="sb-section">
-        <div class="sb-section-title">Sigmoid Trailing Stop</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-sts">Enable</label>
-          <label class="toggle"><input type="checkbox" id="tog-sts" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="sb-param"><span class="sb-param-label">ATR Length</span><span class="sb-param-val">200</span></div>
-        <div class="sb-param"><span class="sb-param-label">ATR Mult</span><span class="sb-param-val">3.0</span></div>
-        <div class="sb-param"><span class="sb-param-label">Sig Length</span><span class="sb-param-val">20</span></div>
-        <div class="sb-param"><span class="sb-param-label">Sig Amp</span><span class="sb-param-val">3.0</span></div>
-        <div class="sb-param"><span class="sb-param-label">Min Dist</span><span class="sb-param-val">0.5</span></div>
-      </div>
-
-      <!-- SMC Structure -->
-      <div class="sb-section">
-        <div class="sb-section-title">SMC Structure</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-swing">Swing BOS/CHoCH</label>
-          <label class="toggle"><input type="checkbox" id="tog-swing" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-internal">Internal BOS/CHoCH</label>
-          <label class="toggle"><input type="checkbox" id="tog-internal" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-swingpts">Swing Points HH/LL</label>
-          <label class="toggle"><input type="checkbox" id="tog-swingpts" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-strongweak">Strong/Weak Hi/Lo</label>
-          <label class="toggle"><input type="checkbox" id="tog-strongweak" checked><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-      <!-- Order Blocks -->
-      <div class="sb-section">
-        <div class="sb-section-title">Order Blocks</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-iob">Internal OBs</label>
-          <label class="toggle"><input type="checkbox" id="tog-iob" checked><span class="toggle-slider"></span></label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-sob">Swing OBs</label>
-          <label class="toggle"><input type="checkbox" id="tog-sob"><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-      <!-- Equal Highs/Lows -->
-      <div class="sb-section">
-        <div class="sb-section-title">Equal High / Low</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-eql">EQH / EQL</label>
-          <label class="toggle"><input type="checkbox" id="tog-eql" checked><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-      <!-- Fair Value Gaps -->
-      <div class="sb-section">
-        <div class="sb-section-title">Fair Value Gaps</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-fvg">FVG</label>
-          <label class="toggle"><input type="checkbox" id="tog-fvg"><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-      <!-- Premium / Discount -->
-      <div class="sb-section">
-        <div class="sb-section-title">Premium / Discount</div>
-        <div class="toggle-row">
-          <label class="toggle-label" for="tog-pdz">P/D Zones</label>
-          <label class="toggle"><input type="checkbox" id="tog-pdz"><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-    </div><!-- /sidebar -->
-  </div><!-- /main -->
+  </div>
 
   <div id="footer">
-    <span>NG=F · NYMEX · USD/MMBtu · Source: Yahoo Finance · Time: Europe/Prague (CET/CEST auto)</span>
-    <span>Scroll = zoom · Drag = pan · Double-click X axis = fit all</span>
+    <span>NG=F · NYMEX · USD/MMBtu · Data: 5 let · EMA: plná historie · Čas: Europe/Prague</span>
+    <span>Scroll = zoom · Táhni doleva = starší data · Dvojklik osy X = fit all</span>
   </div>
-</div><!-- /app -->
+</div>
 
 <script>
 'use strict';
@@ -255,49 +142,41 @@ input:checked+.toggle-slider:before{transform:translateX(16px);background:#fff}
 const TICKER = 'NG=F';
 const TZ     = 'Europe/Prague';
 
-// Yahoo Finance confirmed limits (from API error messages):
-//  1m  → range=5d   (hard 7d limit, 5d is safe)
-//  5m  → range=1mo  (hard 60d limit, HTTP 422 with period1/period2)
-//  15m → range=1mo  (same as 5m)
-//  1h  → range=1y   (hard 730d limit, range string works)
-//  1d  → range=5y
-//  1wk → range=10y
-const FETCH_CFG = {
-  '1m':  {range:'5d',   iv:'1m'},
-  '5m':  {range:'1mo',  iv:'5m'},
-  '15m': {range:'1mo',  iv:'15m'},
-  '1h':  {range:'1y',   iv:'1h'},
-  '1d':  {range:'5y',   iv:'1d'},
-  '1wk': {range:'10y',  iv:'1wk'},
+// Yahoo Finance přesné limity (ověřeno z chybových hlášek API):
+//
+//  interval │ max historie │ metoda        │ poznámka
+//  ─────────┼──────────────┼───────────────┼─────────────────────────────────
+//  1m       │ 7 dní        │ range=5d      │ jediný validní range < 7d
+//  5m       │ 60 dní       │ range=1mo     │ period1/period2 → HTTP 422 pro 5m!
+//  15m      │ 60 dní       │ range=1mo     │ period1/period2 → HTTP 422 pro 15m!
+//  1h       │ 730 dní      │ period1/p2    │ range string nefunguje pro 2y+, musí být ts
+//  1d       │ neomezeno    │ range=5y      │
+//  1wk      │ neomezeno    │ range=10y     │
+//
+// POZOR: pro 5m a 15m Yahoo Finance odmítá period1/period2 s HTTP 422.
+// Jedině validní range stringy (1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max) fungují.
+// Pro 1h naopak range=2y nefunguje → nutný period1/period2.
+const FETCH_CONFIG_BY_IV = {
+  '1m':  { usePeriod: false, range: '5d',   interval: '1m'  },
+  '5m':  { usePeriod: false, range: '1mo',  interval: '5m'  },
+  '15m': { usePeriod: false, range: '1mo',  interval: '15m' },
+  '1h':  { usePeriod: false, range: '1y',   interval: '1h'  },
+  '1d':  { usePeriod: false, range: '5y',   interval: '1d'  },
+  '1wk': { usePeriod: false, range: '10y',  interval: '1wk' },
 };
 
-// Safe refresh rates — well under Yahoo's ~2000 req/hr limit.
-// Worst case: 1m = 1 req/30s = 120/hr; others even less.
-const REFRESH_MS = {
-  '1m': 30000, '5m': 60000, '15m': 120000,
-  '1h': 300000, '1d': 600000, '1wk': 1800000
-};
+const REFRESH_BY_IV = {'1m':10000,'5m':15000,'15m':20000,'1h':120000,'1d':300000,'1wk':600000};
 
-const PROXIES = [
+const PROXIES  = [
   u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u=>`https://proxy.cors.sh/${u}`,
 ];
 const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
 
-// SMC params (matching Pine Script defaults)
-const SMC = {
-  swingLen: 50, internalLen: 5, eqlLen: 3, eqlThreshold: 0.1,
-  atrLen: 200,
-};
-// STS params (matching Pine Script defaults)
-const STS_PARAMS = {
-  atrLen: 200, atrMult: 3.0, sigLen: 20, sigAmp: 3.0, minDist: 0.5
-};
-
 // ── Prague time ───────────────────────────────────────────────────────────────
 function pragueNow(){
-  return new Date().toLocaleTimeString('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  return new Date().toLocaleTimeString('cs-CZ',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 function pragueOffsetSec(ts){
   const d=new Date(ts*1000);
@@ -309,6 +188,7 @@ function pragueOffsetSec(ts){
   return diff*60;
 }
 function shiftTs(ts){return ts+pragueOffsetSec(ts);}
+
 setInterval(()=>{document.getElementById('prg-time').textContent=pragueNow();},1000);
 document.getElementById('prg-time').textContent=pragueNow();
 
@@ -324,258 +204,11 @@ function calcEMA(closes,period){
   return out;
 }
 
-// ── ATR ───────────────────────────────────────────────────────────────────────
-function calcATR(candles,period){
-  const tr=new Array(candles.length).fill(0);
-  for(let i=1;i<candles.length;i++){
-    const c=candles[i],p=candles[i-1];
-    tr[i]=Math.max(c.high-c.low,Math.abs(c.high-p.close),Math.abs(c.low-p.close));
-  }
-  const atr=new Array(candles.length).fill(null);
-  let sum=0;
-  for(let i=1;i<=period&&i<candles.length;i++) sum+=tr[i];
-  if(period<candles.length){atr[period]=sum/period;}
-  for(let i=period+1;i<candles.length;i++){
-    atr[i]=(atr[i-1]*(period-1)+tr[i])/period;
-  }
-  return atr;
-}
-
-// ── Sigmoid ───────────────────────────────────────────────────────────────────
-function sigmoid(t){
-  const tc=Math.min(Math.max(t,0),1);
-  const x=-6+12*tc;
-  const sMin=1/(1+Math.exp(6));
-  const sMax=1/(1+Math.exp(-6));
-  const sig=1/(1+Math.exp(-x));
-  return (sig-sMin)/(sMax-sMin);
-}
-
-// ── Sigmoid Trailing Stop ─────────────────────────────────────────────────────
-function calcSTS(candles,p){
-  const atr=calcATR(candles,p.atrLen);
-  const n=candles.length;
-  const stops=new Array(n).fill(null);
-  const dirs=new Array(n).fill(1);
-  const adjusting=new Array(n).fill(false);
-
-  let stsStop=null,stsDir=1,stsAdj=false,sigCount=0,startLevel=null,targetOff=0;
-
-  for(let i=0;i<n;i++){
-    const c=candles[i];
-    const a=atr[i];
-    if(a==null){stops[i]=null;dirs[i]=stsDir;continue;}
-    const upper=c.high+p.atrMult*a;
-    const lower=c.low -p.atrMult*a;
-
-    if(stsStop===null){
-      stsStop=stsDir===1?lower:upper;
-    } else {
-      if(stsDir===1){
-        if(c.close<stsStop){stsDir=-1;stsStop=upper;stsAdj=false;sigCount=0;}
-      } else {
-        if(c.close>stsStop){stsDir=1;stsStop=lower;stsAdj=false;sigCount=0;}
-      }
-    }
-
-    const dist=stsDir===1?c.close-stsStop:stsStop-c.close;
-    const kDist=p.atrMult*(a>0?a:1);
-    const minD=p.minDist*(a>0?a:1);
-
-    if(!stsAdj&&dist>kDist){
-      stsAdj=true;sigCount=0;startLevel=stsStop;targetOff=p.sigAmp*a;
-    }
-    if(stsAdj){
-      sigCount++;
-      const t=sigCount/p.sigLen;
-      const sigF=sigmoid(t);
-      const adj=targetOff*sigF;
-      const candidate=stsDir===1?startLevel+adj:startLevel-adj;
-      const newDist=stsDir===1?c.close-candidate:candidate-c.close;
-      if(newDist<minD||sigCount>=p.sigLen){
-        stsAdj=false;
-      } else {
-        stsStop=stsDir===1?Math.max(stsStop,candidate):Math.min(stsStop,candidate);
-      }
-    }
-    stops[i]=stsStop;
-    dirs[i]=stsDir;
-    adjusting[i]=stsAdj;
-  }
-  return{stops,dirs,adjusting};
-}
-
-// ── SMC helpers ───────────────────────────────────────────────────────────────
-function pivot(candles,size){
-  // Returns array of {type:'high'|'low', idx, price, time}
-  const pivots=[];
-  for(let i=size;i<candles.length-size;i++){
-    const c=candles[i];
-    let isHigh=true,isLow=true;
-    for(let j=1;j<=size;j++){
-      if(candles[i-j].high>=c.high||candles[i+j].high>=c.high) isHigh=false;
-      if(candles[i-j].low <=c.low ||candles[i+j].low <=c.low ) isLow=false;
-    }
-    if(isHigh) pivots.push({type:'high',idx:i,price:c.high,time:candles[i].time});
-    if(isLow)  pivots.push({type:'low', idx:i,price:c.low, time:candles[i].time});
-  }
-  return pivots;
-}
-
-function calcSMC(candles){
-  const atr=calcATR(candles,SMC.atrLen);
-  const swingPivots  =pivot(candles,SMC.swingLen);
-  const internalPivots=pivot(candles,SMC.internalLen);
-
-  // ── Swing BOS/CHoCH ──
-  const swingStructures=[];
-  let lastSwingHigh=null,lastSwingLow=null,swingBias=0;
-  for(const p of swingPivots){
-    if(p.type==='high'){
-      if(lastSwingHigh&&p.price>lastSwingHigh.price&&swingBias===1){
-        swingStructures.push({type:'BOS',dir:'bull',from:lastSwingHigh,to:p,level:lastSwingHigh.price});
-      } else if(lastSwingHigh&&p.price>lastSwingHigh.price&&swingBias===-1){
-        swingStructures.push({type:'CHoCH',dir:'bull',from:lastSwingHigh,to:p,level:lastSwingHigh.price});
-        swingBias=1;
-      }
-      lastSwingHigh=p;
-    } else {
-      if(lastSwingLow&&p.price<lastSwingLow.price&&swingBias===-1){
-        swingStructures.push({type:'BOS',dir:'bear',from:lastSwingLow,to:p,level:lastSwingLow.price});
-      } else if(lastSwingLow&&p.price<lastSwingLow.price&&swingBias===1){
-        swingStructures.push({type:'CHoCH',dir:'bear',from:lastSwingLow,to:p,level:lastSwingLow.price});
-        swingBias=-1;
-      }
-      lastSwingLow=p;
-    }
-  }
-
-  // ── Swing HH/HL/LH/LL ──
-  const swingPoints=[];
-  let prevHigh=null,prevLow=null;
-  for(const p of swingPivots){
-    if(p.type==='high'){
-      if(prevHigh) swingPoints.push({label:p.price>prevHigh.price?'HH':'LH',idx:p.idx,price:p.price,time:p.time,dir:'bear'});
-      prevHigh=p;
-    } else {
-      if(prevLow) swingPoints.push({label:p.price<prevLow.price?'LL':'HL',idx:p.idx,price:p.price,time:p.time,dir:'bull'});
-      prevLow=p;
-    }
-  }
-
-  // ── Strong/Weak High/Low ──
-  const allHighs=swingPivots.filter(p=>p.type==='high');
-  const allLows =swingPivots.filter(p=>p.type==='low');
-  const strongWeak={
-    strongHigh:allHighs.length?allHighs[allHighs.length-1]:null,
-    weakHigh:  allHighs.length>1?allHighs[allHighs.length-2]:null,
-    strongLow: allLows.length?allLows[allLows.length-1]:null,
-    weakLow:   allLows.length>1?allLows[allLows.length-2]:null,
-  };
-
-  // ── Internal BOS/CHoCH ──
-  const internalStructures=[];
-  let lastIntHigh=null,lastIntLow=null,intBias=0;
-  for(const p of internalPivots){
-    if(p.type==='high'){
-      if(lastIntHigh&&p.price>lastIntHigh.price){
-        internalStructures.push({type:intBias===-1?'CHoCH':'BOS',dir:'bull',from:lastIntHigh,to:p,level:lastIntHigh.price});
-        if(intBias===-1)intBias=1;
-      }
-      lastIntHigh=p;
-    } else {
-      if(lastIntLow&&p.price<lastIntLow.price){
-        internalStructures.push({type:intBias===1?'CHoCH':'BOS',dir:'bear',from:lastIntLow,to:p,level:lastIntLow.price});
-        if(intBias===1)intBias=-1;
-      }
-      lastIntLow=p;
-    }
-  }
-
-  // ── Order Blocks (last N before each BOS/CHoCH) ──
-  function findOBs(structures,candles,isInternal){
-    const obs=[];
-    const used=new Set();
-    for(const s of structures.slice(-10)){
-      const fromIdx=s.from.idx;
-      if(used.has(fromIdx))continue;
-      used.add(fromIdx);
-      // Search back from pivot for the last opposite-direction candle
-      let obIdx=fromIdx;
-      if(s.dir==='bull'){
-        for(let i=fromIdx;i>=Math.max(0,fromIdx-10);i--){
-          if(candles[i].close<candles[i].open){obIdx=i;break;}
-        }
-      } else {
-        for(let i=fromIdx;i>=Math.max(0,fromIdx-10);i--){
-          if(candles[i].close>candles[i].open){obIdx=i;break;}
-        }
-      }
-      obs.push({dir:s.dir,high:candles[obIdx].high,low:candles[obIdx].low,
-                time:candles[obIdx].time,endTime:candles[candles.length-1].time,
-                internal:isInternal});
-    }
-    return obs;
-  }
-  const internalOBs=findOBs(internalStructures,candles,true);
-  const swingOBs   =findOBs(swingStructures,candles,false);
-
-  // ── Equal Highs / Lows ──
-  const eqHighs=[],eqLows=[];
-  const eqlThr=atr[atr.length-1]!=null?SMC.eqlThreshold*atr[atr.length-1]:0.01;
-  for(let i=0;i<allHighs.length-1;i++){
-    const a=allHighs[i],b=allHighs[i+1];
-    if(Math.abs(a.price-b.price)<eqlThr) eqHighs.push({a,b});
-  }
-  for(let i=0;i<allLows.length-1;i++){
-    const a=allLows[i],b=allLows[i+1];
-    if(Math.abs(a.price-b.price)<eqlThr) eqLows.push({a,b});
-  }
-
-  // ── Fair Value Gaps ──
-  const fvgs=[];
-  for(let i=2;i<candles.length;i++){
-    const prev2=candles[i-2],prev=candles[i-1],curr=candles[i];
-    if(curr.low>prev2.high)
-      fvgs.push({dir:'bull',top:curr.low,bottom:prev2.high,time:prev.time,endTime:curr.time});
-    else if(curr.high<prev2.low)
-      fvgs.push({dir:'bear',top:prev2.low,bottom:curr.high,time:prev.time,endTime:curr.time});
-  }
-  // Keep only last 10 unmitigated FVGs
-  const activeFVGs=fvgs.slice(-10).filter(f=>{
-    const last=candles[candles.length-1];
-    if(f.dir==='bull'&&last.low<f.bottom)return false;
-    if(f.dir==='bear'&&last.high>f.top)return false;
-    return true;
-  });
-
-  // ── Premium / Discount zones ──
-  const allH=swingPivots.filter(p=>p.type==='high').map(p=>p.price);
-  const allL=swingPivots.filter(p=>p.type==='low').map(p=>p.price);
-  const rangeHigh=allH.length?Math.max(...allH):candles[candles.length-1].high;
-  const rangeLow =allL.length?Math.min(...allL):candles[candles.length-1].low;
-  const pdz={high:rangeHigh,low:rangeLow,mid:(rangeHigh+rangeLow)/2};
-
-  return{swingStructures,internalStructures,swingPoints,internalOBs,swingOBs,
-         eqHighs,eqLows,activeFVGs,pdz,strongWeak};
-}
-
 // ── State ─────────────────────────────────────────────────────────────────────
-let chart,candleSeries,volSeries,ema50S,ema200S,ema500S,stsSeries,stsFlipSeries;
-let smcSeries={};  // keyed lightweight-charts series for SMC overlays
+let chart,candleSeries,volSeries,ema50S,ema200S,ema500S;
 let curIv='1h';
+let curZoomDays=365;   // jen pro zoom view, nemění fetch
 let refreshTimer;
-let lastCandles=[];
-let smcData=null;
-
-// Toggle states
-const TOGGLES={
-  ema50:true,ema200:true,ema500:true,
-  sts:true,
-  swing:true,internal:true,swingpts:true,strongweak:true,
-  iob:true,sob:false,
-  eql:true,fvg:false,pdz:false,
-};
 
 // ── Wait for lib ──────────────────────────────────────────────────────────────
 function waitForLib(cb){
@@ -583,7 +216,7 @@ function waitForLib(cb){
   let n=0;
   const id=setInterval(()=>{
     if(typeof LightweightCharts!=='undefined'){clearInterval(id);cb();return;}
-    if(++n>80){clearInterval(id);showErr('Failed to load chart library.');}
+    if(++n>80){clearInterval(id);showErr('Nepodařilo se načíst charting knihovnu.');}
   },100);
 }
 
@@ -598,7 +231,7 @@ function initChart(){
       horzLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}},
     rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.06,bottom:0.26}},
     timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
-    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true},
+    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
     handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:true},
     width:wrap.clientWidth,height:wrap.clientHeight,
   });
@@ -612,13 +245,9 @@ function initChart(){
   volSeries=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
   chart.priceScale('vol').applyOptions({scaleMargins:{top:0.80,bottom:0}});
 
-  ema50S =chart.addLineSeries({color:'#f0c040',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
-  ema200S=chart.addLineSeries({color:'#e74c3c',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
-  ema500S=chart.addLineSeries({color:'#2196f3',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
-
-  // STS line + flip dots
-  stsSeries    =chart.addLineSeries({color:'#26c281',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001},lineStyle:0});
-  stsFlipSeries=chart.addLineSeries({color:'transparent',lineWidth:0,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+  ema50S =chart.addLineSeries({color:'#f0c040',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
+  ema200S=chart.addLineSeries({color:'#e74c3c',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
+  ema500S=chart.addLineSeries({color:'#2196f3',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}});
 
   chart.subscribeCrosshairMove(p=>{
     if(!p.time||!p.seriesData){clearTooltip();return;}
@@ -631,9 +260,9 @@ function initChart(){
     setOI('l',b.low?.toFixed(3),'#e74c3c');
     setOI('c',b.close?.toFixed(3),up?'#26c281':'#e74c3c');
     const e50=p.seriesData.get(ema50S),e200=p.seriesData.get(ema200S),e500=p.seriesData.get(ema500S);
-    el('ev50').textContent =e50 ?e50.value.toFixed(3) :'—';
-    el('ev200').textContent=e200?e200.value.toFixed(3):'—';
-    el('ev500').textContent=e500?e500.value.toFixed(3):'—';
+    el('ev50').textContent =e50  ?e50.value.toFixed(3)  :'—';
+    el('ev200').textContent=e200 ?e200.value.toFixed(3) :'—';
+    el('ev500').textContent=e500 ?e500.value.toFixed(3) :'—';
   });
 
   new ResizeObserver(([e])=>{
@@ -642,177 +271,17 @@ function initChart(){
   }).observe(wrap);
 }
 
-// ── Apply toggle visibility ───────────────────────────────────────────────────
-function applyToggles(){
-  if(!chart)return;
-  const vis=(s,show)=>s&&s.applyOptions({visible:show});
-  vis(ema50S,  TOGGLES.ema50);
-  vis(ema200S, TOGGLES.ema200);
-  vis(ema500S, TOGGLES.ema500);
-  vis(stsSeries,     TOGGLES.sts);
-  vis(stsFlipSeries, TOGGLES.sts);
-
-  // SMC series
-  Object.entries(smcSeries).forEach(([key,s])=>{
-    const show=
-      (key.startsWith('swing')   && TOGGLES.swing)   ||
-      (key.startsWith('int')     && TOGGLES.internal) ||
-      (key.startsWith('sp-')     && TOGGLES.swingpts) ||
-      (key.startsWith('sw-')     && TOGGLES.strongweak)||
-      (key.startsWith('iob')     && TOGGLES.iob)      ||
-      (key.startsWith('sob')     && TOGGLES.sob)      ||
-      (key.startsWith('eql')     && TOGGLES.eql)      ||
-      (key.startsWith('fvg')     && TOGGLES.fvg)      ||
-      (key.startsWith('pdz')     && TOGGLES.pdz);
-    if(s&&typeof s.applyOptions==='function') vis(s,!!show);
+// ── Zoom view (bez fetchování) ────────────────────────────────────────────────
+// Posune timeScale tak, aby bylo vidět posledních N dní.
+// Uživatel pak může táhnout doleva do celé 5leté historie.
+function applyZoom(days){
+  const now=Math.floor(Date.now()/1000);
+  const from=now - days*86400;
+  // Posuneme oba timestamps do pražského času (stejně jako svíčky)
+  chart.timeScale().setVisibleRange({
+    from: shiftTs(from),
+    to:   shiftTs(now + 2*86400),  // +2 dny buffer vpravo
   });
-}
-
-// ── Draw SMC overlays as LW-chart series ──────────────────────────────────────
-function clearSmcSeries(){
-  Object.values(smcSeries).forEach(s=>{try{chart.removeSeries(s);}catch{}});
-  smcSeries={};
-}
-
-function addLine(key,data,color,width,style,visible){
-  if(!data||data.length<2)return;
-  const s=chart.addLineSeries({color,lineWidth:width,priceLineVisible:false,lastValueVisible:false,
-    crosshairMarkerVisible:false,lineStyle:style||0,visible:!!visible,
-    priceFormat:{type:'price',precision:3,minMove:0.001}});
-  s.setData(data);
-  smcSeries[key]=s;
-}
-
-function addArea(key,topData,bottomData,topColor,bottomColor,visible){
-  if(!topData||topData.length<2)return;
-  const s=chart.addAreaSeries({topColor,bottomColor,lineColor:'transparent',
-    lineWidth:0,priceLineVisible:false,lastValueVisible:false,
-    crosshairMarkerVisible:false,visible:!!visible,
-    priceFormat:{type:'price',precision:3,minMove:0.001}});
-  s.setData(topData);
-  smcSeries[key]=s;
-}
-
-function drawSMC(candles,smc,shifted){
-  clearSmcSeries();
-  if(!smc||!candles.length)return;
-  const lastTime=shifted[shifted.length-1].time;
-  const extendT =lastTime+(shifted.length>1?shifted[1].time-shifted[0].time:86400)*20;
-
-  // ── Swing BOS/CHoCH lines ──
-  smc.swingStructures.slice(-20).forEach((s,i)=>{
-    const ft=shiftTs(s.from.time),tt=shiftTs(s.to.time);
-    const col=s.dir==='bull'?'#26c281':'#e74c3c';
-    const lStyle=s.type==='BOS'?0:2;
-    addLine(`swing-str-${i}`,[{time:ft,value:s.level},{time:Math.max(tt,ft+1),value:s.level}],col,1,lStyle,TOGGLES.swing);
-  });
-
-  // ── Internal BOS/CHoCH lines ──
-  smc.internalStructures.slice(-30).forEach((s,i)=>{
-    const ft=shiftTs(s.from.time),tt=shiftTs(s.to.time);
-    const col=s.dir==='bull'?'#1a9e6e':'#c0392b';
-    const lStyle=s.type==='BOS'?2:3;
-    addLine(`int-str-${i}`,[{time:ft,value:s.level},{time:Math.max(tt,ft+1),value:s.level}],col,1,lStyle,TOGGLES.internal);
-  });
-
-  // ── Swing points HH/HL/LH/LL (dotted vertical markers via short lines) ──
-  smc.swingPoints.slice(-30).forEach((p,i)=>{
-    const t=shiftTs(p.time);
-    const col=p.dir==='bull'?'#26c281':'#e74c3c';
-    const off=(candles[candles.length-1].high-candles[candles.length-1].low)*0.003;
-    addLine(`sp-${i}`,[{time:t,value:p.price},{time:t,value:p.price+(p.dir==='bull'?-off:off)}],col,1,0,TOGGLES.swingpts);
-  });
-
-  // ── Strong/Weak High/Low (horizontal lines to right edge) ──
-  const sw=smc.strongWeak;
-  if(sw.strongHigh){
-    const t=shiftTs(sw.strongHigh.time);
-    addLine('sw-sh',[{time:t,value:sw.strongHigh.price},{time:extendT,value:sw.strongHigh.price}],'#e74c3c',1,2,TOGGLES.strongweak);
-  }
-  if(sw.weakHigh){
-    const t=shiftTs(sw.weakHigh.time);
-    addLine('sw-wh',[{time:t,value:sw.weakHigh.price},{time:extendT,value:sw.weakHigh.price}],'#c0392b',1,3,TOGGLES.strongweak);
-  }
-  if(sw.strongLow){
-    const t=shiftTs(sw.strongLow.time);
-    addLine('sw-sl',[{time:t,value:sw.strongLow.price},{time:extendT,value:sw.strongLow.price}],'#26c281',1,2,TOGGLES.strongweak);
-  }
-  if(sw.weakLow){
-    const t=shiftTs(sw.weakLow.time);
-    addLine('sw-wl',[{time:t,value:sw.weakLow.price},{time:extendT,value:sw.weakLow.price}],'#1a9e6e',1,3,TOGGLES.strongweak);
-  }
-
-  // ── Internal Order Blocks ──
-  smc.internalOBs.slice(-5).forEach((ob,i)=>{
-    const t=shiftTs(ob.time);
-    const col=ob.dir==='bull'?'rgba(49,121,245,0.25)':'rgba(247,124,128,0.25)';
-    const border=ob.dir==='bull'?'#3179f5':'#f77c80';
-    addLine(`iob-top-${i}`,[{time:t,value:ob.high},{time:extendT,value:ob.high}],border,1,0,TOGGLES.iob);
-    addLine(`iob-bot-${i}`,[{time:t,value:ob.low}, {time:extendT,value:ob.low} ],border,1,0,TOGGLES.iob);
-  });
-
-  // ── Swing Order Blocks ──
-  smc.swingOBs.slice(-5).forEach((ob,i)=>{
-    const t=shiftTs(ob.time);
-    const border=ob.dir==='bull'?'#1848cc':'#b22833';
-    addLine(`sob-top-${i}`,[{time:t,value:ob.high},{time:extendT,value:ob.high}],border,1,0,TOGGLES.sob);
-    addLine(`sob-bot-${i}`,[{time:t,value:ob.low}, {time:extendT,value:ob.low} ],border,1,0,TOGGLES.sob);
-  });
-
-  // ── Equal Highs / Lows ──
-  smc.eqHighs.slice(-5).forEach((eq,i)=>{
-    const ta=shiftTs(eq.a.time),tb=shiftTs(eq.b.time);
-    addLine(`eql-h-${i}`,[{time:ta,value:eq.a.price},{time:tb,value:eq.b.price}],'#e74c3c',1,3,TOGGLES.eql);
-  });
-  smc.eqLows.slice(-5).forEach((eq,i)=>{
-    const ta=shiftTs(eq.a.time),tb=shiftTs(eq.b.time);
-    addLine(`eql-l-${i}`,[{time:ta,value:eq.a.price},{time:tb,value:eq.b.price}],'#26c281',1,3,TOGGLES.eql);
-  });
-
-  // ── Fair Value Gaps ──
-  smc.activeFVGs.forEach((fvg,i)=>{
-    const t=shiftTs(fvg.time);
-    const col=fvg.dir==='bull'?'rgba(0,255,104,0.12)':'rgba(255,0,8,0.12)';
-    const border=fvg.dir==='bull'?'rgba(0,255,104,0.4)':'rgba(255,0,8,0.4)';
-    addLine(`fvg-top-${i}`,[{time:t,value:fvg.top},  {time:extendT,value:fvg.top}  ],border,1,2,TOGGLES.fvg);
-    addLine(`fvg-bot-${i}`,[{time:t,value:fvg.bottom},{time:extendT,value:fvg.bottom}],border,1,2,TOGGLES.fvg);
-  });
-
-  // ── Premium / Discount Zones ──
-  if(shifted.length>=2){
-    const firstT=shifted[0].time;
-    addLine('pdz-high',[{time:firstT,value:smc.pdz.high}, {time:extendT,value:smc.pdz.high}],'rgba(231,76,60,0.6)', 1,2,TOGGLES.pdz);
-    addLine('pdz-mid', [{time:firstT,value:smc.pdz.mid},  {time:extendT,value:smc.pdz.mid} ],'rgba(135,139,148,0.6)',1,2,TOGGLES.pdz);
-    addLine('pdz-low', [{time:firstT,value:smc.pdz.low},  {time:extendT,value:smc.pdz.low} ],'rgba(8,153,129,0.6)', 1,2,TOGGLES.pdz);
-  }
-}
-
-// ── Draw STS ──────────────────────────────────────────────────────────────────
-function drawSTS(candles,shifted){
-  const{stops,dirs,adjusting}=calcSTS(candles,STS_PARAMS);
-  const bullData=[],bearData=[],flipData=[];
-  for(let i=0;i<shifted.length;i++){
-    if(stops[i]==null)continue;
-    const t=shifted[i].time;
-    const isFlip=i>0&&dirs[i]!==dirs[i-1];
-    if(!isFlip){
-      if(dirs[i]===1) bullData.push({time:t,value:stops[i]});
-      else             bearData.push({time:t,value:stops[i]});
-    } else {
-      flipData.push({time:t,value:stops[i]});
-    }
-  }
-  // We use two separate line series (bull/bear) via color changes
-  // Merge into single series with color segments
-  const merged=[];
-  for(let i=0;i<shifted.length;i++){
-    if(stops[i]==null)continue;
-    merged.push({time:shifted[i].time,value:stops[i]});
-  }
-  stsSeries.setData(merged);
-  // Update line color per direction — use last direction
-  const lastDir=dirs.filter(d=>d!==undefined).slice(-1)[0]??1;
-  stsSeries.applyOptions({color:lastDir===1?'rgba(8,153,129,0.9)':'rgba(242,54,69,0.9)'});
 }
 
 // ── Fetch helpers ─────────────────────────────────────────────────────────────
@@ -823,36 +292,49 @@ async function fetchWithFallback(yfUrl){
       const res=await fetch(mkP(yfUrl),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});
       if(!res.ok){errs.push(`HTTP ${res.status}`);continue;}
       const txt=await res.text();
-      if(!txt?.trim()){errs.push('empty response');continue;}
+      if(!txt?.trim()){errs.push('prázdná odpověď');continue;}
       return JSON.parse(txt);
     }catch(e){errs.push(e.message);}
   }
-  throw new Error('All proxies failed: '+errs.join(' | '));
+  throw new Error('Proxy selhaly: '+errs.join(' | '));
 }
-function buildURL(host,range,iv){
-  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?range=${range}&interval=${iv}&includePrePost=false&events=div%7Csplit`;
+
+function buildYFUrl(host, cfg){
+  const base = `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
+  if(cfg.usePeriod){
+    const p2 = Math.floor(Date.now()/1000);
+    const p1 = p2 - cfg.days * 86400;
+    return `${base}&period1=${p1}&period2=${p2}`;
+  }
+  return `${base}&range=${cfg.range}`;
 }
+
 function parseCandles(json){
   const r=json?.chart?.result?.[0];
-  if(!r) throw new Error(`Yahoo Finance: ${json?.chart?.error?.description||'No data'}`);
+  if(!r){
+    const yfErr = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'Žádná data';
+    throw new Error(`Yahoo Finance: ${yfErr}`);
+  }
   const ts=r.timestamp||[],q=r.indicators?.quote?.[0]||{},m=r.meta||{};
-  if(!ts.length) throw new Error('Empty data from Yahoo Finance');
+  if(!ts.length) throw new Error('Prázdná data od Yahoo Finance');
   const candles=ts.map((t,i)=>({
     time:Math.floor(t),open:q.open?.[i],high:q.high?.[i],low:q.low?.[i],close:q.close?.[i],volume:q.volume?.[i]??0,
   })).filter(c=>c.open!=null&&c.close!=null).sort((a,b)=>a.time-b.time);
-  if(!candles.length)throw new Error('No valid candles after filtering');
+  if(!candles.length) throw new Error('Žádné platné svíčky po filtrování');
   const last=candles[candles.length-1];
   return{candles,meta:{
-    price:m.regularMarketPrice??last.close,
-    prevClose:m.chartPreviousClose??candles[candles.length-2]?.close,
-    volume:m.regularMarketVolume??last.volume,
-    dayHigh:m.regularMarketDayHigh,dayLow:m.regularMarketDayLow,
+    price:    m.regularMarketPrice  ??last.close,
+    prevClose:m.chartPreviousClose  ??candles[candles.length-2]?.close,
+    volume:   m.regularMarketVolume ??last.volume,
+    dayHigh:  m.regularMarketDayHigh,
+    dayLow:   m.regularMarketDayLow,
   }};
 }
-async function fetchYF(range,iv){
+
+async function fetchYF(cfg){
   let lastErr;
   for(const host of YF_HOSTS){
-    try{return await fetchWithFallback(buildURL(host,range,iv));}
+    try{return await fetchWithFallback(buildYFUrl(host,cfg));}
     catch(e){lastErr=e;}
   }
   throw lastErr;
@@ -861,37 +343,43 @@ async function fetchYF(range,iv){
 // ── Main load ─────────────────────────────────────────────────────────────────
 async function loadData(isRefresh=false){
   setRefreshing(true);
-  if(!isRefresh)showLoading(`Loading ${FETCH_CFG[curIv].range} / ${curIv}…`);
-  const{range,iv}=FETCH_CFG[curIv];
-  try{
-    const json=await fetchYF(range,iv);
-    const{candles,meta}=parseCandles(json);
-    lastCandles=candles;
+  if(!isRefresh) showLoading('Načítám data…');
 
+  const cfg = FETCH_CONFIG_BY_IV[curIv];
+  const descr = cfg.usePeriod
+    ? `~730 dní / ${cfg.interval}`
+    : `${cfg.range} / ${cfg.interval}`;
+
+  try{
+    setLoadMsg(`Načítám ${descr}…`);
+    const json=await fetchYF(cfg);
+    const{candles,meta}=parseCandles(json);
+
+    // Svíčky + volume — všechna data (5 let)
     const shifted=candles.map(c=>({...c,time:shiftTs(c.time)}));
     candleSeries.setData(shifted);
-    volSeries.setData(shifted.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'#1a3d2b':'#3d1a1a'})));
+    volSeries.setData(shifted.map(c=>({
+      time:c.time,value:c.volume,color:c.close>=c.open?'#1a3d2b':'#3d1a1a'
+    })));
 
-    // EMA
+    // EMA z celé dostupné historie
     const closes=candles.map(c=>c.close);
-    const e50arr=calcEMA(closes,50),e200arr=calcEMA(closes,200),e500arr=calcEMA(closes,500);
+    const e50arr =calcEMA(closes,50);
+    const e200arr=calcEMA(closes,200);
+    const e500arr=calcEMA(closes,500);
+
     ema50S.setData( shifted.map((c,i)=>e50arr[i] !=null?{time:c.time,value:+e50arr[i].toFixed(4)} :null).filter(Boolean));
     ema200S.setData(shifted.map((c,i)=>e200arr[i]!=null?{time:c.time,value:+e200arr[i].toFixed(4)}:null).filter(Boolean));
     ema500S.setData(shifted.map((c,i)=>e500arr[i]!=null?{time:c.time,value:+e500arr[i].toFixed(4)}:null).filter(Boolean));
-    const li=candles.length-1;
-    el('ev50').textContent =e50arr[li] !=null?e50arr[li].toFixed(3) :'—';
-    el('ev200').textContent=e200arr[li]!=null?e200arr[li].toFixed(3):'—';
-    el('ev500').textContent=e500arr[li]!=null?e500arr[li].toFixed(3):'—';
 
-    // STS
-    if(TOGGLES.sts) drawSTS(candles,shifted);
+    // Poslední EMA hodnoty do legendy
+    const lastIdx=candles.length-1;
+    el('ev50').textContent =e50arr[lastIdx] !=null?e50arr[lastIdx].toFixed(3) :'—';
+    el('ev200').textContent=e200arr[lastIdx]!=null?e200arr[lastIdx].toFixed(3):'—';
+    el('ev500').textContent=e500arr[lastIdx]!=null?e500arr[lastIdx].toFixed(3):'—';
 
-    // SMC
-    smcData=calcSMC(candles);
-    drawSMC(candles,smcData,shifted);
-
-    // Fit
-    chart.timeScale().fitContent();
+    // Zoom na zvolené okno (neomezuje scroll doleva!)
+    applyZoom(curZoomDays);
 
     // Header
     const{price,prevClose,volume,dayHigh,dayLow}=meta;
@@ -899,82 +387,79 @@ async function loadData(isRefresh=false){
     const pct=ch!=null&&prevClose?ch/prevClose*100:null;
     const up=ch>=0,sign=up?'+':'',clr=up?'#26c281':'#e74c3c';
     setText('price',price.toFixed(3));
-    el('change').textContent=ch!=null?sign+ch.toFixed(3):'—';el('change').style.color=clr;
-    el('changePct').textContent=pct!=null?`(${sign}${pct.toFixed(2)}%)`:'';el('changePct').style.color=clr;
-    setText('vol',volume?Number(volume).toLocaleString('en-US'):'—');
+    el('change').textContent=ch!=null?sign+ch.toFixed(3):'—'; el('change').style.color=clr;
+    el('changePct').textContent=pct!=null?`(${sign}${pct.toFixed(2)}%)`:''; el('changePct').style.color=clr;
+    setText('vol',volume?Number(volume).toLocaleString('cs-CZ'):'—');
     setText('dhigh',dayHigh?dayHigh.toFixed(3):candles.reduce((m,c)=>Math.max(m,c.high),0).toFixed(3));
     setText('dlow', dayLow ?dayLow.toFixed(3) :candles.reduce((m,c)=>Math.min(m,c.low),Infinity).toFixed(3));
 
     hideOverlay();
+    setRefreshing(false);
     resetTimer();
+
   }catch(e){
-    if(!isRefresh)showErr(e.message||'Unknown error');
-    else console.error('Refresh failed:',e);
+    setRefreshing(false);
+    if(!isRefresh) showErr(e.message||'Neznámá chyba');
+    else console.error('Refresh selhal:',e);
   }
-  setRefreshing(false);
 }
 
+// ── Reset timer ───────────────────────────────────────────────────────────────
 function resetTimer(){
   clearInterval(refreshTimer);
-  const ms=REFRESH_MS[curIv]||60000;
+  const ms=REFRESH_BY_IV[curIv]||60000;
   refreshTimer=setInterval(()=>loadData(true),ms);
-  el('status-txt').textContent=`Auto-refresh ${ms/1000}s`;
+  const s=ms/1000;
+  el('status').textContent=s<60?`Auto-refresh ${s}s`:`Auto-refresh ${s/60}min`;
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 const el=id=>document.getElementById(id);
 const setText=(id,v)=>{el(id).textContent=v;};
+function setLoadMsg(msg){const m=el('load-msg');if(m)m.textContent=msg;}
+
 function clearTooltip(){
   el('hint').style.display='';
   ['o','h','l','c'].forEach(k=>el('oi-'+k).style.display='none');
   ['50','200','500'].forEach(p=>el('ev'+p).textContent='—');
 }
-function setOI(k,v,c){el('oi-'+k).style.display='flex';el('tv-'+k).textContent=v;el('tv-'+k).style.color=c;}
+function setOI(k,v,c){
+  el('oi-'+k).style.display='flex';
+  el('tv-'+k).textContent=v;el('tv-'+k).style.color=c;
+}
 function showLoading(msg){
   const o=el('overlay');o.style.display='flex';
   o.innerHTML=`<div id="spin"></div><div id="load-msg">${msg}</div>`;
 }
 function showErr(msg){
   const o=el('overlay');o.style.display='flex';
-  o.innerHTML=`<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData()">Retry</button></div>`;
+  o.innerHTML=`<div class="ebox"><p class="etit">⚠ Chyba při načítání</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData()">Zkusit znovu</button></div>`;
 }
 function hideOverlay(){el('overlay').style.display='none';}
 function setRefreshing(on){
   el('dot').style.background=on?'#e7a22b':'#26c281';
-  if(on)setText('status-txt','Loading…');
+  if(on)setText('status','Načítám…');
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────────
+// Zoom buttons — jen posunout pohled, NE refetch
+document.querySelectorAll('.zb').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.zb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  curZoomDays=+btn.dataset.days;
+  applyZoom(curZoomDays);   // okamžitý zoom, bez načítání
+}));
+
+// Interval buttons — změna intervalu = nový fetch
 document.querySelectorAll('.iv').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('.iv').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');curIv=btn.dataset.iv;clearTooltip();loadData();
+  btn.classList.add('on');
+  curIv=btn.dataset.iv;
+  clearTooltip();
+  loadData();
 }));
-el('rbtn').addEventListener('click',()=>loadData(false));
 
-// ── Sidebar toggles ───────────────────────────────────────────────────────────
-Object.keys(TOGGLES).forEach(key=>{
-  const inp=el('tog-'+key);
-  if(!inp)return;
-  inp.checked=TOGGLES[key];
-  inp.addEventListener('change',()=>{
-    TOGGLES[key]=inp.checked;
-    // For SMC indicators re-draw; for EMA/STS just toggle visibility
-    if(['ema50','ema200','ema500','sts'].includes(key)){
-      applyToggles();
-      // Redraw STS if toggled on
-      if(key==='sts'&&TOGGLES.sts&&lastCandles.length){
-        const shifted=lastCandles.map(c=>({...c,time:shiftTs(c.time)}));
-        drawSTS(lastCandles,shifted);
-      }
-    } else {
-      // SMC toggle — redraw with new visibility
-      if(lastCandles.length&&smcData){
-        const shifted=lastCandles.map(c=>({...c,time:shiftTs(c.time)}));
-        drawSMC(lastCandles,smcData,shifted);
-      }
-    }
-  });
-});
+el('rbtn').addEventListener('click',()=>loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 waitForLib(()=>{initChart();loadData();});
