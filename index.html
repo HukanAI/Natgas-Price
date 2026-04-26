@@ -142,19 +142,30 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 const TICKER = 'NG=F';
 const TZ     = 'Europe/Prague';
 
-// Validní Yahoo Finance range: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
-// Intraday (< 1d) má hard limit 60 dní — používáme period1/period2 místo range.
-// period1/period2 = Unix timestamp v sekundách.
+// Yahoo Finance přesné limity (ověřeno z chybových hlášek API):
+//
+//  interval │ max historie │ metoda        │ poznámka
+//  ─────────┼──────────────┼───────────────┼─────────────────────────────────
+//  1m       │ 7 dní        │ range=5d      │ jediný validní range < 7d
+//  5m       │ 60 dní       │ range=1mo     │ period1/period2 → HTTP 422 pro 5m!
+//  15m      │ 60 dní       │ range=1mo     │ period1/period2 → HTTP 422 pro 15m!
+//  1h       │ 730 dní      │ period1/p2    │ range string nefunguje pro 2y+, musí být ts
+//  1d       │ neomezeno    │ range=5y      │
+//  1wk      │ neomezeno    │ range=10y     │
+//
+// POZOR: pro 5m a 15m Yahoo Finance odmítá period1/period2 s HTTP 422.
+// Jedině validní range stringy (1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max) fungují.
+// Pro 1h naopak range=2y nefunguje → nutný period1/period2.
 const FETCH_CONFIG_BY_IV = {
-  '1m':  { usePeriod: true,  days: 7,    interval: '1m'  },
-  '5m':  { usePeriod: true,  days: 59,   interval: '5m'  },
-  '15m': { usePeriod: true,  days: 59,   interval: '15m' },
-  '1h':  { usePeriod: true,  days: 59,   interval: '1h'  },
-  '1d':  { usePeriod: false, range: '5y',interval: '1d'  },
-  '1wk': { usePeriod: false, range: '10y',interval:'1wk' },
+  '1m':  { usePeriod: false, range: '5d',   interval: '1m'  },
+  '5m':  { usePeriod: false, range: '1mo',  interval: '5m'  },
+  '15m': { usePeriod: false, range: '1mo',  interval: '15m' },
+  '1h':  { usePeriod: true,  days:  729,    interval: '1h'  },
+  '1d':  { usePeriod: false, range: '5y',   interval: '1d'  },
+  '1wk': { usePeriod: false, range: '10y',  interval: '1wk' },
 };
 
-const REFRESH_BY_IV = {'1m':10000,'5m':15000,'15m':20000,'1h':60000,'1d':300000,'1wk':600000};
+const REFRESH_BY_IV = {'1m':10000,'5m':15000,'15m':20000,'1h':120000,'1d':300000,'1wk':600000};
 
 const PROXIES  = [
   u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
@@ -300,7 +311,10 @@ function buildYFUrl(host, cfg){
 
 function parseCandles(json){
   const r=json?.chart?.result?.[0];
-  if(!r) throw new Error(json?.chart?.error?.description||'Žádná data');
+  if(!r){
+    const yfErr = json?.chart?.error?.description || JSON.stringify(json?.chart?.error) || 'Žádná data';
+    throw new Error(`Yahoo Finance: ${yfErr}`);
+  }
   const ts=r.timestamp||[],q=r.indicators?.quote?.[0]||{},m=r.meta||{};
   if(!ts.length) throw new Error('Prázdná data od Yahoo Finance');
   const candles=ts.map((t,i)=>({
@@ -332,7 +346,9 @@ async function loadData(isRefresh=false){
   if(!isRefresh) showLoading('Načítám data…');
 
   const cfg = FETCH_CONFIG_BY_IV[curIv];
-  const descr = cfg.usePeriod ? `${cfg.days}d / ${cfg.interval}` : `${cfg.range} / ${cfg.interval}`;
+  const descr = cfg.usePeriod
+    ? `~730 dní / ${cfg.interval}`
+    : `${cfg.range} / ${cfg.interval}`;
 
   try{
     setLoadMsg(`Načítám ${descr}…`);
