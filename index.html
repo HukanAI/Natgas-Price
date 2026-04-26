@@ -43,31 +43,33 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .leg-val{font-weight:600}
 .leg-sep{width:1px;background:#1e2530;height:12px;margin:0 2px}
 
-#body{flex:1;display:flex;min-height:0}
+#body{flex:1;display:flex;min-height:0;position:relative}
 
-/* Chart area — three panes stacked vertically */
+/* Chart area */
 #chart-area{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}
-
-/* Each pane hosts exactly one lightweight-charts instance */
 #pane-main{flex:55;min-height:0;position:relative}
-#pane-rsi {flex:22;min-height:0;border-top:1px solid #1e2530;position:relative}
-#pane-macd{flex:23;min-height:0;border-top:1px solid #1e2530;position:relative}
+#pane-rsi {flex:22;min-height:0;border-top:1px solid #1e2530;position:relative;overflow:hidden}
+#pane-macd{flex:23;min-height:0;border-top:1px solid #1e2530;position:relative;overflow:hidden}
 .pane-label{position:absolute;top:4px;left:8px;font-size:10px;color:#3d4a5c;font-family:monospace;z-index:2;pointer-events:none}
 
 /* Side panel */
-#side-panel{width:220px;flex-shrink:0;border-left:1px solid #1e2530;background:#0a0e17;display:flex;flex-direction:column;overflow-y:auto}
+#side-panel{width:220px;flex-shrink:0;border-left:1px solid #1e2530;background:#0a0e17;display:flex;flex-direction:column;overflow-y:auto;transition:width .2s}
+#side-panel.hidden{width:0;border-left:none;overflow:hidden}
 #panel-header{padding:8px 12px;border-bottom:1px solid #1e2530;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-#panel-header span{font-size:11px;color:#5a6478;text-transform:uppercase;letter-spacing:1px}
-#panel-toggle{background:transparent;border:none;color:#5a6478;cursor:pointer;font-size:16px;line-height:1;padding:0 2px}
-#panel-toggle:hover{color:#aab}
+#panel-header span{font-size:11px;color:#5a6478;text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+
+/* Panel toggle button — always visible, sits on the border */
+#panel-toggle-wrap{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10}
+#panel-toggle{background:#0a0e17;border:1px solid #1e2530;border-right:none;color:#5a6478;cursor:pointer;font-size:13px;line-height:1;padding:6px 4px;border-radius:4px 0 0 4px;writing-mode:horizontal-tb}
+#panel-toggle:hover{color:#aab;background:#111620}
+
 .ind-group{border-bottom:1px solid #1e2530}
-.ind-header{padding:7px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.ind-header{padding:7px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;white-space:nowrap}
 .ind-header:hover{background:#111620}
 .ind-name{font-size:12px;color:#8492a6;flex:1}
 .ind-toggle{width:28px;height:15px;border-radius:8px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .2s}
 .ind-toggle::after{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s}
-.ind-toggle.on{background:#1a6ed8}
-.ind-toggle.on::after{transform:translateX(13px)}
+.ind-toggle.on{background:#1a6ed8}.ind-toggle.on::after{transform:translateX(13px)}
 .ind-toggle.off{background:#2a3548}
 .ind-chevron{font-size:10px;color:#3d4a5c;transition:transform .2s;flex-shrink:0}
 .ind-chevron.open{transform:rotate(90deg)}
@@ -174,17 +176,20 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       </div>
     </div>
 
+    <!-- Panel toggle always visible -->
+    <div id="panel-toggle-wrap">
+      <button id="panel-toggle" title="Toggle indicators panel">◀</button>
+    </div>
+
     <div id="side-panel">
       <div id="panel-header">
         <span>Indicators</span>
-        <button id="panel-toggle" title="Hide panel">◀</button>
       </div>
 
       <div class="ind-group">
         <div class="ind-header">
           <button class="ind-toggle on" data-ind="ema50"></button>
-          <span class="ind-name">EMA 50</span>
-          <span class="ind-chevron">▶</span>
+          <span class="ind-name">EMA 50</span><span class="ind-chevron">▶</span>
         </div>
         <div class="ind-body">
           <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-ema50-period" type="number" min="1" max="500" value="50"/></div>
@@ -192,12 +197,10 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
           <button class="apply-btn" data-apply="ema50">Apply</button>
         </div>
       </div>
-
       <div class="ind-group">
         <div class="ind-header">
           <button class="ind-toggle on" data-ind="ema200"></button>
-          <span class="ind-name">EMA 200</span>
-          <span class="ind-chevron">▶</span>
+          <span class="ind-name">EMA 200</span><span class="ind-chevron">▶</span>
         </div>
         <div class="ind-body">
           <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-ema200-period" type="number" min="1" max="1000" value="200"/></div>
@@ -205,12 +208,10 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
           <button class="apply-btn" data-apply="ema200">Apply</button>
         </div>
       </div>
-
       <div class="ind-group">
         <div class="ind-header">
           <button class="ind-toggle on" data-ind="ema500"></button>
-          <span class="ind-name">EMA 500</span>
-          <span class="ind-chevron">▶</span>
+          <span class="ind-name">EMA 500</span><span class="ind-chevron">▶</span>
         </div>
         <div class="ind-body">
           <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-ema500-period" type="number" min="1" max="2000" value="500"/></div>
@@ -218,12 +219,10 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
           <button class="apply-btn" data-apply="ema500">Apply</button>
         </div>
       </div>
-
       <div class="ind-group">
         <div class="ind-header">
           <button class="ind-toggle on" data-ind="bb"></button>
-          <span class="ind-name">Bollinger Bands</span>
-          <span class="ind-chevron">▶</span>
+          <span class="ind-name">Bollinger Bands</span><span class="ind-chevron">▶</span>
         </div>
         <div class="ind-body">
           <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-bb-period" type="number" min="2" max="200" value="20"/></div>
@@ -232,12 +231,10 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
           <button class="apply-btn" data-apply="bb">Apply</button>
         </div>
       </div>
-
       <div class="ind-group">
         <div class="ind-header">
           <button class="ind-toggle on" data-ind="rsi"></button>
-          <span class="ind-name">RSI</span>
-          <span class="ind-chevron">▶</span>
+          <span class="ind-name">RSI</span><span class="ind-chevron">▶</span>
         </div>
         <div class="ind-body">
           <div class="param-row"><span class="param-label">Period</span><input class="param-input" id="p-rsi-period" type="number" min="2" max="100" value="14"/></div>
@@ -247,12 +244,10 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
           <button class="apply-btn" data-apply="rsi">Apply</button>
         </div>
       </div>
-
       <div class="ind-group">
         <div class="ind-header">
           <button class="ind-toggle on" data-ind="macd"></button>
-          <span class="ind-name">MACD</span>
-          <span class="ind-chevron">▶</span>
+          <span class="ind-name">MACD</span><span class="ind-chevron">▶</span>
         </div>
         <div class="ind-body">
           <div class="param-row"><span class="param-label">Fast</span><input class="param-input" id="p-macd-fast" type="number" min="2" max="100" value="12"/></div>
@@ -268,7 +263,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 <script>
 'use strict';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
 const TICKER     = 'NG=F';
 const TZ         = 'Europe/Prague';
 const REFRESH_MS = 10000;
@@ -294,7 +288,6 @@ const PROXIES = [
 ];
 const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
 
-// ── Indicator state ───────────────────────────────────────────────────────────
 const IND = {
   ema50:  {on:true, period:50,  color:'#f0c040'},
   ema200: {on:true, period:200, color:'#e05050'},
@@ -304,28 +297,22 @@ const IND = {
   macd:   {on:true, fast:12, slow:26, signal:9},
 };
 
-// ── App state ─────────────────────────────────────────────────────────────────
-let curIv        = '1h';
-let curViewKey   = '14';
+let curIv      = '1h';
+let curViewKey = '14';
 let refreshTimer = null;
 let lastCandles  = null;
 let lastShifted  = null;
 let panelVisible = true;
+let syncLock     = false;
 
-// Crosshair sync guard — prevents infinite loops
-let syncLock = false;
-
-// Chart instances
 let chartMain, chartRsi, chartMacd;
-
-// Series refs — all set inside initCharts()
 let serCandle, serVol;
 let serEma50, serEma200, serEma500;
 let serBBUpper, serBBMid, serBBLower;
 let serRsi, serRsiOB, serRsiOS, serRsiMid;
 let serMacdLine, serMacdSignal, serMacdHist;
 
-// ── Prague timezone ───────────────────────────────────────────────────────────
+// ── Prague time ───────────────────────────────────────────────────────────────
 function pragueNow() {
   return new Date().toLocaleTimeString('cs-CZ',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
@@ -344,735 +331,480 @@ function pragueOffsetSec(ts) {
 function shiftTs(ts)  { return ts + pragueOffsetSec(ts); }
 function todayStr()   { return new Date().toLocaleDateString('en-CA',{timeZone:TZ}); }
 function dateStr(ts)  { return new Date(ts*1000).toLocaleDateString('en-CA',{timeZone:TZ}); }
-
-function getPrevDayClose(candles, fallback) {
+function getPrevDayClose(candles, fb) {
   const today = todayStr();
   for (let i = candles.length-1; i >= 0; i--)
     if (dateStr(candles[i].time) < today) return candles[i].close;
-  return fallback;
+  return fb;
 }
-
 setInterval(()=>{ g('prg-time').textContent = pragueNow(); }, 1000);
 g('prg-time').textContent = pragueNow();
 
 // ── Resample ──────────────────────────────────────────────────────────────────
 function resample(candles, n) {
   if (n <= 1) return candles;
-  const sec = n * 3600;
-  const map = new Map();
+  const sec = n * 3600, map = new Map();
   for (const c of candles) {
-    const key = Math.floor(c.time / sec) * sec;
-    if (!map.has(key)) {
-      map.set(key, {time:key, open:c.open, high:c.high, low:c.low, close:c.close, volume:c.volume});
-    } else {
+    const key = Math.floor(c.time/sec)*sec;
+    if (!map.has(key)) map.set(key,{time:key,open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume});
+    else {
       const b = map.get(key);
-      if (c.high > b.high) b.high = c.high;
-      if (c.low  < b.low)  b.low  = c.low;
-      b.close = c.close;
-      b.volume += c.volume;
+      if (c.high>b.high) b.high=c.high;
+      if (c.low<b.low)   b.low=c.low;
+      b.close=c.close; b.volume+=c.volume;
     }
   }
   return [...map.values()].sort((a,b)=>a.time-b.time);
 }
 
-// ── Indicator calculations ────────────────────────────────────────────────────
+// ── Indicators ────────────────────────────────────────────────────────────────
 function calcEMA(closes, period) {
   const out = new Array(closes.length).fill(null);
   if (closes.length < period) return out;
   let sum = 0;
-  for (let i = 0; i < period; i++) sum += closes[i];
-  let ema = sum / period;
-  out[period-1] = ema;
-  const k = 2 / (period + 1);
-  for (let i = period; i < closes.length; i++) {
-    ema = closes[i] * k + ema * (1-k);
-    out[i] = ema;
-  }
+  for (let i=0; i<period; i++) sum += closes[i];
+  let ema = sum/period; out[period-1] = ema;
+  const k = 2/(period+1);
+  for (let i=period; i<closes.length; i++) { ema = closes[i]*k + ema*(1-k); out[i]=ema; }
   return out;
 }
-
 function calcBB(closes, period, mult) {
-  const upper = new Array(closes.length).fill(null);
-  const mid   = new Array(closes.length).fill(null);
-  const lower = new Array(closes.length).fill(null);
-  for (let i = period-1; i < closes.length; i++) {
-    const sl   = closes.slice(i-period+1, i+1);
-    const mean = sl.reduce((s,v)=>s+v,0) / period;
-    const sd   = Math.sqrt(sl.reduce((s,v)=>s+(v-mean)**2,0) / period);
-    mid[i]   = mean;
-    upper[i] = mean + mult * sd;
-    lower[i] = mean - mult * sd;
+  const upper=new Array(closes.length).fill(null), mid=new Array(closes.length).fill(null), lower=new Array(closes.length).fill(null);
+  for (let i=period-1; i<closes.length; i++) {
+    const sl=closes.slice(i-period+1,i+1), mean=sl.reduce((s,v)=>s+v,0)/period;
+    const sd=Math.sqrt(sl.reduce((s,v)=>s+(v-mean)**2,0)/period);
+    mid[i]=mean; upper[i]=mean+mult*sd; lower[i]=mean-mult*sd;
   }
-  return {upper, mid, lower};
+  return {upper,mid,lower};
 }
-
 function calcRSI(closes, period) {
-  const out = new Array(closes.length).fill(null);
-  if (closes.length < period + 1) return out;
-  let avgG = 0, avgL = 0;
-  for (let i = 1; i <= period; i++) {
-    const d = closes[i] - closes[i-1];
-    if (d > 0) avgG += d; else avgL -= d;
-  }
-  avgG /= period; avgL /= period;
-  out[period] = avgL === 0 ? 100 : +(100 - 100/(1 + avgG/avgL)).toFixed(2);
-  for (let i = period+1; i < closes.length; i++) {
-    const d = closes[i] - closes[i-1];
-    avgG = (avgG * (period-1) + (d > 0 ? d : 0)) / period;
-    avgL = (avgL * (period-1) + (d < 0 ? -d : 0)) / period;
-    out[i] = avgL === 0 ? 100 : +(100 - 100/(1 + avgG/avgL)).toFixed(2);
+  const out=new Array(closes.length).fill(null);
+  if (closes.length<period+1) return out;
+  let avgG=0, avgL=0;
+  for (let i=1; i<=period; i++) { const d=closes[i]-closes[i-1]; if(d>0)avgG+=d; else avgL-=d; }
+  avgG/=period; avgL/=period;
+  out[period]=avgL===0?100:+(100-100/(1+avgG/avgL)).toFixed(2);
+  for (let i=period+1; i<closes.length; i++) {
+    const d=closes[i]-closes[i-1];
+    avgG=(avgG*(period-1)+(d>0?d:0))/period;
+    avgL=(avgL*(period-1)+(d<0?-d:0))/period;
+    out[i]=avgL===0?100:+(100-100/(1+avgG/avgL)).toFixed(2);
   }
   return out;
 }
-
 function calcMACD(closes, fast, slow, signal) {
-  const eFast = calcEMA(closes, fast);
-  const eSlow = calcEMA(closes, slow);
-  const macd  = closes.map((_,i) =>
-    eFast[i] != null && eSlow[i] != null ? eFast[i] - eSlow[i] : null
-  );
-  const macdVals = macd.filter(v => v != null);
-  const sigEma   = calcEMA(macdVals, signal);
-  const sig = new Array(closes.length).fill(null);
-  let si = 0;
-  for (let i = 0; i < closes.length; i++)
-    if (macd[i] != null) { sig[i] = sigEma[si] ?? null; si++; }
-  const hist = closes.map((_,i) =>
-    macd[i] != null && sig[i] != null ? macd[i] - sig[i] : null
-  );
-  return {macd, sig, hist};
+  const eFast=calcEMA(closes,fast), eSlow=calcEMA(closes,slow);
+  const macd=closes.map((_,i)=>eFast[i]!=null&&eSlow[i]!=null?eFast[i]-eSlow[i]:null);
+  const macdVals=macd.filter(v=>v!=null), sigEma=calcEMA(macdVals,signal);
+  const sig=new Array(closes.length).fill(null); let si=0;
+  for (let i=0; i<closes.length; i++) if(macd[i]!=null){sig[i]=sigEma[si]??null;si++;}
+  const hist=closes.map((_,i)=>macd[i]!=null&&sig[i]!=null?macd[i]-sig[i]:null);
+  return {macd,sig,hist};
 }
+function rsiColor(v) { return v>=IND.rsi.ob?'#e74c3c':v<=IND.rsi.os?'#26c281':'#a78bfa'; }
 
-function rsiColor(v) {
-  return v >= IND.rsi.ob ? '#e74c3c' : v <= IND.rsi.os ? '#26c281' : '#a78bfa';
-}
-
-// ── Chart factory ─────────────────────────────────────────────────────────────
-// Called only after LightweightCharts is loaded, so the global is guaranteed.
+// ── Init charts ───────────────────────────────────────────────────────────────
 function buildBase() {
   return {
-    layout:       {background:{type:'solid',color:'#0d1117'}, textColor:'#5a6478', fontFamily:'monospace', fontSize:11},
-    grid:         {vertLines:{color:'#131a24'}, horzLines:{color:'#131a24'}},
-    crosshair:    {mode:LightweightCharts.CrosshairMode.Normal, vertLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}, horzLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}},
-    handleScroll: {mouseWheel:true, pressedMouseMove:true, horzTouchDrag:true, vertTouchDrag:false},
-    handleScale:  {mouseWheel:true, pinch:true, axisPressedMouseMove:true},
+    layout:{background:{type:'solid',color:'#0d1117'},textColor:'#5a6478',fontFamily:'monospace',fontSize:11},
+    grid:{vertLines:{color:'#131a24'},horzLines:{color:'#131a24'}},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'},horzLine:{color:'#334155',labelBackgroundColor:'#1e2d3d'}},
+    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
+    handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:true},
   };
 }
-
 function makeChart(elId, extra) {
-  const el = g(elId);
-  return LightweightCharts.createChart(el, {
-    ...buildBase(), ...extra,
-    width: el.clientWidth,
-    height: el.clientHeight,
-  });
+  const el=g(elId);
+  return LightweightCharts.createChart(el,{...buildBase(),...extra,width:el.clientWidth,height:el.clientHeight});
 }
 
-// ── Init all charts ───────────────────────────────────────────────────────────
 function initCharts() {
+  // Fixed price scale width so all three charts have identical left offset for X axis
+  const SCALE_W = 65;
 
-  // ── Main pane ───────────────────────────────────────────────────────────────
-  chartMain = makeChart('pane-main', {
-    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.06, bottom:0.20}, minimumWidth:65},
-    timeScale: {borderColor:'#1e2530', timeVisible:true, secondsVisible:false, rightOffset:5, barSpacing:8, minBarSpacing:2, borderVisible:true},
+  chartMain = makeChart('pane-main',{
+    rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.06,bottom:0.20},minimumWidth:SCALE_W},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false,rightOffset:5,barSpacing:8,minBarSpacing:2},
   });
+  serCandle = chartMain.addCandlestickSeries({upColor:'#26c281',downColor:'#e74c3c',borderUpColor:'#26c281',borderDownColor:'#e74c3c',wickUpColor:'#26c281',wickDownColor:'#e74c3c',priceFormat:{type:'price',precision:3,minMove:0.001}});
+  serVol    = chartMain.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
+  chartMain.priceScale('vol').applyOptions({scaleMargins:{top:0.85,bottom:0},borderColor:'#1e2530'});
+  const emaBase={priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}};
+  serEma50  = chartMain.addLineSeries({...emaBase,color:IND.ema50.color, lineWidth:1.5});
+  serEma200 = chartMain.addLineSeries({...emaBase,color:IND.ema200.color,lineWidth:1.5});
+  serEma500 = chartMain.addLineSeries({...emaBase,color:IND.ema500.color,lineWidth:1.5});
+  const bbBase={priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:3,minMove:0.001}};
+  serBBUpper=chartMain.addLineSeries({...bbBase,color:'rgba(126,184,247,0.7)',lineWidth:1});
+  serBBMid  =chartMain.addLineSeries({...bbBase,color:'rgba(126,184,247,0.4)',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
+  serBBLower=chartMain.addLineSeries({...bbBase,color:'rgba(126,184,247,0.7)',lineWidth:1});
 
-  serCandle = chartMain.addCandlestickSeries({
-    upColor:'#26c281', downColor:'#e74c3c',
-    borderUpColor:'#26c281', borderDownColor:'#e74c3c',
-    wickUpColor:'#26c281', wickDownColor:'#e74c3c',
-    priceFormat:{type:'price', precision:3, minMove:0.001},
+  chartRsi = makeChart('pane-rsi',{
+    rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.08,bottom:0.08},minimumWidth:SCALE_W},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false},
   });
-  serVol = chartMain.addHistogramSeries({priceFormat:{type:'volume'}, priceScaleId:'vol'});
-  chartMain.priceScale('vol').applyOptions({scaleMargins:{top:0.85, bottom:0}, borderColor:'#1e2530'});
+  serRsi    = chartRsi.addLineSeries({color:IND.rsi.color,lineWidth:1.5,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:true,crosshairMarkerRadius:3,priceFormat:{type:'custom',formatter:v=>v.toFixed(1)}});
+  const refBase={priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false};
+  serRsiOB  = chartRsi.addLineSeries({...refBase,color:'rgba(231,76,60,0.4)',  lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
+  serRsiOS  = chartRsi.addLineSeries({...refBase,color:'rgba(38,194,129,0.4)',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed});
+  serRsiMid = chartRsi.addLineSeries({...refBase,color:'rgba(100,120,150,0.4)',lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dotted});
 
-  const emaBase = {priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, priceFormat:{type:'price',precision:3,minMove:0.001}};
-  serEma50  = chartMain.addLineSeries({...emaBase, color:IND.ema50.color,  lineWidth:1.5});
-  serEma200 = chartMain.addLineSeries({...emaBase, color:IND.ema200.color, lineWidth:1.5});
-  serEma500 = chartMain.addLineSeries({...emaBase, color:IND.ema500.color, lineWidth:1.5});
-
-  const bbBase = {priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, priceFormat:{type:'price',precision:3,minMove:0.001}};
-  serBBUpper = chartMain.addLineSeries({...bbBase, color:'rgba(126,184,247,0.7)', lineWidth:1});
-  serBBMid   = chartMain.addLineSeries({...bbBase, color:'rgba(126,184,247,0.4)', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed});
-  serBBLower = chartMain.addLineSeries({...bbBase, color:'rgba(126,184,247,0.7)', lineWidth:1});
-
-  // ── RSI pane ────────────────────────────────────────────────────────────────
-  chartRsi = makeChart('pane-rsi', {
-    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.08, bottom:0.08}, minimumWidth:65},
-    timeScale: {
-      borderColor:'#1e2530',
-      timeVisible:true,
-      secondsVisible:false,
-      borderVisible:true,
-      tickMarkFormatter: (time, tickMarkType, locale) => {
-        // Same format as chartMain — show time HH:MM, or date for day marks
-        const d = new Date(time * 1000);
-        const h = d.getUTCHours().toString().padStart(2,'0');
-        const m = d.getUTCMinutes().toString().padStart(2,'0');
-        if (tickMarkType <= 2) { // year/month/day boundary
-          return `${d.getUTCDate()}.`;
-        }
-        return `${h}:${m}`;
-      },
-    },
+  chartMacd = makeChart('pane-macd',{
+    rightPriceScale:{borderColor:'#1e2530',scaleMargins:{top:0.08,bottom:0.08},minimumWidth:SCALE_W},
+    timeScale:{borderColor:'#1e2530',timeVisible:true,secondsVisible:false},
   });
+  serMacdLine  =chartMacd.addLineSeries({color:'#26c281',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
+  serMacdSignal=chartMacd.addLineSeries({color:'#f0c040',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,priceFormat:{type:'price',precision:4,minMove:0.0001}});
+  serMacdHist  =chartMacd.addHistogramSeries({priceFormat:{type:'price',precision:4,minMove:0.0001}});
 
-  serRsi = chartRsi.addLineSeries({
-    color:IND.rsi.color, lineWidth:1.5,
-    priceLineVisible:false, lastValueVisible:true,
-    crosshairMarkerVisible:true, crosshairMarkerRadius:3,
-    priceFormat:{type:'custom', formatter:v=>v.toFixed(1)},
-  });
-  const refBase = {priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false};
-  serRsiOB  = chartRsi.addLineSeries({...refBase, color:'rgba(231,76,60,0.4)',   lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed});
-  serRsiOS  = chartRsi.addLineSeries({...refBase, color:'rgba(38,194,129,0.4)', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed});
-  serRsiMid = chartRsi.addLineSeries({...refBase, color:'rgba(100,120,150,0.4)',lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dotted});
-
-  // ── MACD pane ───────────────────────────────────────────────────────────────
-  chartMacd = makeChart('pane-macd', {
-    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.08, bottom:0.08}, minimumWidth:65},
-    timeScale: {borderColor:'#1e2530', timeVisible:true, secondsVisible:false, borderVisible:true},
-  });
-
-  serMacdLine   = chartMacd.addLineSeries({color:'#26c281', lineWidth:1.5, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, priceFormat:{type:'price',precision:4,minMove:0.0001}});
-  serMacdSignal = chartMacd.addLineSeries({color:'#f0c040', lineWidth:1.5, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, priceFormat:{type:'price',precision:4,minMove:0.0001}});
-  serMacdHist   = chartMacd.addHistogramSeries({priceFormat:{type:'price',precision:4,minMove:0.0001}});
-
-  // ── Time scale synchronisation ──────────────────────────────────────────────
-  // Strategy: use the LOGICAL range (bar indices) from chartMain as the
-  // source of truth. RSI and MACD receive the same logical range.
-  // This keeps all three axes pixel-perfect in sync regardless of whether
-  // their time scales show labels.
+  // ── Time sync: use chartMain as master ────────────────────────────────────
+  // After data is loaded we call forceSyncRange() once to align all charts.
+  // Thereafter, logical range changes on ANY chart propagate to the others.
   chartMain.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (syncLock || !range) return;
     syncLock = true;
-    if (IND.rsi.on)  safeSetLogicalRange(chartRsi,  range);
-    if (IND.macd.on) safeSetLogicalRange(chartMacd, range);
+    try {
+      if (IND.rsi.on)  chartRsi.timeScale().setVisibleLogicalRange(range);
+      if (IND.macd.on) chartMacd.timeScale().setVisibleLogicalRange(range);
+    } catch(_){}
     syncLock = false;
   });
   chartRsi.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (syncLock || !range) return;
     syncLock = true;
-    safeSetLogicalRange(chartMain, range);
-    if (IND.macd.on) safeSetLogicalRange(chartMacd, range);
+    try {
+      chartMain.timeScale().setVisibleLogicalRange(range);
+      if (IND.macd.on) chartMacd.timeScale().setVisibleLogicalRange(range);
+    } catch(_){}
     syncLock = false;
   });
   chartMacd.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (syncLock || !range) return;
     syncLock = true;
-    safeSetLogicalRange(chartMain, range);
-    if (IND.rsi.on) safeSetLogicalRange(chartRsi, range);
+    try {
+      chartMain.timeScale().setVisibleLogicalRange(range);
+      if (IND.rsi.on) chartRsi.timeScale().setVisibleLogicalRange(range);
+    } catch(_){}
     syncLock = false;
   });
 
-  // ── Crosshair synchronisation ───────────────────────────────────────────────
+  // ── Crosshair sync ────────────────────────────────────────────────────────
   chartMain.subscribeCrosshairMove(p => {
     onMainCross(p);
-    if (syncLock) return;
-    syncLock = true;
-    syncCrossTo(p, chartRsi,  IND.rsi.on);
-    syncCrossTo(p, chartMacd, IND.macd.on);
-    syncLock = false;
+    if (syncLock) return; syncLock=true;
+    syncCrossTo(p,chartRsi,IND.rsi.on); syncCrossTo(p,chartMacd,IND.macd.on);
+    syncLock=false;
   });
   chartRsi.subscribeCrosshairMove(p => {
-    const s = p?.seriesData?.get(serRsi);
-    if (s) { g('ev-rsi').textContent = s.value.toFixed(1); g('ev-rsi').style.color = rsiColor(s.value); }
-    if (syncLock) return;
-    syncLock = true;
-    syncCrossTo(p, chartMain, true);
-    syncCrossTo(p, chartMacd, IND.macd.on);
-    syncLock = false;
+    const s=p?.seriesData?.get(serRsi);
+    if (s){g('ev-rsi').textContent=s.value.toFixed(1);g('ev-rsi').style.color=rsiColor(s.value);}
+    if (syncLock) return; syncLock=true;
+    syncCrossTo(p,chartMain,true); syncCrossTo(p,chartMacd,IND.macd.on);
+    syncLock=false;
   });
   chartMacd.subscribeCrosshairMove(p => {
-    const ml = p?.seriesData?.get(serMacdLine);
-    const ms = p?.seriesData?.get(serMacdSignal);
-    const mh = p?.seriesData?.get(serMacdHist);
-    if (ml) g('ev-macd').textContent = ml.value.toFixed(4);
-    if (ms) g('ev-sig').textContent  = ms.value.toFixed(4);
-    if (mh) { g('ev-hist').textContent = mh.value.toFixed(4); g('ev-hist').style.color = mh.value >= 0 ? '#26c281' : '#e74c3c'; }
-    if (syncLock) return;
-    syncLock = true;
-    syncCrossTo(p, chartMain, true);
-    syncCrossTo(p, chartRsi,  IND.rsi.on);
-    syncLock = false;
+    const ml=p?.seriesData?.get(serMacdLine),ms=p?.seriesData?.get(serMacdSignal),mh=p?.seriesData?.get(serMacdHist);
+    if(ml)g('ev-macd').textContent=ml.value.toFixed(4);
+    if(ms)g('ev-sig').textContent=ms.value.toFixed(4);
+    if(mh){g('ev-hist').textContent=mh.value.toFixed(4);g('ev-hist').style.color=mh.value>=0?'#26c281':'#e74c3c';}
+    if (syncLock) return; syncLock=true;
+    syncCrossTo(p,chartMain,true); syncCrossTo(p,chartRsi,IND.rsi.on);
+    syncLock=false;
   });
 
-  // ── Resize observer ─────────────────────────────────────────────────────────
-  new ResizeObserver(() => resizeAll()).observe(g('chart-area'));
+  // ── Resize observer ───────────────────────────────────────────────────────
+  new ResizeObserver(()=>resizeAll()).observe(g('chart-area'));
 }
 
-// Safe logical range setter — ignores when chart has no data / zero height
-function safeSetLogicalRange(chart, range) {
-// lightweight-charts renders the right price scale inside the chart canvas.
-// Each chart measures its own label width independently, causing horizontal
-// offset between panes. Fix: after data loads, read the actual right-margin
-// width from chartMain and force the same width on RSI and MACD.
-function syncPriceScaleWidths() {
-  // We can infer the price scale width from the chart's internal layout.
-  // The canvas width = total width; the plot area width = canvas - priceScale.
-  // We expose this by temporarily reading the timeScale content width.
-  try {
-    const mainEl   = g('pane-main');
-    const totalW   = mainEl.clientWidth;
-    // lightweight-charts v4: timeScale().width() returns the plot area width (excl. price scale)
-    const plotW    = chartMain.timeScale().width();
-    const scaleW   = totalW - plotW;
-    if (scaleW > 0 && scaleW < 200) {
-      // Force same right-scale width on RSI and MACD
-      chartRsi.applyOptions({  rightPriceScale: { minimumWidth: scaleW } });
-      chartMacd.applyOptions({ rightPriceScale: { minimumWidth: scaleW } });
-    }
-  } catch (_) {}
-}
-  try { chart.timeScale().setVisibleLogicalRange(range); } catch (_) {}
-}
-
-// Sync crosshair position from one chart to another
-function syncCrossTo(param, targetChart, active) {
+function syncCrossTo(param, chart, active) {
   if (!active) return;
   try {
-    if (param?.point && param?.time != null) {
-      targetChart.setCrosshairPosition(param.price ?? 0, param.time, null);
-    } else {
-      targetChart.clearCrosshairPosition();
-    }
-  } catch (_) {}
+    if (param?.point && param?.time != null) chart.setCrosshairPosition(param.price??0, param.time, null);
+    else chart.clearCrosshairPosition();
+  } catch(_){}
 }
 
-// ── Resize all charts ─────────────────────────────────────────────────────────
+// After ALL data is set on all three charts, force them to the same logical range.
+// This is the key fix: we call this ONCE after setData() on all series.
+function forceSyncRange() {
+  try {
+    const range = chartMain.timeScale().getVisibleLogicalRange();
+    if (!range) return;
+    syncLock = true;
+    if (IND.rsi.on)  chartRsi.timeScale().setVisibleLogicalRange(range);
+    if (IND.macd.on) chartMacd.timeScale().setVisibleLogicalRange(range);
+    syncLock = false;
+  } catch(_){ syncLock=false; }
+}
+
+// ── Resize ────────────────────────────────────────────────────────────────────
 function resizeAll() {
-  requestAnimationFrame(() => {
-    const resize = (chart, elId) => {
-      const el = g(elId);
-      if (!el) return;
-      const w = el.clientWidth, h = el.clientHeight;
-      if (w > 0 && h > 0) chart.applyOptions({width:w, height:h});
-    };
-    resize(chartMain, 'pane-main');
-    if (IND.rsi.on)  resize(chartRsi,  'pane-rsi');
-    if (IND.macd.on) resize(chartMacd, 'pane-macd');
-    // Re-sync price scale widths after resize
-    setTimeout(syncPriceScaleWidths, 50);
+  requestAnimationFrame(()=>{
+    const resize=(ch,id)=>{ const el=g(id); if(!el)return; const w=el.clientWidth,h=el.clientHeight; if(w>0&&h>0)ch.applyOptions({width:w,height:h}); };
+    resize(chartMain,'pane-main');
+    if(IND.rsi.on)  resize(chartRsi,'pane-rsi');
+    if(IND.macd.on) resize(chartMacd,'pane-macd');
+    // Re-sync logical range after resize so bars stay aligned
+    setTimeout(forceSyncRange,30);
   });
 }
 
-// ── Indicator visibility ──────────────────────────────────────────────────────
+// ── Indicator visibility (flex sizing — no display:none) ──────────────────────
 function applyIndVisibility() {
-  if (!serEma50) return; // not yet initialised
-
-  serEma50.applyOptions({visible:IND.ema50.on, color:IND.ema50.color});
-  g('leg-ema50').style.display  = IND.ema50.on  ? '' : 'none';
-
-  serEma200.applyOptions({visible:IND.ema200.on, color:IND.ema200.color});
-  g('leg-ema200').style.display = IND.ema200.on ? '' : 'none';
-
-  serEma500.applyOptions({visible:IND.ema500.on, color:IND.ema500.color});
-  g('leg-ema500').style.display = IND.ema500.on ? '' : 'none';
-
-  [serBBUpper, serBBMid, serBBLower].forEach(s => s.applyOptions({visible:IND.bb.on}));
-  g('leg-bb').style.display  = IND.bb.on ? '' : 'none';
-  g('sep-bb').style.display  = IND.bb.on ? '' : 'none';
-
+  if (!serEma50) return;
+  serEma50.applyOptions({visible:IND.ema50.on,color:IND.ema50.color});
+  g('leg-ema50').style.display=IND.ema50.on?'':'none';
+  serEma200.applyOptions({visible:IND.ema200.on,color:IND.ema200.color});
+  g('leg-ema200').style.display=IND.ema200.on?'':'none';
+  serEma500.applyOptions({visible:IND.ema500.on,color:IND.ema500.color});
+  g('leg-ema500').style.display=IND.ema500.on?'':'none';
+  [serBBUpper,serBBMid,serBBLower].forEach(s=>s.applyOptions({visible:IND.bb.on}));
+  g('leg-bb').style.display=IND.bb.on?'':'none';
+  g('sep-bb').style.display=IND.bb.on?'':'none';
   serRsi.applyOptions({color:IND.rsi.color});
-  // Use flex sizing to show/hide sub-panes — avoids clientHeight=0 problem
-  g('pane-rsi').style.flex     = IND.rsi.on  ? '22' : '0';
-  g('pane-rsi').style.overflow = 'hidden';
-  g('pane-rsi').style.borderTop = IND.rsi.on ? '1px solid #1e2530' : 'none';
-  g('leg-rsi').style.display   = IND.rsi.on  ? '' : 'none';
-
-  g('pane-macd').style.flex     = IND.macd.on ? '23' : '0';
-  g('pane-macd').style.overflow = 'hidden';
-  g('pane-macd').style.borderTop = IND.macd.on ? '1px solid #1e2530' : 'none';
-  g('leg-macd').style.display   = IND.macd.on ? '' : 'none';
-
+  const rsiPane=g('pane-rsi');
+  rsiPane.style.flex=IND.rsi.on?'22':'0';
+  rsiPane.style.overflow='hidden';
+  rsiPane.style.borderTop=IND.rsi.on?'1px solid #1e2530':'none';
+  g('leg-rsi').style.display=IND.rsi.on?'':'none';
+  const macdPane=g('pane-macd');
+  macdPane.style.flex=IND.macd.on?'23':'0';
+  macdPane.style.overflow='hidden';
+  macdPane.style.borderTop=IND.macd.on?'1px solid #1e2530':'none';
+  g('leg-macd').style.display=IND.macd.on?'':'none';
   resizeAll();
 }
 
 // ── Render indicators ─────────────────────────────────────────────────────────
 function renderIndicators(candles, shifted) {
-  const closes = candles.map(c => c.close);
-  const li     = candles.length - 1;
-  const toLine = arr =>
-    shifted.map((c,i) => arr[i] != null ? {time:c.time, value:+arr[i].toFixed(4)} : null).filter(Boolean);
+  const closes=candles.map(c=>c.close), li=candles.length-1;
+  const toLine=arr=>shifted.map((c,i)=>arr[i]!=null?{time:c.time,value:+arr[i].toFixed(4)}:null).filter(Boolean);
 
-  // EMA
-  const e50  = calcEMA(closes, IND.ema50.period);
-  const e200 = calcEMA(closes, IND.ema200.period);
-  const e500 = calcEMA(closes, IND.ema500.period);
-  serEma50.setData(toLine(e50));
-  serEma200.setData(toLine(e200));
-  serEma500.setData(toLine(e500));
-  g('ev50').textContent  = e50[li]  != null ? e50[li].toFixed(3)  : '—';
-  g('ev200').textContent = e200[li] != null ? e200[li].toFixed(3) : '—';
-  g('ev500').textContent = e500[li] != null ? e500[li].toFixed(3) : '—';
+  const e50=calcEMA(closes,IND.ema50.period),e200=calcEMA(closes,IND.ema200.period),e500=calcEMA(closes,IND.ema500.period);
+  serEma50.setData(toLine(e50)); serEma200.setData(toLine(e200)); serEma500.setData(toLine(e500));
+  g('ev50').textContent =e50[li] !=null?e50[li].toFixed(3):'—';
+  g('ev200').textContent=e200[li]!=null?e200[li].toFixed(3):'—';
+  g('ev500').textContent=e500[li]!=null?e500[li].toFixed(3):'—';
 
-  // Bollinger Bands
-  const {upper, mid, lower} = calcBB(closes, IND.bb.period, IND.bb.mult);
-  serBBUpper.setData(toLine(upper));
-  serBBMid.setData(toLine(mid));
-  serBBLower.setData(toLine(lower));
-  if (upper[li] != null && lower[li] != null)
-    g('ev-bb').textContent = `${lower[li].toFixed(3)} – ${upper[li].toFixed(3)}`;
+  const{upper,mid,lower}=calcBB(closes,IND.bb.period,IND.bb.mult);
+  serBBUpper.setData(toLine(upper)); serBBMid.setData(toLine(mid)); serBBLower.setData(toLine(lower));
+  if(upper[li]!=null&&lower[li]!=null) g('ev-bb').textContent=`${lower[li].toFixed(3)} – ${upper[li].toFixed(3)}`;
 
-  // RSI
-  const rsiArr = calcRSI(closes, IND.rsi.period);
+  const rsiArr=calcRSI(closes,IND.rsi.period);
   serRsi.setData(toLine(rsiArr));
-  const t0 = shifted[0].time, t1 = shifted[li].time;
-  serRsiOB.setData( [{time:t0, value:IND.rsi.ob}, {time:t1, value:IND.rsi.ob}]);
-  serRsiOS.setData( [{time:t0, value:IND.rsi.os}, {time:t1, value:IND.rsi.os}]);
-  serRsiMid.setData([{time:t0, value:50},          {time:t1, value:50}]);
-  const lastRsi = rsiArr[li];
-  g('ev-rsi').textContent = lastRsi != null ? lastRsi.toFixed(1) : '—';
-  g('ev-rsi').style.color = rsiColor(lastRsi);
+  const t0=shifted[0].time,t1=shifted[li].time;
+  serRsiOB.setData([{time:t0,value:IND.rsi.ob},{time:t1,value:IND.rsi.ob}]);
+  serRsiOS.setData([{time:t0,value:IND.rsi.os},{time:t1,value:IND.rsi.os}]);
+  serRsiMid.setData([{time:t0,value:50},{time:t1,value:50}]);
+  const lastRsi=rsiArr[li];
+  g('ev-rsi').textContent=lastRsi!=null?lastRsi.toFixed(1):'—'; g('ev-rsi').style.color=rsiColor(lastRsi);
 
-  // MACD
-  const {macd, sig, hist} = calcMACD(closes, IND.macd.fast, IND.macd.slow, IND.macd.signal);
-  serMacdLine.setData(toLine(macd));
-  serMacdSignal.setData(toLine(sig));
-  serMacdHist.setData(
-    shifted.map((c,i) => hist[i] != null
-      ? {time:c.time, value:+hist[i].toFixed(4), color: hist[i] >= 0 ? 'rgba(38,194,129,0.6)' : 'rgba(231,76,60,0.6)'}
-      : null
-    ).filter(Boolean)
-  );
-  const lm = macd[li], ls = sig[li], lh = hist[li];
-  g('ev-macd').textContent = lm != null ? lm.toFixed(4) : '—';
-  g('ev-sig').textContent  = ls != null ? ls.toFixed(4) : '—';
-  g('ev-hist').textContent = lh != null ? lh.toFixed(4) : '—';
-  g('ev-hist').style.color = lh == null ? '#555' : lh >= 0 ? '#26c281' : '#e74c3c';
+  const{macd,sig,hist}=calcMACD(closes,IND.macd.fast,IND.macd.slow,IND.macd.signal);
+  serMacdLine.setData(toLine(macd)); serMacdSignal.setData(toLine(sig));
+  serMacdHist.setData(shifted.map((c,i)=>hist[i]!=null?{time:c.time,value:+hist[i].toFixed(4),color:hist[i]>=0?'rgba(38,194,129,0.6)':'rgba(231,76,60,0.6)'}:null).filter(Boolean));
+  const lm=macd[li],ls=sig[li],lh=hist[li];
+  g('ev-macd').textContent=lm!=null?lm.toFixed(4):'—'; g('ev-sig').textContent=ls!=null?ls.toFixed(4):'—';
+  g('ev-hist').textContent=lh!=null?lh.toFixed(4):'—'; g('ev-hist').style.color=lh==null?'#555':lh>=0?'#26c281':'#e74c3c';
 }
 
-// ── Main crosshair handler ────────────────────────────────────────────────────
+// ── Main crosshair ────────────────────────────────────────────────────────────
 function onMainCross(p) {
-  if (!p?.seriesData) { clearTip(); return; }
-  const b = p.seriesData.get(serCandle);
-  if (!b) { clearTip(); return; }
-  g('hint').style.display = 'none';
-  setOI('o', b.open?.toFixed(3),  '#8492a6');
-  setOI('h', b.high?.toFixed(3),  '#26c281');
-  setOI('l', b.low?.toFixed(3),   '#e74c3c');
-  setOI('c', b.close?.toFixed(3), b.close >= b.open ? '#26c281' : '#e74c3c');
-  const e50  = p.seriesData.get(serEma50);
-  const e200 = p.seriesData.get(serEma200);
-  const e500 = p.seriesData.get(serEma500);
-  const bbu  = p.seriesData.get(serBBUpper);
-  const bbl  = p.seriesData.get(serBBLower);
-  if (e50)  g('ev50').textContent  = e50.value.toFixed(3);
-  if (e200) g('ev200').textContent = e200.value.toFixed(3);
-  if (e500) g('ev500').textContent = e500.value.toFixed(3);
-  if (bbu && bbl) g('ev-bb').textContent = `${bbl.value.toFixed(3)} – ${bbu.value.toFixed(3)}`;
+  if(!p?.seriesData){clearTip();return;}
+  const b=p.seriesData.get(serCandle); if(!b){clearTip();return;}
+  g('hint').style.display='none';
+  setOI('o',b.open?.toFixed(3),'#8492a6'); setOI('h',b.high?.toFixed(3),'#26c281');
+  setOI('l',b.low?.toFixed(3),'#e74c3c'); setOI('c',b.close?.toFixed(3),b.close>=b.open?'#26c281':'#e74c3c');
+  const e50=p.seriesData.get(serEma50),e200=p.seriesData.get(serEma200),e500=p.seriesData.get(serEma500);
+  const bbu=p.seriesData.get(serBBUpper),bbl=p.seriesData.get(serBBLower);
+  if(e50) g('ev50').textContent=e50.value.toFixed(3);
+  if(e200)g('ev200').textContent=e200.value.toFixed(3);
+  if(e500)g('ev500').textContent=e500.value.toFixed(3);
+  if(bbu&&bbl)g('ev-bb').textContent=`${bbl.value.toFixed(3)} – ${bbu.value.toFixed(3)}`;
 }
 
 // ── View zoom ─────────────────────────────────────────────────────────────────
 function applyView(key) {
-  if (!chartMain) return;
-  const val = VIEW_DAYS[key];
-  if (val === undefined) return;
-  const nowSec = Math.floor(Date.now() / 1000);
-  let fromSec;
-  if (val === 'ytd') {
-    fromSec = Math.floor(new Date(`${new Date().getFullYear()}-01-01T00:00:00`).getTime() / 1000);
-  } else {
-    fromSec = nowSec - val * 86400;
-  }
-  chartMain.timeScale().setVisibleRange({
-    from: shiftTs(fromSec),
-    to:   shiftTs(nowSec + 2 * 86400),
-  });
+  if(!chartMain)return;
+  const val=VIEW_DAYS[key]; if(val===undefined)return;
+  const nowSec=Math.floor(Date.now()/1000);
+  const fromSec = val==='ytd'
+    ? Math.floor(new Date(`${new Date().getFullYear()}-01-01T00:00:00`).getTime()/1000)
+    : nowSec - val*86400;
+  chartMain.timeScale().setVisibleRange({from:shiftTs(fromSec),to:shiftTs(nowSec+2*86400)});
+  // Sync RSI/MACD after view change — give chartMain time to update logical range
+  setTimeout(forceSyncRange, 50);
 }
 
-// ── Autofit ───────────────────────────────────────────────────────────────────
 function fitAll() {
-  if (!chartMain) return;
+  if(!chartMain)return;
   chartMain.timeScale().fitContent();
   chartMain.priceScale('right').applyOptions({autoScale:true});
+  setTimeout(forceSyncRange,50);
 }
 
-// ── Fetch helpers ─────────────────────────────────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchWithFallback(url) {
-  const errs = [];
-  for (const mkP of PROXIES) {
-    try {
-      const res = await fetch(mkP(url), {
-        headers: {Accept:'application/json'},
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
-      const txt = await res.text();
-      if (!txt?.trim()) { errs.push('empty'); continue; }
+  const errs=[];
+  for(const mkP of PROXIES){
+    try{
+      const res=await fetch(mkP(url),{headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+      if(!res.ok){errs.push(`HTTP ${res.status}`);continue;}
+      const txt=await res.text(); if(!txt?.trim()){errs.push('empty');continue;}
       return JSON.parse(txt);
-    } catch (e) { errs.push(e.message); }
+    }catch(e){errs.push(e.message);}
   }
-  throw new Error('All proxies failed: ' + errs.join(' | '));
+  throw new Error('All proxies failed: '+errs.join(' | '));
+}
+function buildUrl(host,cfg){return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;}
+async function fetchYF(cfg){let last;for(const h of YF_HOSTS){try{return await fetchWithFallback(buildUrl(h,cfg));}catch(e){last=e;}}throw last;}
+function parseYF(json){
+  const r=json?.chart?.result?.[0]; if(!r)throw new Error('Yahoo Finance: '+(json?.chart?.error?.description||'no data'));
+  const ts=r.timestamp||[],q=r.indicators?.quote?.[0]||{},m=r.meta||{};
+  if(!ts.length)throw new Error('Yahoo Finance returned empty data');
+  const candles=ts.map((t,i)=>({time:Math.floor(t),open:q.open?.[i],high:q.high?.[i],low:q.low?.[i],close:q.close?.[i],volume:q.volume?.[i]??0}))
+    .filter(c=>c.open!=null&&c.high!=null&&c.low!=null&&c.close!=null).sort((a,b)=>a.time-b.time);
+  if(!candles.length)throw new Error('No valid candles');
+  const last=candles[candles.length-1];
+  return{candles,price:m.regularMarketPrice??last.close,yfPrevClose:m.chartPreviousClose??null,volume:m.regularMarketVolume??last.volume,dayHigh:m.regularMarketDayHigh??null,dayLow:m.regularMarketDayLow??null};
 }
 
-function buildUrl(host, cfg) {
-  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}` +
-    `?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
-}
-
-async function fetchYF(cfg) {
-  let last;
-  for (const host of YF_HOSTS) {
-    try { return await fetchWithFallback(buildUrl(host, cfg)); }
-    catch (e) { last = e; }
-  }
-  throw last;
-}
-
-function parseYF(json) {
-  const r = json?.chart?.result?.[0];
-  if (!r) throw new Error('Yahoo Finance: ' + (json?.chart?.error?.description || 'no data'));
-  const ts = r.timestamp || [], q = r.indicators?.quote?.[0] || {}, m = r.meta || {};
-  if (!ts.length) throw new Error('Yahoo Finance returned empty data');
-
-  const candles = ts
-    .map((t,i) => ({
-      time:   Math.floor(t),
-      open:   q.open?.[i],
-      high:   q.high?.[i],
-      low:    q.low?.[i],
-      close:  q.close?.[i],
-      volume: q.volume?.[i] ?? 0,
-    }))
-    .filter(c => c.open != null && c.high != null && c.low != null && c.close != null)
-    .sort((a,b) => a.time - b.time);
-
-  if (!candles.length) throw new Error('No valid candles after filtering');
-  const last = candles[candles.length-1];
-  return {
-    candles,
-    price:       m.regularMarketPrice   ?? last.close,
-    yfPrevClose: m.chartPreviousClose   ?? null,
-    volume:      m.regularMarketVolume  ?? last.volume,
-    dayHigh:     m.regularMarketDayHigh ?? null,
-    dayLow:      m.regularMarketDayLow  ?? null,
-  };
-}
-
-// ── Main load ─────────────────────────────────────────────────────────────────
+// ── Load data ─────────────────────────────────────────────────────────────────
 async function loadData(isRefresh) {
   setRefreshing(true);
-  if (!isRefresh) showLoading();
+  if(!isRefresh)showLoading();
+  const cfg=FETCH_CFG[curIv];
+  try{
+    const json=await fetchYF(cfg);
+    let{candles,price,yfPrevClose,volume,dayHigh,dayLow}=parseYF(json);
+    if(cfg.resample>1)candles=resample(candles,cfg.resample);
+    lastCandles=candles;
+    lastShifted=candles.map(c=>({...c,time:shiftTs(c.time)}));
+    const shifted=lastShifted, li=candles.length-1;
 
-  const cfg = FETCH_CFG[curIv];
-  try {
-    const json = await fetchYF(cfg);
-    let {candles, price, yfPrevClose, volume, dayHigh, dayLow} = parseYF(json);
-    if (cfg.resample > 1) candles = resample(candles, cfg.resample);
-
-    lastCandles = candles;
-    lastShifted = candles.map(c => ({...c, time: shiftTs(c.time)}));
-    const shifted = lastShifted;
-    const li = candles.length - 1;
-
-    // Candles + volume
     serCandle.setData(shifted);
-    serVol.setData(shifted.map(c => ({
-      time:  c.time,
-      value: c.volume,
-      color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
-    })));
+    serVol.setData(shifted.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'#1a3d2b':'#3d1a1a'})));
+    renderIndicators(candles,shifted);
 
-    // Indicators
-    renderIndicators(candles, shifted);
+    // Header
+    const baseline=getPrevDayClose(candles,yfPrevClose);
+    const ch=baseline!=null?price-baseline:null, pct=ch!=null&&baseline?ch/baseline*100:null;
+    const up=ch==null||ch>=0,clr=up?'#26c281':'#e74c3c',sgn=up?'+':'';
+    setText('price',price.toFixed(3));
+    g('change').textContent=ch!=null?sgn+ch.toFixed(3):'—'; g('change').style.color=clr;
+    g('changePct').textContent=pct!=null?`(${sgn}${pct.toFixed(2)}%)`:''; g('changePct').style.color=clr;
+    setText('vol',volume?Number(volume).toLocaleString('en-US'):'—');
+    const today=todayStr(), todayBars=candles.filter(c=>dateStr(c.time)===today);
+    const tH=todayBars.length?todayBars.reduce((m,c)=>Math.max(m,c.high),-Infinity):null;
+    const tL=todayBars.length?todayBars.reduce((m,c)=>Math.min(m,c.low),Infinity):null;
+    setText('dhigh',(dayHigh??tH??candles.reduce((m,c)=>Math.max(m,c.high),-Infinity)).toFixed(3));
+    setText('dlow', (dayLow ??tL??candles.reduce((m,c)=>Math.min(m,c.low),Infinity)).toFixed(3));
 
-    // Header stats
-    const baseline = getPrevDayClose(candles, yfPrevClose);
-    const ch  = baseline != null ? price - baseline : null;
-    const pct = ch != null && baseline ? ch / baseline * 100 : null;
-    const up  = ch == null || ch >= 0;
-    const clr = up ? '#26c281' : '#e74c3c';
-    const sgn = up ? '+' : '';
-    setText('price', price.toFixed(3));
-    g('change').textContent    = ch  != null ? sgn + ch.toFixed(3)          : '—'; g('change').style.color    = clr;
-    g('changePct').textContent = pct != null ? `(${sgn}${pct.toFixed(2)}%)` : ''; g('changePct').style.color = clr;
-    setText('vol', volume ? Number(volume).toLocaleString('en-US') : '—');
-
-    const today     = todayStr();
-    const todayBars = candles.filter(c => dateStr(c.time) === today);
-    const tH = todayBars.length ? todayBars.reduce((m,c) => Math.max(m,c.high), -Infinity) : null;
-    const tL = todayBars.length ? todayBars.reduce((m,c) => Math.min(m,c.low),   Infinity) : null;
-    setText('dhigh', (dayHigh ?? tH ?? candles.reduce((m,c) => Math.max(m,c.high), -Infinity)).toFixed(3));
-    setText('dlow',  (dayLow  ?? tL ?? candles.reduce((m,c) => Math.min(m,c.low),   Infinity)).toFixed(3));
-
-    // Fit + apply view on initial load / interval change
-    if (!isRefresh) {
+    if(!isRefresh){
       chartMain.timeScale().fitContent();
       chartMain.priceScale('right').applyOptions({autoScale:true});
-      setTimeout(() => {
-        applyView(curViewKey);
-        syncPriceScaleWidths();
-      }, 80);
+      // Wait for fitContent to settle, then apply view, then force-sync RSI/MACD
+      setTimeout(()=>{ applyView(curViewKey); setTimeout(forceSyncRange,50); },80);
     } else {
-      // On refresh, re-sync widths in case labels changed (e.g. price digits changed)
-      setTimeout(syncPriceScaleWidths, 80);
+      setTimeout(forceSyncRange,50);
     }
 
     hideOverlay();
     resetTimer();
-  } catch (e) {
-    console.error('loadData error:', e);
-    if (!isRefresh) showErr(e.message || 'Unknown error');
-  } finally {
-    setRefreshing(false);
-  }
+  }catch(e){
+    console.error('loadData:',e);
+    if(!isRefresh)showErr(e.message||'Unknown error');
+  }finally{setRefreshing(false);}
 }
 
-// ── Timer ─────────────────────────────────────────────────────────────────────
-function resetTimer() {
+function resetTimer(){
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => loadData(true), REFRESH_MS);
-  setText('status', `Auto-refresh ${REFRESH_MS/1000}s`);
+  refreshTimer=setInterval(()=>loadData(true),REFRESH_MS);
+  setText('status',`Auto-refresh ${REFRESH_MS/1000}s`);
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
-function g(id)          { return document.getElementById(id); }
-function setText(id, v) { g(id).textContent = v; }
-
-function clearTip() {
-  g('hint').style.display = '';
-  ['o','h','l','c'].forEach(k => g('oi-'+k).style.display = 'none');
-  ['50','200','500'].forEach(p => g('ev'+p).textContent = '—');
-  g('ev-bb').textContent  = '—';
-  g('ev-rsi').textContent = '—'; g('ev-rsi').style.color  = '#a78bfa';
-  g('ev-macd').textContent = g('ev-sig').textContent = g('ev-hist').textContent = '—';
-  g('ev-hist').style.color = '#555';
+function g(id){return document.getElementById(id);}
+function setText(id,v){g(id).textContent=v;}
+function clearTip(){
+  g('hint').style.display='';
+  ['o','h','l','c'].forEach(k=>g('oi-'+k).style.display='none');
+  ['50','200','500'].forEach(p=>g('ev'+p).textContent='—');
+  g('ev-bb').textContent='—'; g('ev-rsi').textContent='—'; g('ev-rsi').style.color='#a78bfa';
+  g('ev-macd').textContent=g('ev-sig').textContent=g('ev-hist').textContent='—'; g('ev-hist').style.color='#555';
 }
-
-function setOI(k, v, c) {
-  g('oi-'+k).style.display = 'flex';
-  g('tv-'+k).textContent   = v;
-  g('tv-'+k).style.color   = c;
-}
-
-function showLoading() {
-  const o = g('overlay'); o.style.display = 'flex';
-  o.innerHTML = '<div id="spin"></div><div id="load-msg">Loading market data…</div>';
-}
-
-function showErr(msg) {
-  const o = g('overlay'); o.style.display = 'flex';
-  o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;
-}
-
-function hideOverlay()     { g('overlay').style.display = 'none'; }
-function setRefreshing(on) {
-  g('dot').style.background = on ? '#e7a22b' : '#26c281';
-  if (on) setText('status', 'Loading…');
-}
+function setOI(k,v,c){g('oi-'+k).style.display='flex';g('tv-'+k).textContent=v;g('tv-'+k).style.color=c;}
+function showLoading(){const o=g('overlay');o.style.display='flex';o.innerHTML='<div id="spin"></div><div id="load-msg">Loading market data…</div>';}
+function showErr(msg){const o=g('overlay');o.style.display='flex';o.innerHTML=`<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;}
+function hideOverlay(){g('overlay').style.display='none';}
+function setRefreshing(on){g('dot').style.background=on?'#e7a22b':'#26c281';if(on)setText('status','Loading…');}
 
 // ── Side panel ────────────────────────────────────────────────────────────────
-document.querySelectorAll('.ind-toggle').forEach(btn => {
-  btn.addEventListener('click', e => {
+document.querySelectorAll('.ind-toggle').forEach(btn=>{
+  btn.addEventListener('click',e=>{
     e.stopPropagation();
-    const ind = btn.dataset.ind;
-    IND[ind].on = !IND[ind].on;
-    btn.classList.toggle('on',  IND[ind].on);
-    btn.classList.toggle('off', !IND[ind].on);
+    const ind=btn.dataset.ind;
+    IND[ind].on=!IND[ind].on;
+    btn.classList.toggle('on',IND[ind].on); btn.classList.toggle('off',!IND[ind].on);
+    applyIndVisibility();
+  });
+});
+document.querySelectorAll('.ind-header').forEach(hdr=>{
+  hdr.addEventListener('click',e=>{
+    if(e.target.classList.contains('ind-toggle'))return;
+    const body=hdr.nextElementSibling,chevron=hdr.querySelector('.ind-chevron');
+    chevron.classList.toggle('open',body.classList.toggle('open'));
+  });
+});
+document.querySelectorAll('.apply-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const ind=btn.dataset.apply;
+    if(ind==='ema50'){IND.ema50.period=+g('p-ema50-period').value||50;IND.ema50.color=g('p-ema50-color').value;serEma50.applyOptions({color:IND.ema50.color});g('dot-ema50').style.background=IND.ema50.color;g('ev50').style.color=IND.ema50.color;}
+    else if(ind==='ema200'){IND.ema200.period=+g('p-ema200-period').value||200;IND.ema200.color=g('p-ema200-color').value;serEma200.applyOptions({color:IND.ema200.color});g('dot-ema200').style.background=IND.ema200.color;g('ev200').style.color=IND.ema200.color;}
+    else if(ind==='ema500'){IND.ema500.period=+g('p-ema500-period').value||500;IND.ema500.color=g('p-ema500-color').value;serEma500.applyOptions({color:IND.ema500.color});g('dot-ema500').style.background=IND.ema500.color;g('ev500').style.color=IND.ema500.color;}
+    else if(ind==='bb'){IND.bb.period=+g('p-bb-period').value||20;IND.bb.mult=+g('p-bb-mult').value||2.0;IND.bb.color=g('p-bb-color').value;}
+    else if(ind==='rsi'){IND.rsi.period=+g('p-rsi-period').value||14;IND.rsi.ob=+g('p-rsi-ob').value||70;IND.rsi.os=+g('p-rsi-os').value||30;IND.rsi.color=g('p-rsi-color').value;}
+    else if(ind==='macd'){IND.macd.fast=+g('p-macd-fast').value||12;IND.macd.slow=+g('p-macd-slow').value||26;IND.macd.signal=+g('p-macd-signal').value||9;}
+    if(lastCandles&&lastShifted)renderIndicators(lastCandles,lastShifted);
     applyIndVisibility();
   });
 });
 
-document.querySelectorAll('.ind-header').forEach(hdr => {
-  hdr.addEventListener('click', e => {
-    if (e.target.classList.contains('ind-toggle')) return;
-    const body    = hdr.nextElementSibling;
-    const chevron = hdr.querySelector('.ind-chevron');
-    const isOpen  = body.classList.toggle('open');
-    chevron.classList.toggle('open', isOpen);
-  });
-});
-
-document.querySelectorAll('.apply-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const ind = btn.dataset.apply;
-    if (ind === 'ema50') {
-      IND.ema50.period = +g('p-ema50-period').value || 50;
-      IND.ema50.color  = g('p-ema50-color').value;
-      serEma50.applyOptions({color:IND.ema50.color});
-      g('dot-ema50').style.background = IND.ema50.color;
-      g('ev50').style.color = IND.ema50.color;
-    } else if (ind === 'ema200') {
-      IND.ema200.period = +g('p-ema200-period').value || 200;
-      IND.ema200.color  = g('p-ema200-color').value;
-      serEma200.applyOptions({color:IND.ema200.color});
-      g('dot-ema200').style.background = IND.ema200.color;
-      g('ev200').style.color = IND.ema200.color;
-    } else if (ind === 'ema500') {
-      IND.ema500.period = +g('p-ema500-period').value || 500;
-      IND.ema500.color  = g('p-ema500-color').value;
-      serEma500.applyOptions({color:IND.ema500.color});
-      g('dot-ema500').style.background = IND.ema500.color;
-      g('ev500').style.color = IND.ema500.color;
-    } else if (ind === 'bb') {
-      IND.bb.period = +g('p-bb-period').value || 20;
-      IND.bb.mult   = +g('p-bb-mult').value   || 2.0;
-      IND.bb.color  = g('p-bb-color').value;
-    } else if (ind === 'rsi') {
-      IND.rsi.period = +g('p-rsi-period').value || 14;
-      IND.rsi.ob     = +g('p-rsi-ob').value     || 70;
-      IND.rsi.os     = +g('p-rsi-os').value     || 30;
-      IND.rsi.color  = g('p-rsi-color').value;
-    } else if (ind === 'macd') {
-      IND.macd.fast   = +g('p-macd-fast').value   || 12;
-      IND.macd.slow   = +g('p-macd-slow').value   || 26;
-      IND.macd.signal = +g('p-macd-signal').value || 9;
-    }
-    // Recompute without refetch
-    if (lastCandles && lastShifted) {
-      renderIndicators(lastCandles, lastShifted);
-    }
-    applyIndVisibility();
-  });
-});
-
-g('panel-toggle').addEventListener('click', () => {
-  panelVisible = !panelVisible;
-  g('side-panel').style.display = panelVisible ? '' : 'none';
-  g('panel-toggle').textContent = panelVisible ? '◀' : '▶';
-  resizeAll();
+// Panel toggle — button stays visible outside the panel
+g('panel-toggle').addEventListener('click',()=>{
+  panelVisible=!panelVisible;
+  const panel=g('side-panel');
+  panel.classList.toggle('hidden',!panelVisible);
+  g('panel-toggle').textContent=panelVisible?'◀':'▶';
+  // Reposition toggle button
+  g('panel-toggle-wrap').style.right=panelVisible?'220px':'0';
+  setTimeout(resizeAll,210); // after CSS transition
 });
 
 // ── Controls ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tf-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    curIv = btn.dataset.iv;
-    clearTip();
-    loadData(false);
-  });
-});
-
-document.querySelectorAll('.vw-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.vw-btn').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    curViewKey = btn.dataset.days;
-    applyView(curViewKey);
-  });
-});
-
-g('fit-btn').addEventListener('click', () => fitAll());
-g('rbtn').addEventListener('click',    () => loadData(false));
+document.querySelectorAll('.tf-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); curIv=btn.dataset.iv; clearTip(); loadData(false);
+}));
+document.querySelectorAll('.vw-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.vw-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); curViewKey=btn.dataset.days; applyView(curViewKey);
+}));
+g('fit-btn').addEventListener('click',()=>fitAll());
+g('rbtn').addEventListener('click',()=>loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-function waitForLib(cb) {
-  if (typeof LightweightCharts !== 'undefined') { cb(); return; }
-  let n = 0;
-  const id = setInterval(() => {
-    if (typeof LightweightCharts !== 'undefined') { clearInterval(id); cb(); return; }
-    if (++n > 100) { clearInterval(id); showErr('Failed to load chart library.'); }
-  }, 100);
+function waitForLib(cb){
+  if(typeof LightweightCharts!=='undefined'){cb();return;}
+  let n=0;
+  const id=setInterval(()=>{
+    if(typeof LightweightCharts!=='undefined'){clearInterval(id);cb();return;}
+    if(++n>100){clearInterval(id);showErr('Failed to load chart library.');}
+  },100);
 }
-
-waitForLib(() => {
+waitForLib(()=>{
   initCharts();
-  setTimeout(() => {
-    applyIndVisibility();
-    loadData(false);
-  }, 0);
+  // Position toggle button correctly on start
+  g('panel-toggle-wrap').style.right='220px';
+  setTimeout(()=>{ applyIndVisibility(); loadData(false); }, 0);
 });
 </script>
 </body>
