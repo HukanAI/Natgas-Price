@@ -473,7 +473,7 @@ function initCharts() {
 
   // ── Main pane ───────────────────────────────────────────────────────────────
   chartMain = makeChart('pane-main', {
-    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.06, bottom:0.20}},
+    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.06, bottom:0.20}, minimumWidth:65},
     timeScale: {borderColor:'#1e2530', timeVisible:true, secondsVisible:false, rightOffset:5, barSpacing:8, minBarSpacing:2, borderVisible:true},
   });
 
@@ -498,9 +498,23 @@ function initCharts() {
 
   // ── RSI pane ────────────────────────────────────────────────────────────────
   chartRsi = makeChart('pane-rsi', {
-    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.08, bottom:0.08}},
-    // No time axis labels on RSI — time scale still exists for sync purposes
-    timeScale: {borderColor:'#1e2530', timeVisible:false, borderVisible:true},
+    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.08, bottom:0.08}, minimumWidth:65},
+    timeScale: {
+      borderColor:'#1e2530',
+      timeVisible:true,
+      secondsVisible:false,
+      borderVisible:true,
+      tickMarkFormatter: (time, tickMarkType, locale) => {
+        // Same format as chartMain — show time HH:MM, or date for day marks
+        const d = new Date(time * 1000);
+        const h = d.getUTCHours().toString().padStart(2,'0');
+        const m = d.getUTCMinutes().toString().padStart(2,'0');
+        if (tickMarkType <= 2) { // year/month/day boundary
+          return `${d.getUTCDate()}.`;
+        }
+        return `${h}:${m}`;
+      },
+    },
   });
 
   serRsi = chartRsi.addLineSeries({
@@ -516,7 +530,7 @@ function initCharts() {
 
   // ── MACD pane ───────────────────────────────────────────────────────────────
   chartMacd = makeChart('pane-macd', {
-    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.08, bottom:0.08}},
+    rightPriceScale: {borderColor:'#1e2530', scaleMargins:{top:0.08, bottom:0.08}, minimumWidth:65},
     timeScale: {borderColor:'#1e2530', timeVisible:true, secondsVisible:false, borderVisible:true},
   });
 
@@ -589,6 +603,27 @@ function initCharts() {
 
 // Safe logical range setter — ignores when chart has no data / zero height
 function safeSetLogicalRange(chart, range) {
+// lightweight-charts renders the right price scale inside the chart canvas.
+// Each chart measures its own label width independently, causing horizontal
+// offset between panes. Fix: after data loads, read the actual right-margin
+// width from chartMain and force the same width on RSI and MACD.
+function syncPriceScaleWidths() {
+  // We can infer the price scale width from the chart's internal layout.
+  // The canvas width = total width; the plot area width = canvas - priceScale.
+  // We expose this by temporarily reading the timeScale content width.
+  try {
+    const mainEl   = g('pane-main');
+    const totalW   = mainEl.clientWidth;
+    // lightweight-charts v4: timeScale().width() returns the plot area width (excl. price scale)
+    const plotW    = chartMain.timeScale().width();
+    const scaleW   = totalW - plotW;
+    if (scaleW > 0 && scaleW < 200) {
+      // Force same right-scale width on RSI and MACD
+      chartRsi.applyOptions({  rightPriceScale: { minimumWidth: scaleW } });
+      chartMacd.applyOptions({ rightPriceScale: { minimumWidth: scaleW } });
+    }
+  } catch (_) {}
+}
   try { chart.timeScale().setVisibleLogicalRange(range); } catch (_) {}
 }
 
@@ -616,6 +651,8 @@ function resizeAll() {
     resize(chartMain, 'pane-main');
     if (IND.rsi.on)  resize(chartRsi,  'pane-rsi');
     if (IND.macd.on) resize(chartMacd, 'pane-macd');
+    // Re-sync price scale widths after resize
+    setTimeout(syncPriceScaleWidths, 50);
   });
 }
 
@@ -863,7 +900,13 @@ async function loadData(isRefresh) {
     if (!isRefresh) {
       chartMain.timeScale().fitContent();
       chartMain.priceScale('right').applyOptions({autoScale:true});
-      setTimeout(() => applyView(curViewKey), 50);
+      setTimeout(() => {
+        applyView(curViewKey);
+        syncPriceScaleWidths();
+      }, 80);
+    } else {
+      // On refresh, re-sync widths in case labels changed (e.g. price digits changed)
+      setTimeout(syncPriceScaleWidths, 80);
     }
 
     hideOverlay();
