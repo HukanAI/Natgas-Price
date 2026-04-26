@@ -90,8 +90,7 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <button class="zb" data-days="90">3M</button>
       <button class="zb on" data-days="365">1Y</button>
       <button class="zb" data-days="730">2Y</button>
-      <button class="zb" data-days="1825">Max</button>
-    </div>
+      <button class="zb" data-days="1825">Max</button>    </div>
     <div class="sep"></div>
     <!-- INTERVAL — mění fetch -->
     <span class="group-label">Interval</span>
@@ -99,8 +98,8 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <button class="iv warn" data-iv="1m">1m</button>
       <button class="iv warn" data-iv="5m">5m</button>
       <button class="iv warn" data-iv="15m">15m</button>
-      <button class="iv" data-iv="1h">1h</button>
-      <button class="iv on" data-iv="1d">1D</button>
+      <button class="iv on" data-iv="1h">1h</button>
+      <button class="iv" data-iv="1d">1D</button>
       <button class="iv" data-iv="1wk">1W</button>
     </div>
     <div class="sep"></div>
@@ -143,15 +142,16 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 const TICKER = 'NG=F';
 const TZ     = 'Europe/Prague';
 
-// Vždy fetchujeme plných 5 let (max co YF vrátí pro denní data)
-// Pro intraday intervaly fetchujeme jejich maximum
-const FETCH_RANGE_BY_IV = {
-  '1m':  {range:'7d',   interval:'1m'},
-  '5m':  {range:'60d',  interval:'5m'},
-  '15m': {range:'60d',  interval:'15m'},
-  '1h':  {range:'2y',   interval:'1h'},
-  '1d':  {range:'5y',   interval:'1d'},
-  '1wk': {range:'10y',  interval:'1wk'},
+// Validní Yahoo Finance range: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+// Intraday (< 1d) má hard limit 60 dní — používáme period1/period2 místo range.
+// period1/period2 = Unix timestamp v sekundách.
+const FETCH_CONFIG_BY_IV = {
+  '1m':  { usePeriod: true,  days: 7,    interval: '1m'  },
+  '5m':  { usePeriod: true,  days: 59,   interval: '5m'  },
+  '15m': { usePeriod: true,  days: 59,   interval: '15m' },
+  '1h':  { usePeriod: true,  days: 59,   interval: '1h'  },
+  '1d':  { usePeriod: false, range: '5y',interval: '1d'  },
+  '1wk': { usePeriod: false, range: '10y',interval:'1wk' },
 };
 
 const REFRESH_BY_IV = {'1m':10000,'5m':15000,'15m':20000,'1h':60000,'1d':300000,'1wk':600000};
@@ -195,7 +195,7 @@ function calcEMA(closes,period){
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let chart,candleSeries,volSeries,ema50S,ema200S,ema500S;
-let curIv='1d';
+let curIv='1h';
 let curZoomDays=365;   // jen pro zoom view, nemění fetch
 let refreshTimer;
 
@@ -288,9 +288,14 @@ async function fetchWithFallback(yfUrl){
   throw new Error('Proxy selhaly: '+errs.join(' | '));
 }
 
-function buildYFUrl(host,range,interval){
-  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}` +
-    `?range=${range}&interval=${interval}&includePrePost=false&events=div%7Csplit`;
+function buildYFUrl(host, cfg){
+  const base = `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
+  if(cfg.usePeriod){
+    const p2 = Math.floor(Date.now()/1000);
+    const p1 = p2 - cfg.days * 86400;
+    return `${base}&period1=${p1}&period2=${p2}`;
+  }
+  return `${base}&range=${cfg.range}`;
 }
 
 function parseCandles(json){
@@ -312,10 +317,10 @@ function parseCandles(json){
   }};
 }
 
-async function fetchYF(range,interval){
+async function fetchYF(cfg){
   let lastErr;
   for(const host of YF_HOSTS){
-    try{return await fetchWithFallback(buildYFUrl(host,range,interval));}
+    try{return await fetchWithFallback(buildYFUrl(host,cfg));}
     catch(e){lastErr=e;}
   }
   throw lastErr;
@@ -326,11 +331,12 @@ async function loadData(isRefresh=false){
   setRefreshing(true);
   if(!isRefresh) showLoading('Načítám data…');
 
-  const{range,interval}=FETCH_RANGE_BY_IV[curIv];
+  const cfg = FETCH_CONFIG_BY_IV[curIv];
+  const descr = cfg.usePeriod ? `${cfg.days}d / ${cfg.interval}` : `${cfg.range} / ${cfg.interval}`;
 
   try{
-    setLoadMsg(`Načítám ${range} dat (interval: ${interval})…`);
-    const json=await fetchYF(range,interval);
+    setLoadMsg(`Načítám ${descr}…`);
+    const json=await fetchYF(cfg);
     const{candles,meta}=parseCandles(json);
 
     // Svíčky + volume — všechna data (5 let)
