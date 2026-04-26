@@ -52,8 +52,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 .etit{color:#e74c3c;font-size:14px;margin-bottom:8px}
 .emsg{color:#5a6478;font-size:11px;font-family:monospace;margin-bottom:14px;word-break:break-word;line-height:1.6}
 .rbtn2{padding:5px 18px;background:transparent;border:1px solid #1a6ed8;border-radius:4px;color:#1a6ed8;cursor:pointer;font-size:12px}
-
-#footer{padding:4px 18px;border-top:1px solid #1e2530;display:flex;justify-content:space-between;font-size:10px;color:#2a3548;font-family:monospace;flex-wrap:wrap;gap:4px}
 </style>
 </head>
 <body>
@@ -78,7 +76,7 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
   </div>
 
   <div id="controls">
-    <span class="grp-label">Interval</span>
+    <span class="grp-label">Timeframe</span>
     <div class="btn-grp">
       <button class="iv" data-iv="1m">1m</button>
       <button class="iv" data-iv="5m">5m</button>
@@ -116,58 +114,59 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
-  <div id="footer">
-    <span>NG=F · NYMEX · USD/MMBtu · Source: Yahoo Finance · Time: Europe/Prague (CET/CEST auto) · Daily change vs prev-day close</span>
-    <span>Scroll = zoom · Drag = pan · ⤢ Autofit = fit all data · 4h = resampled from 1h</span>
-  </div>
-
 </div>
 <script>
 'use strict';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const TICKER = 'NG=F';
-const TZ     = 'Europe/Prague';
+const TICKER     = 'NG=F';
+const TZ         = 'Europe/Prague';
 const REFRESH_MS = 10000;
 
-// Yahoo Finance fetch config per interval.
-// 4h is not natively supported — we fetch 1h and resample client-side.
-// Verified limits: 1m=7d, 5m/15m=60d (range string only, period1/2 → HTTP 422),
-//                 1h=730d, 1d/1wk=unlimited.
+// Per-timeframe autofit strategy:
+//   1d, 1wk → plain autoScale (no filter — multi-dollar daily moves are legitimate)
+//   4h, 1h  → MAD filter, factor 3.5 (catches $2 spikes, used for longer intraday)
+//   15m, 5m → MAD filter, factor 4.5 (looser — shorter window, less outlier risk)
+//   1m      → MAD filter, factor 5.0 (very loose — only extreme spikes filtered)
+const FIT_CFG = {
+  '1m':  { filter: true,  madFactor: 5.0 },
+  '5m':  { filter: true,  madFactor: 4.5 },
+  '15m': { filter: true,  madFactor: 4.5 },
+  '1h':  { filter: true,  madFactor: 3.5 },
+  '4h':  { filter: true,  madFactor: 3.5 },
+  '1d':  { filter: false },
+  '1wk': { filter: false },
+};
 const FETCH_CFG = {
   '1m':  { range: '5d',  interval: '1m',  resample: 1 },
   '5m':  { range: '1mo', interval: '5m',  resample: 1 },
   '15m': { range: '1mo', interval: '15m', resample: 1 },
   '1h':  { range: '1y',  interval: '1h',  resample: 1 },
-  '4h':  { range: '1y',  interval: '1h',  resample: 4 }, // built from 1h
+  '4h':  { range: '1y',  interval: '1h',  resample: 4 },
   '1d':  { range: '5y',  interval: '1d',  resample: 1 },
   '1wk': { range: '10y', interval: '1wk', resample: 1 },
 };
-
-// Intraday intervals — outlier-filtered Y axis on autofit
-const INTRADAY = new Set(['1m','5m','15m','1h','4h']);
 
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   u => `https://proxy.cors.sh/${u}`,
 ];
-const YF_HOSTS = ['query2.finance.yahoo.com','query1.finance.yahoo.com'];
+const YF_HOSTS = ['query2.finance.yahoo.com', 'query1.finance.yahoo.com'];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let chart, candleSeries, volSeries, ema50S, ema200S, ema500S;
-let curIv = '1h';
+let curIv       = '1h';
 let refreshTimer;
-let lastCandles = null; // raw (unshifted) candles, cached for Autofit
+let lastCandles = null; // raw unshifted candles, kept for Autofit button
 
-// ── Prague timezone helpers ───────────────────────────────────────────────────
+// ── Prague timezone ───────────────────────────────────────────────────────────
 function pragueNow() {
   return new Date().toLocaleTimeString('cs-CZ', {
     timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
 
-// UTC offset of Prague in seconds for a given unix timestamp (DST-aware)
 function pragueOffsetSec(ts) {
   const d = new Date(ts * 1000);
   const mins = tz => {
@@ -176,20 +175,18 @@ function pragueOffsetSec(ts) {
     return +h * 60 + +m;
   };
   let diff = mins(TZ) - mins('UTC');
-  if (diff > 720)  diff -= 1440;
+  if (diff >  720) diff -= 1440;
   if (diff < -720) diff += 1440;
   return diff * 60;
 }
 
-// Shift unix timestamp so chart X axis displays Prague local time
 function shiftTs(ts) { return ts + pragueOffsetSec(ts); }
 
-// Today's date string in Prague timezone, e.g. "2025-04-26"
 function todayPrague() {
   return new Date().toLocaleDateString('en-CA', { timeZone: TZ });
 }
 
-// Close of the last candle whose Prague date < today (= previous calendar day close)
+// Last close whose Prague date < today → previous calendar day close
 function getPrevDayClose(candles, fallback) {
   const today = todayPrague();
   for (let i = candles.length - 1; i >= 0; i--) {
@@ -199,13 +196,11 @@ function getPrevDayClose(candles, fallback) {
   return fallback;
 }
 
-// Live Prague clock
 setInterval(() => { g('prg-time').textContent = pragueNow(); }, 1000);
 g('prg-time').textContent = pragueNow();
 
-// ── Resample candles (e.g. 1h → 4h) ─────────────────────────────────────────
-// Buckets are aligned to UTC midnight so 4h candles always start
-// at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC.
+// ── Resample (e.g. 1h → 4h) ──────────────────────────────────────────────────
+// Buckets align to UTC midnight so 4h = 00,04,08,12,16,20 UTC
 function resample(candles, n) {
   if (n <= 1) return candles;
   const bucketSec = n * 3600;
@@ -218,8 +213,8 @@ function resample(candles, n) {
       const b = map.get(key);
       if (c.high > b.high) b.high = c.high;
       if (c.low  < b.low)  b.low  = c.low;
-      b.close   = c.close;
-      b.volume += c.volume;
+      b.close    = c.close;
+      b.volume  += c.volume;
     }
   }
   return [...map.values()].sort((a, b) => a.time - b.time);
@@ -227,64 +222,107 @@ function resample(candles, n) {
 
 // ── EMA ───────────────────────────────────────────────────────────────────────
 function calcEMA(closes, period) {
-  if (closes.length < period) return new Array(closes.length).fill(null);
-  const k = 2 / (period + 1);
   const out = new Array(closes.length).fill(null);
+  if (closes.length < period) return out;
   let sum = 0;
   for (let i = 0; i < period; i++) sum += closes[i];
-  let prev = sum / period;
-  out[period - 1] = prev;
+  let ema = sum / period;
+  out[period - 1] = ema;
+  const k = 2 / (period + 1);
   for (let i = period; i < closes.length; i++) {
-    prev = closes[i] * k + prev * (1 - k);
-    out[i] = prev;
+    ema = closes[i] * k + ema * (1 - k);
+    out[i] = ema;
   }
   return out;
 }
 
-// ── Autofit (both X and Y, outlier-filtered for intraday) ────────────────────
-function fitAll(candles) {
-  chart.timeScale().fitContent();
+// ── Outlier-filtered price range (MAD method) ─────────────────────────────────
+// Uses Median Absolute Deviation — more robust than IQR for spike detection.
+// A candle is an outlier if its high or low deviates from the median by
+// more than `madFactor` × MAD. We use 3.5 which catches $2 spikes reliably
+// without hiding legitimate volatile candles.
+function cleanPriceRange(candles, madFactor) {
+  if (!candles || candles.length < 5) return null;
 
-  if (candles && INTRADAY.has(curIv)) {
-    const range = cleanRange(candles);
-    if (range) {
-      const pad = (range.max - range.min) * 0.02;
-      candleSeries.applyOptions({
-        autoscaleInfoProvider: () => ({
-          priceRange: { minValue: range.min - pad, maxValue: range.max + pad },
-        }),
-      });
-      // Re-enable normal autoscale after a tick so user panning works correctly
-      setTimeout(() => {
-        candleSeries.applyOptions({ autoscaleInfoProvider: null });
-        chart.priceScale('right').applyOptions({ autoScale: true });
-      }, 150);
-      return;
+  // Use all OHLC values to compute median (not just close)
+  const prices = candles.flatMap(c => [c.open, c.high, c.low, c.close]).sort((a, b) => a - b);
+  const med    = prices[Math.floor(prices.length / 2)];
+
+  const devs = prices.map(p => Math.abs(p - med)).sort((a, b) => a - b);
+  const mad   = devs[Math.floor(devs.length / 2)];
+
+  // If MAD is 0 (very flat data) fall back to simple min/max
+  const fence = mad > 0 ? madFactor * mad : Infinity;
+  const lo    = med - fence;
+  const hi    = med + fence;
+
+  let min = Infinity, max = -Infinity;
+  let outliers = 0;
+  for (const c of candles) {
+    // A candle is an outlier if BOTH high and low are outside the fence
+    // (prevents filtering legitimate wicks)
+    if (c.high > hi && c.low < lo) { outliers++; continue; }
+    if (c.high > hi || c.low < lo) {
+      // Partial spike: clamp the offending value instead of skipping
+      const effLow  = c.low  < lo ? lo  : c.low;
+      const effHigh = c.high > hi ? hi  : c.high;
+      if (effLow  < min) min = effLow;
+      if (effHigh > max) max = effHigh;
+    } else {
+      if (c.low  < min) min = c.low;
+      if (c.high > max) max = c.high;
     }
   }
-  chart.priceScale('right').applyOptions({ autoScale: true });
+
+  if (!isFinite(min) || !isFinite(max) || max <= min) return null;
+  return { min, max, outliers };
 }
 
-// IQR-based outlier filter: exclude candles whose high/low exceed 3×IQR fence
-function cleanRange(candles) {
-  if (candles.length < 10) return null;
-  const closes = candles.map(c => c.close).slice().sort((a, b) => a - b);
-  const q1  = closes[Math.floor(closes.length * 0.25)];
-  const q3  = closes[Math.floor(closes.length * 0.75)];
-  const iqr = q3 - q1;
-  if (iqr === 0) return null;
-  const lo = q1 - 3 * iqr;
-  const hi = q3 + 3 * iqr;
-  let min = Infinity, max = -Infinity;
-  for (const c of candles) {
-    if (c.high > hi || c.low < lo) continue;
-    if (c.low  < min) min = c.low;
-    if (c.high > max) max = c.high;
+// ── Autofit — X and Y axes ───────────────────────────────────────────────────
+// Strategy:
+//   1. fitContent() resets the X axis to show all data.
+//   2. Compute a clean price range (MAD outlier filter for all timeframes).
+//   3. Use setVisiblePriceRange() — stable, immediate, no async hacks.
+//   4. Re-enable autoScale so subsequent panning/zooming works normally.
+function fitAll(candles) {
+  if (!chart) return;
+  chart.timeScale().fitContent();
+
+  const cfg = FIT_CFG[curIv];
+
+  // 1D and 1W: plain autoScale — legitimate multi-dollar moves must not be filtered
+  if (!cfg || !cfg.filter) {
+    chart.priceScale('right').applyOptions({ autoScale: true });
+    return;
   }
-  return isFinite(min) && isFinite(max) ? { min, max } : null;
+
+  // Intraday: MAD outlier filter with per-timeframe sensitivity
+  const range = cleanPriceRange(candles, cfg.madFactor);
+  if (!range) {
+    chart.priceScale('right').applyOptions({ autoScale: true });
+    return;
+  }
+
+  const pad  = (range.max - range.min) * 0.03;
+  const minP = range.min - pad;
+  const maxP = range.max + pad;
+
+  chart.priceScale('right').applyOptions({ autoScale: false });
+  candleSeries.applyOptions({
+    autoscaleInfoProvider: () => ({
+      priceRange: { minValue: minP, maxValue: maxP },
+    }),
+  });
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      candleSeries.applyOptions({ autoscaleInfoProvider: null });
+      chart.priceScale('right').applyOptions({ autoScale: true });
+    });
+  });
 }
 
-// ── Wait for LightweightCharts CDN ───────────────────────────────────────────
+// ── Wait for lib ──────────────────────────────────────────────────────────────
 function waitForLib(cb) {
   if (typeof LightweightCharts !== 'undefined') { cb(); return; }
   let n = 0;
@@ -299,34 +337,40 @@ function initChart() {
   const wrap = g('cwrap');
   chart = LightweightCharts.createChart(g('cv'), {
     layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
-    grid: { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
+    grid:   { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
     crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
+      mode:     LightweightCharts.CrosshairMode.Normal,
       vertLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
       horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' },
     },
     rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.26 } },
-    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2 },
+    timeScale: {
+      borderColor: '#1e2530', timeVisible: true, secondsVisible: false,
+      rightOffset: 5, barSpacing: 8, minBarSpacing: 2,
+    },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
     handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
-    width: wrap.clientWidth,
+    width:  wrap.clientWidth,
     height: wrap.clientHeight,
   });
 
   candleSeries = chart.addCandlestickSeries({
-    upColor: '#26c281', downColor: '#e74c3c',
-    borderUpColor: '#26c281', borderDownColor: '#e74c3c',
-    wickUpColor: '#26c281', wickDownColor: '#e74c3c',
+    upColor:        '#26c281', downColor:       '#e74c3c',
+    borderUpColor:  '#26c281', borderDownColor: '#e74c3c',
+    wickUpColor:    '#26c281', wickDownColor:   '#e74c3c',
     priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
   });
 
   volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
   chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.80, bottom: 0 } });
 
-  const lineOpts = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } };
-  ema50S  = chart.addLineSeries({ ...lineOpts, color: '#f0c040', lineWidth: 1.5 });
-  ema200S = chart.addLineSeries({ ...lineOpts, color: '#e74c3c', lineWidth: 1.5 });
-  ema500S = chart.addLineSeries({ ...lineOpts, color: '#2196f3', lineWidth: 1.5 });
+  const lineBase = {
+    priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+    priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
+  };
+  ema50S  = chart.addLineSeries({ ...lineBase, color: '#f0c040', lineWidth: 1.5 });
+  ema200S = chart.addLineSeries({ ...lineBase, color: '#e74c3c', lineWidth: 1.5 });
+  ema500S = chart.addLineSeries({ ...lineBase, color: '#2196f3', lineWidth: 1.5 });
 
   chart.subscribeCrosshairMove(p => {
     if (!p.time || !p.seriesData) { clearTip(); return; }
@@ -352,14 +396,14 @@ function initChart() {
   }).observe(wrap);
 }
 
-// ── Fetch helpers ─────────────────────────────────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchWithFallback(url) {
   const errs = [];
   for (const mkP of PROXIES) {
     try {
       const res = await fetch(mkP(url), {
         headers: { Accept: 'application/json' },
-        signal: AbortSignal.timeout(12000),
+        signal:  AbortSignal.timeout(12000),
       });
       if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
       const txt = await res.text();
@@ -402,13 +446,14 @@ function parseYF(json) {
     .filter(c => c.open != null && c.high != null && c.low != null && c.close != null)
     .sort((a, b) => a.time - b.time);
 
-  if (!candles.length) throw new Error('No valid OHLC candles after filtering');
+  if (!candles.length) throw new Error('No valid candles after filtering');
+
   const last = candles[candles.length - 1];
   return {
     candles,
-    price:       m.regularMarketPrice  ?? last.close,
-    yfPrevClose: m.chartPreviousClose  ?? null,
-    volume:      m.regularMarketVolume ?? last.volume,
+    price:       m.regularMarketPrice   ?? last.close,
+    yfPrevClose: m.chartPreviousClose   ?? null,
+    volume:      m.regularMarketVolume  ?? last.volume,
     dayHigh:     m.regularMarketDayHigh ?? null,
     dayLow:      m.regularMarketDayLow  ?? null,
   };
@@ -424,11 +469,10 @@ async function loadData(isRefresh) {
     const json = await fetchYF(cfg);
     let { candles, price, yfPrevClose, volume, dayHigh, dayLow } = parseYF(json);
 
-    // Resample if needed (4h = resample 4 × 1h candles into one)
     if (cfg.resample > 1) candles = resample(candles, cfg.resample);
     lastCandles = candles;
 
-    // Shift timestamps to Prague local time for X axis display
+    // Shift timestamps to Prague local time for X axis
     const shifted = candles.map(c => ({ ...c, time: shiftTs(c.time) }));
 
     candleSeries.setData(shifted);
@@ -437,23 +481,21 @@ async function loadData(isRefresh) {
       color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
     })));
 
-    // EMA — computed on raw closes (before timezone shift)
+    // EMA on raw closes (before tz shift)
     const closes  = candles.map(c => c.close);
     const e50arr  = calcEMA(closes, 50);
     const e200arr = calcEMA(closes, 200);
     const e500arr = calcEMA(closes, 500);
-
-    const toEmaData = (arr) =>
+    const toLine  = arr =>
       shifted.map((c, i) => arr[i] != null ? { time: c.time, value: +arr[i].toFixed(4) } : null).filter(Boolean);
-    ema50S.setData(toEmaData(e50arr));
-    ema200S.setData(toEmaData(e200arr));
-    ema500S.setData(toEmaData(e500arr));
+    ema50S.setData(toLine(e50arr));
+    ema200S.setData(toLine(e200arr));
+    ema500S.setData(toLine(e500arr));
 
-    // EMA legend — last values
     const li = candles.length - 1;
-    g('ev50').textContent  = e50arr[li]  != null ? (+e50arr[li]).toFixed(3)  : '—';
-    g('ev200').textContent = e200arr[li] != null ? (+e200arr[li]).toFixed(3) : '—';
-    g('ev500').textContent = e500arr[li] != null ? (+e500arr[li]).toFixed(3) : '—';
+    g('ev50').textContent  = e50arr[li]  != null ? e50arr[li].toFixed(3)  : '—';
+    g('ev200').textContent = e200arr[li] != null ? e200arr[li].toFixed(3) : '—';
+    g('ev500').textContent = e500arr[li] != null ? e500arr[li].toFixed(3) : '—';
 
     // Daily change vs previous calendar day close (Prague time)
     const baseline = getPrevDayClose(candles, yfPrevClose);
@@ -462,24 +504,24 @@ async function loadData(isRefresh) {
     const up  = ch == null || ch >= 0;
     const clr = up ? '#26c281' : '#e74c3c';
     const sgn = up ? '+' : '';
-    setText('price', price.toFixed(3));
+    setText('price',     price.toFixed(3));
     g('change').textContent    = ch  != null ? sgn + ch.toFixed(3)          : '—';
     g('change').style.color    = clr;
     g('changePct').textContent = pct != null ? `(${sgn}${pct.toFixed(2)}%)` : '';
     g('changePct').style.color = clr;
     setText('vol', volume ? Number(volume).toLocaleString('en-US') : '—');
 
-    // Today's high/low (Prague date)
-    const today = todayPrague();
+    // Today's high / low
+    const today    = todayPrague();
     const todayBars = candles.filter(c =>
       new Date(c.time * 1000).toLocaleDateString('en-CA', { timeZone: TZ }) === today
     );
-    const computedHigh = todayBars.length ? todayBars.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
-    const computedLow  = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
-    setText('dhigh', (dayHigh ?? computedHigh ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
-    setText('dlow',  (dayLow  ?? computedLow  ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
+    const hi = todayBars.length ? todayBars.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
+    const lo = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
+    setText('dhigh', (dayHigh ?? hi ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
+    setText('dlow',  (dayLow  ?? lo ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
 
-    // Autofit only on initial load or interval change, NOT on auto-refresh
+    // Autofit on initial load / interval change — never on auto-refresh
     if (!isRefresh) fitAll(candles);
 
     hideOverlay();
@@ -500,8 +542,8 @@ function resetTimer() {
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
-function g(id)        { return document.getElementById(id); }
-function setText(id,v){ g(id).textContent = v; }
+function g(id)         { return document.getElementById(id); }
+function setText(id, v){ g(id).textContent = v; }
 
 function clearTip() {
   g('hint').style.display = '';
@@ -510,8 +552,8 @@ function clearTip() {
 }
 function setOI(k, v, c) {
   g('oi-'+k).style.display = 'flex';
-  g('tv-'+k).textContent = v;
-  g('tv-'+k).style.color = c;
+  g('tv-'+k).textContent   = v;
+  g('tv-'+k).style.color   = c;
 }
 function showLoading() {
   const o = g('overlay'); o.style.display = 'flex';
@@ -519,9 +561,13 @@ function showLoading() {
 }
 function showErr(msg) {
   const o = g('overlay'); o.style.display = 'flex';
-  o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;
+  o.innerHTML = `<div class="ebox">
+    <p class="etit">⚠ Failed to load data</p>
+    <p class="emsg">${msg.replace(/\n/g,'<br>')}</p>
+    <button class="rbtn2" onclick="loadData(false)">Retry</button>
+  </div>`;
 }
-function hideOverlay() { g('overlay').style.display = 'none'; }
+function hideOverlay()    { g('overlay').style.display = 'none'; }
 function setRefreshing(on) {
   g('dot').style.background = on ? '#e7a22b' : '#26c281';
   if (on) setText('status', 'Loading…');
@@ -538,11 +584,8 @@ document.querySelectorAll('.iv').forEach(btn => {
   });
 });
 
-g('fit-btn').addEventListener('click', () => {
-  if (chart) fitAll(lastCandles);
-});
-
-g('rbtn').addEventListener('click', () => loadData(false));
+g('fit-btn').addEventListener('click', () => fitAll(lastCandles));
+g('rbtn').addEventListener('click',    () => loadData(false));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 waitForLib(() => { initChart(); loadData(false); });
