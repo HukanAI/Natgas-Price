@@ -101,10 +101,11 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     <div class="btn-grp">
       <button class="btn vw-btn" data-days="1">1D</button>
       <button class="btn vw-btn" data-days="5">5D</button>
+      <button class="btn vw-btn on" data-days="14">2W</button>
       <button class="btn vw-btn" data-days="30">1M</button>
       <button class="btn vw-btn" data-days="180">6M</button>
       <button class="btn vw-btn" data-days="ytd">YTD</button>
-      <button class="btn vw-btn on" data-days="365">1Y</button>
+      <button class="btn vw-btn" data-days="365">1Y</button>
       <button class="btn vw-btn" data-days="1825">5Y</button>
     </div>
     <div class="sep"></div>
@@ -171,7 +172,7 @@ const FETCH_CFG = {
 
 // View button → days to show (ytd handled separately)
 const VIEW_DAYS = {
-  '1': 1, '5': 5, '30': 30, '180': 180, 'ytd': 'ytd', '365': 365, '1825': 1825,
+  '1': 1, '5': 5, '14': 14, '30': 30, '180': 180, 'ytd': 'ytd', '365': 365, '1825': 1825,
 };
 
 const PROXIES = [
@@ -183,7 +184,7 @@ const YF_HOSTS = ['query2.finance.yahoo.com', 'query1.finance.yahoo.com'];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let curIv      = '1h';
-let curViewKey = '365'; // currently selected view button key
+let curViewKey = '14'; // currently selected view button key
 let refreshTimer = null;
 let isSyncing    = false;
 
