@@ -32,25 +32,24 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 #dot{width:7px;height:7px;border-radius:50%;background:#26c281;flex-shrink:0;transition:background .3s}
 #status{font-size:11px;color:#3d4a5c;font-family:monospace}
 
-#tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:14px;align-items:center;min-height:28px;flex-wrap:wrap}
+#tbar{padding:4px 18px;border-bottom:1px solid #1e2530;display:flex;gap:12px;align-items:center;min-height:28px;flex-wrap:wrap}
 .oi{display:none;gap:5px;align-items:baseline}
 .ol{font-size:11px;color:#3d4a5c;font-family:monospace}
 .ov{font-size:12px;font-weight:600;font-family:monospace}
 #hint{font-size:11px;color:#3d4a5c;font-family:monospace}
 #legend{display:flex;gap:12px;align-items:center;margin-left:auto;flex-wrap:wrap}
 .leg{font-size:11px;font-family:monospace;display:flex;align-items:center;gap:4px}
-.leg-dot{width:18px;height:2px;border-radius:1px;display:inline-block}
+.leg-dot{width:16px;height:2px;border-radius:1px;display:inline-block}
 .leg-val{font-weight:600}
 .leg-sep{width:1px;background:#1e2530;height:14px;margin:0 2px}
 
-/* Chart panes container */
 #cwrap{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
-#pane-main{flex:55;min-height:0;position:relative}
-#pane-rsi {flex:22;min-height:0;border-top:1px solid #1e2530;position:relative}
-#pane-macd{flex:23;min-height:0;border-top:1px solid #1e2530;position:relative}
+.pane{min-height:0;position:relative}
+#pane-main{flex:55}
+#pane-rsi {flex:22;border-top:1px solid #1e2530}
+#pane-macd{flex:23;border-top:1px solid #1e2530}
 .pane-label{position:absolute;top:4px;left:8px;font-size:10px;color:#3d4a5c;font-family:monospace;z-index:2;pointer-events:none;letter-spacing:.5px}
 
-/* Overlay */
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0d1117;z-index:20}
 #spin{width:36px;height:36px;border:3px solid #1e2530;border-top:3px solid #1a6ed8;border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -64,7 +63,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 <body>
 <div id="app">
 
-  <!-- HEADER -->
   <div id="header">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span id="ticker-sym">NG=F</span>
@@ -83,7 +81,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     </div>
   </div>
 
-  <!-- CONTROLS -->
   <div id="controls">
     <span class="grp-label">Timeframe</span>
     <div class="btn-grp">
@@ -102,7 +99,6 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
     <span id="status">—</span>
   </div>
 
-  <!-- OHLC + INDICATOR BAR -->
   <div id="tbar">
     <span id="hint">Hover over chart for values</span>
     <div class="oi" id="oi-o"><span class="ol">O</span><span class="ov" id="tv-o"></span></div>
@@ -117,16 +113,15 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
       <span class="leg"><span class="leg-dot" style="background:#a78bfa"></span>RSI <span class="leg-val" id="ev-rsi" style="color:#a78bfa">—</span></span>
       <span class="leg-sep"></span>
       <span class="leg"><span class="leg-dot" style="background:#26c281"></span>MACD <span class="leg-val" id="ev-macd" style="color:#26c281">—</span></span>
-      <span class="leg"><span class="leg-dot" style="background:#f0c040"></span>Signal <span class="leg-val" id="ev-sig" style="color:#f0c040">—</span></span>
-      <span class="leg"><span class="leg-dot" style="background:#334155"></span>Hist <span class="leg-val" id="ev-hist" style="color:#334155">—</span></span>
+      <span class="leg"><span class="leg-dot" style="background:#f0c040"></span>Sig <span class="leg-val" id="ev-sig" style="color:#f0c040">—</span></span>
+      <span class="leg"><span class="leg-dot" style="background:#555"></span>Hist <span class="leg-val" id="ev-hist">—</span></span>
     </div>
   </div>
 
-  <!-- CHART PANES -->
   <div id="cwrap">
-    <div id="pane-main"><span class="pane-label">NG=F · USD/MMBtu</span></div>
-    <div id="pane-rsi"> <span class="pane-label">RSI (14)</span></div>
-    <div id="pane-macd"><span class="pane-label">MACD (12, 26, 9)</span></div>
+    <div class="pane" id="pane-main"><span class="pane-label">NG=F · USD/MMBtu</span></div>
+    <div class="pane" id="pane-rsi"><span class="pane-label">RSI (14)</span></div>
+    <div class="pane" id="pane-macd"><span class="pane-label">MACD (12, 26, 9)</span></div>
     <div id="overlay">
       <div id="spin"></div>
       <div id="load-msg">Loading chart library…</div>
@@ -137,10 +132,11 @@ html,body,#app{height:100%;background:#0d1117;color:#e8eaf0;font-family:system-u
 <script>
 'use strict';
 
-// ── Config ────────────────────────────────────────────────────────────────────
-const TICKER     = 'NG=F';
-const TZ         = 'Europe/Prague';
-const REFRESH_MS = 10000;
+// ─── Constants ────────────────────────────────────────────────────────────────
+const TICKER      = 'NG=F';
+const TZ          = 'Europe/Prague';
+const REFRESH_MS  = 10000;
+const SWING_STR   = 10; // pivot strength (bars each side)
 
 const FETCH_CFG = {
   '1m':  { range: '5d',  interval: '1m',  resample: 1 },
@@ -159,41 +155,57 @@ const PROXIES = [
 ];
 const YF_HOSTS = ['query2.finance.yahoo.com', 'query1.finance.yahoo.com'];
 
-// ── Chart state ───────────────────────────────────────────────────────────────
-let chartMain, chartRsi, chartMacd;
-let candleSeries, volSeries, ema50S, ema200S, ema500S;
-let rsiSeries, rsiOB, rsiOS, rsiMid;
-let macdLineSeries, macdSignalSeries, macdHistSeries;
-let curIv = '1h';
-let refreshTimer;
-let isSyncing = false; // prevent recursive crosshair sync
+// ─── App state ────────────────────────────────────────────────────────────────
+let curIv        = '1h';
+let refreshTimer = null;
+let isSyncing    = false;
 
-// ── Prague time ───────────────────────────────────────────────────────────────
+// Chart instances (set in initCharts)
+let chartMain, chartRsi, chartMacd;
+
+// Main chart series
+let serCandle, serVol, serEma50, serEma200, serEma500;
+// Zone series (premium / discount)
+let serZoneHigh, serZoneEquil, serZoneLow, serPremiumArea, serDiscountArea;
+// RSI series
+let serRsi, serRsiOB, serRsiOS, serRsiMid;
+// MACD series
+let serMacdLine, serMacdSignal, serMacdHist;
+
+// ─── Prague time ──────────────────────────────────────────────────────────────
 function pragueNow() {
-  return new Date().toLocaleTimeString('cs-CZ', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date().toLocaleTimeString('cs-CZ', {
+    timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
 }
 function pragueOffsetSec(ts) {
   const d = new Date(ts * 1000);
-  const mins = tz => { const [,t] = d.toLocaleString('en-GB',{timeZone:tz}).split(', '); const [h,m] = t.split(':'); return +h*60+ +m; };
+  const mins = tz => {
+    const [, t] = d.toLocaleString('en-GB', { timeZone: tz }).split(', ');
+    const [h, m] = t.split(':');
+    return +h * 60 + +m;
+  };
   let diff = mins(TZ) - mins('UTC');
   if (diff >  720) diff -= 1440;
   if (diff < -720) diff += 1440;
   return diff * 60;
 }
 function shiftTs(ts) { return ts + pragueOffsetSec(ts); }
-function todayPrague() { return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); }
-function getPrevDayClose(candles, fb) {
-  const today = todayPrague();
+function todayStr()  { return new Date().toLocaleDateString('en-CA', { timeZone: TZ }); }
+function dateStr(ts) { return new Date(ts * 1000).toLocaleDateString('en-CA', { timeZone: TZ }); }
+
+function getPrevDayClose(candles, fallback) {
+  const today = todayStr();
   for (let i = candles.length - 1; i >= 0; i--) {
-    if (new Date(candles[i].time * 1000).toLocaleDateString('en-CA', { timeZone: TZ }) < today)
-      return candles[i].close;
+    if (dateStr(candles[i].time) < today) return candles[i].close;
   }
-  return fb;
+  return fallback;
 }
+
 setInterval(() => { g('prg-time').textContent = pragueNow(); }, 1000);
 g('prg-time').textContent = pragueNow();
 
-// ── Resample ──────────────────────────────────────────────────────────────────
+// ─── Resample ─────────────────────────────────────────────────────────────────
 function resample(candles, n) {
   if (n <= 1) return candles;
   const sec = n * 3600;
@@ -206,13 +218,14 @@ function resample(candles, n) {
       const b = map.get(key);
       if (c.high > b.high) b.high = c.high;
       if (c.low  < b.low)  b.low  = c.low;
-      b.close = c.close; b.volume += c.volume;
+      b.close   = c.close;
+      b.volume += c.volume;
     }
   }
   return [...map.values()].sort((a, b) => a.time - b.time);
 }
 
-// ── Indicators ────────────────────────────────────────────────────────────────
+// ─── Indicators ───────────────────────────────────────────────────────────────
 function calcEMA(closes, period) {
   const out = new Array(closes.length).fill(null);
   if (closes.length < period) return out;
@@ -221,7 +234,10 @@ function calcEMA(closes, period) {
   let ema = sum / period;
   out[period - 1] = ema;
   const k = 2 / (period + 1);
-  for (let i = period; i < closes.length; i++) { ema = closes[i] * k + ema * (1 - k); out[i] = ema; }
+  for (let i = period; i < closes.length; i++) {
+    ema    = closes[i] * k + ema * (1 - k);
+    out[i] = ema;
+  }
   return out;
 }
 
@@ -245,285 +261,393 @@ function calcRSI(closes, period) {
 }
 
 function calcMACD(closes, fast, slow, signal) {
-  const emaFast = calcEMA(closes, fast);
-  const emaSlow = calcEMA(closes, slow);
-  const macdLine = closes.map((_, i) =>
-    emaFast[i] != null && emaSlow[i] != null ? +(emaFast[i] - emaSlow[i]).toFixed(4) : null
+  const eFast = calcEMA(closes, fast);
+  const eSlow = calcEMA(closes, slow);
+  const macd  = closes.map((_, i) =>
+    eFast[i] != null && eSlow[i] != null ? eFast[i] - eSlow[i] : null
   );
-  // Signal = EMA of MACD line (only over non-null values)
-  const macdValid = macdLine.filter(v => v != null);
-  const sigArr = calcEMA(macdValid, signal);
-  // Re-align signal back to original indices
-  const signalLine = new Array(closes.length).fill(null);
+  // Compute EMA of macd (skipping nulls, re-aligning)
+  const macdVals = macd.filter(v => v != null);
+  const sigEma   = calcEMA(macdVals, signal);
+  const sig      = new Array(closes.length).fill(null);
   let si = 0;
   for (let i = 0; i < closes.length; i++) {
-    if (macdLine[i] != null) { signalLine[i] = sigArr[si] != null ? +sigArr[si].toFixed(4) : null; si++; }
+    if (macd[i] != null) { sig[i] = sigEma[si] ?? null; si++; }
   }
-  const histogram = closes.map((_, i) =>
-    macdLine[i] != null && signalLine[i] != null ? +(macdLine[i] - signalLine[i]).toFixed(4) : null
+  const hist = closes.map((_, i) =>
+    macd[i] != null && sig[i] != null ? macd[i] - sig[i] : null
   );
-  return { macdLine, signalLine, histogram };
+  return { macd, sig, hist };
 }
 
-function rsiColor(v) {
-  if (v == null) return '#a78bfa';
-  return v >= 70 ? '#e74c3c' : v <= 30 ? '#26c281' : '#a78bfa';
+// ─── SMC swing pivot detection ────────────────────────────────────────────────
+function findSwings(candles, strength) {
+  let high = null, low = null;
+  const end = candles.length - 1 - strength;
+  for (let i = end; i >= strength; i--) {
+    if (!high) {
+      let ok = true;
+      for (let j = i - strength; j <= i + strength; j++) {
+        if (j !== i && candles[j].high >= candles[i].high) { ok = false; break; }
+      }
+      if (ok) high = candles[i].high;
+    }
+    if (!low) {
+      let ok = true;
+      for (let j = i - strength; j <= i + strength; j++) {
+        if (j !== i && candles[j].low <= candles[i].low) { ok = false; break; }
+      }
+      if (ok) low = candles[i].low;
+    }
+    if (high && low) break;
+  }
+  return { high, low };
 }
 
-// ── Chart factory ─────────────────────────────────────────────────────────────
-function getChartBase() {
+// ─── Chart init ───────────────────────────────────────────────────────────────
+function buildChartOpts(extra) {
+  // Called only inside initCharts(), so LightweightCharts is guaranteed loaded
   return {
-    layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
-    grid:   { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' }, horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' } },
+    layout:       { background: { type: 'solid', color: '#0d1117' }, textColor: '#5a6478', fontFamily: 'monospace', fontSize: 11 },
+    grid:         { vertLines: { color: '#131a24' }, horzLines: { color: '#131a24' } },
+    crosshair:    { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' }, horzLine: { color: '#334155', labelBackgroundColor: '#1e2d3d' } },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
     handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+    ...extra,
   };
 }
 
-function makeChart(elId, extraOpts) {
+function createChart(elId, extra) {
   const el = g(elId);
-  const base = getChartBase();
   return LightweightCharts.createChart(el, {
-    ...base,
-    ...extraOpts,
+    ...buildChartOpts(extra),
     width:  el.clientWidth,
     height: el.clientHeight,
   });
 }
 
-// ── Init all three charts ─────────────────────────────────────────────────────
 function initCharts() {
-  // ── Main chart (candles + EMA + volume) ────────────────────────────────────
-  chartMain = makeChart('pane-main', {
+  // ── Main chart ──────────────────────────────────────────────────────────────
+  chartMain = createChart('pane-main', {
     rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.06, bottom: 0.22 } },
-    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2, borderVisible: false },
+    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 8, minBarSpacing: 2 },
   });
 
-  candleSeries = chartMain.addCandlestickSeries({
+  serCandle = chartMain.addCandlestickSeries({
     upColor: '#26c281', downColor: '#e74c3c',
     borderUpColor: '#26c281', borderDownColor: '#e74c3c',
     wickUpColor: '#26c281', wickDownColor: '#e74c3c',
     priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
   });
 
-  volSeries = chartMain.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
+  serVol = chartMain.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: 'vol',
+  });
   chartMain.priceScale('vol').applyOptions({ scaleMargins: { top: 0.80, bottom: 0 }, borderColor: '#1e2530' });
 
-  const emaBase = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } };
-  ema50S  = chartMain.addLineSeries({ ...emaBase, color: '#f0c040', lineWidth: 1.5 });
-  ema200S = chartMain.addLineSeries({ ...emaBase, color: '#e74c3c', lineWidth: 1.5 });
-  ema500S = chartMain.addLineSeries({ ...emaBase, color: '#2196f3', lineWidth: 1.5 });
+  const emaOpts = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.001 } };
+  serEma50  = chartMain.addLineSeries({ ...emaOpts, color: '#f0c040', lineWidth: 1.5 });
+  serEma200 = chartMain.addLineSeries({ ...emaOpts, color: '#e74c3c', lineWidth: 1.5 });
+  serEma500 = chartMain.addLineSeries({ ...emaOpts, color: '#2196f3', lineWidth: 1.5 });
 
-  chartMain.subscribeCrosshairMove(syncCrosshair);
-  chartMain.subscribeCrosshairMove(p => updateOhlcBar(p));
+  // Zone series — order matters for z-index (added after candles so they render on top)
+  const zOpts = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false };
 
-  // Initialise zone series after chartMain exists
-  initZoneSeries();
-
-  // ── RSI chart ─────────────────────────────────────────────────────────────
-  chartRsi = makeChart('pane-rsi', {
-    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 60 },
-    timeScale: { borderColor: '#1e2530', timeVisible: false, borderVisible: false },
+  serPremiumArea = chartMain.addAreaSeries({
+    ...zOpts,
+    topColor:    'rgba(231,76,60,0.18)',
+    bottomColor: 'rgba(231,76,60,0.03)',
+    lineColor:   'rgba(231,76,60,0)',
+    lineWidth:   0,
   });
 
-  rsiSeries = chartRsi.addLineSeries({
+  serDiscountArea = chartMain.addAreaSeries({
+    ...zOpts,
+    topColor:    'rgba(38,194,129,0.03)',
+    bottomColor: 'rgba(38,194,129,0.18)',
+    lineColor:   'rgba(38,194,129,0)',
+    lineWidth:   0,
+  });
+
+  serZoneHigh  = chartMain.addLineSeries({ ...zOpts, color: 'rgba(231,76,60,0.8)',   lineWidth: 1 });
+  serZoneEquil = chartMain.addLineSeries({ ...zOpts, color: 'rgba(240,192,64,0.6)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  serZoneLow   = chartMain.addLineSeries({ ...zOpts, color: 'rgba(38,194,129,0.8)', lineWidth: 1 });
+
+  // Crosshair
+  chartMain.subscribeCrosshairMove(onMainCrosshair);
+
+  // ── RSI chart ───────────────────────────────────────────────────────────────
+  chartRsi = createChart('pane-rsi', {
+    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.08, bottom: 0.08 } },
+    timeScale: { borderColor: '#1e2530', timeVisible: false },
+  });
+
+  serRsi = chartRsi.addLineSeries({
     color: '#a78bfa', lineWidth: 1.5,
     priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: true,
+    crosshairMarkerRadius: 3,
     priceFormat: { type: 'custom', formatter: v => v.toFixed(1) },
   });
-  const refBase = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false };
-  rsiOB  = chartRsi.addLineSeries({ ...refBase, color: '#e74c3c55', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
-  rsiOS  = chartRsi.addLineSeries({ ...refBase, color: '#26c28155', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
-  rsiMid = chartRsi.addLineSeries({ ...refBase, color: '#33415566', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted });
 
-  chartRsi.subscribeCrosshairMove(syncCrosshair);
+  const refOpts = { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false };
+  serRsiOB  = chartRsi.addLineSeries({ ...refOpts, color: 'rgba(231,76,60,0.4)',   lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  serRsiOS  = chartRsi.addLineSeries({ ...refOpts, color: 'rgba(38,194,129,0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  serRsiMid = chartRsi.addLineSeries({ ...refOpts, color: 'rgba(100,120,150,0.4)',lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted });
+
   chartRsi.subscribeCrosshairMove(p => {
-    const s = p.seriesData?.get(rsiSeries);
+    syncCrosshair(p, chartRsi);
+    const s = p?.seriesData?.get(serRsi);
     if (s) { g('ev-rsi').textContent = s.value.toFixed(1); g('ev-rsi').style.color = rsiColor(s.value); }
   });
 
-  // ── MACD chart ────────────────────────────────────────────────────────────
-  chartMacd = makeChart('pane-macd', {
-    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.1, bottom: 0.1 }, minimumWidth: 60 },
-    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false, borderVisible: false },
+  // ── MACD chart ──────────────────────────────────────────────────────────────
+  chartMacd = createChart('pane-macd', {
+    rightPriceScale: { borderColor: '#1e2530', scaleMargins: { top: 0.08, bottom: 0.08 } },
+    timeScale: { borderColor: '#1e2530', timeVisible: true, secondsVisible: false },
   });
 
-  macdLineSeries   = chartMacd.addLineSeries({ color: '#26c281', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 4, minMove: 0.0001 } });
-  macdSignalSeries = chartMacd.addLineSeries({ color: '#f0c040', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 4, minMove: 0.0001 } });
-  macdHistSeries   = chartMacd.addHistogramSeries({ priceFormat: { type: 'price', precision: 4, minMove: 0.0001 }, priceScaleId: 'right' });
+  serMacdLine   = chartMacd.addLineSeries({ color: '#26c281', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 4, minMove: 0.0001 } });
+  serMacdSignal = chartMacd.addLineSeries({ color: '#f0c040', lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 4, minMove: 0.0001 } });
+  serMacdHist   = chartMacd.addHistogramSeries({ priceFormat: { type: 'price', precision: 4, minMove: 0.0001 } });
 
-  chartMacd.subscribeCrosshairMove(syncCrosshair);
   chartMacd.subscribeCrosshairMove(p => {
-    const ml = p.seriesData?.get(macdLineSeries);
-    const ms = p.seriesData?.get(macdSignalSeries);
-    const mh = p.seriesData?.get(macdHistSeries);
-    if (ml) { g('ev-macd').textContent = ml.value.toFixed(4); }
-    if (ms) { g('ev-sig').textContent  = ms.value.toFixed(4); }
+    syncCrosshair(p, chartMacd);
+    const ml = p?.seriesData?.get(serMacdLine);
+    const ms = p?.seriesData?.get(serMacdSignal);
+    const mh = p?.seriesData?.get(serMacdHist);
+    if (ml) g('ev-macd').textContent = ml.value.toFixed(4);
+    if (ms) g('ev-sig').textContent  = ms.value.toFixed(4);
     if (mh) { g('ev-hist').textContent = mh.value.toFixed(4); g('ev-hist').style.color = mh.value >= 0 ? '#26c281' : '#e74c3c'; }
   });
 
-  // ── Synchronise time scales across all three charts ───────────────────────
-  const charts = [chartMain, chartRsi, chartMacd];
-  charts.forEach(src => {
+  // ── Sync time scales ────────────────────────────────────────────────────────
+  const allCharts = [chartMain, chartRsi, chartMacd];
+  allCharts.forEach(src => {
     src.timeScale().subscribeVisibleLogicalRangeChange(range => {
-      if (!range) return;
-      charts.forEach(dst => { if (dst !== src) dst.timeScale().setVisibleLogicalRange(range); });
+      if (!range || isSyncing) return;
+      isSyncing = true;
+      allCharts.forEach(dst => { if (dst !== src) dst.timeScale().setVisibleLogicalRange(range); });
+      isSyncing = false;
     });
   });
 
-  // ── Resize all three when container changes ────────────────────────────────
-  new ResizeObserver(() => resizeAll()).observe(g('cwrap'));
+  // ── Resize observer ─────────────────────────────────────────────────────────
+  new ResizeObserver(() => {
+    const resize = (ch, id) => {
+      const el = g(id);
+      const w = el.clientWidth, h = el.clientHeight;
+      if (w > 0 && h > 0) ch.applyOptions({ width: w, height: h });
+    };
+    resize(chartMain, 'pane-main');
+    resize(chartRsi,  'pane-rsi');
+    resize(chartMacd, 'pane-macd');
+  }).observe(g('cwrap'));
 }
 
-function resizeAll() {
-  const resize = (ch, elId) => {
-    const el = g(elId);
-    const w = el.clientWidth, h = el.clientHeight;
-    if (w > 0 && h > 0) ch.applyOptions({ width: w, height: h });
-  };
-  resize(chartMain, 'pane-main');
-  resize(chartRsi,  'pane-rsi');
-  resize(chartMacd, 'pane-macd');
-}
-
-// ── Crosshair sync across panes ───────────────────────────────────────────────
-function syncCrosshair(param) {
+// ─── Crosshair helpers ────────────────────────────────────────────────────────
+function syncCrosshair(param, sourceChart) {
   if (isSyncing) return;
   isSyncing = true;
-  const charts = [chartMain, chartRsi, chartMacd];
-  charts.forEach(ch => {
-    if (ch === param.sourceChart) return;
-    if (param.point) {
-      ch.setCrosshairPosition(param.price ?? 0, param.time ?? 0, ch.series?.[0]);
+  [chartMain, chartRsi, chartMacd].forEach(ch => {
+    if (ch === sourceChart) return;
+    if (param?.point) {
+      // Find the first series on this chart to pass as reference
+      try { ch.setCrosshairPosition(param.price ?? 0, param.time, null); } catch (_) {}
     } else {
-      ch.clearCrosshairPosition();
+      try { ch.clearCrosshairPosition(); } catch (_) {}
     }
   });
   isSyncing = false;
 }
 
-// ── OHLC bar update ───────────────────────────────────────────────────────────
-function updateOhlcBar(p) {
-  if (!p.time || !p.seriesData) { clearTip(); return; }
-  const b = p.seriesData.get(candleSeries);
+function onMainCrosshair(p) {
+  syncCrosshair(p, chartMain);
+  if (!p?.seriesData) { clearTip(); return; }
+  const b = p.seriesData.get(serCandle);
   if (!b) { clearTip(); return; }
   g('hint').style.display = 'none';
   setOI('o', b.open?.toFixed(3),  '#8492a6');
   setOI('h', b.high?.toFixed(3),  '#26c281');
   setOI('l', b.low?.toFixed(3),   '#e74c3c');
   setOI('c', b.close?.toFixed(3), b.close >= b.open ? '#26c281' : '#e74c3c');
-  const e50  = p.seriesData.get(ema50S);
-  const e200 = p.seriesData.get(ema200S);
-  const e500 = p.seriesData.get(ema500S);
+  const e50  = p.seriesData.get(serEma50);
+  const e200 = p.seriesData.get(serEma200);
+  const e500 = p.seriesData.get(serEma500);
   if (e50)  g('ev50').textContent  = e50.value.toFixed(3);
   if (e200) g('ev200').textContent = e200.value.toFixed(3);
   if (e500) g('ev500').textContent = e500.value.toFixed(3);
 }
 
-// ── Autofit ───────────────────────────────────────────────────────────────────
-function fitAll() {
-  chartMain.timeScale().fitContent();
-  chartMain.priceScale('right').applyOptions({ autoScale: true });
-  // RSI and MACD follow via time scale sync
+function rsiColor(v) {
+  return v >= 70 ? '#e74c3c' : v <= 30 ? '#26c281' : '#a78bfa';
 }
 
-// ── Fetch ─────────────────────────────────────────────────────────────────────
+// ─── Autofit ──────────────────────────────────────────────────────────────────
+function fitAll() {
+  if (!chartMain) return;
+  chartMain.timeScale().fitContent();
+  chartMain.priceScale('right').applyOptions({ autoScale: true });
+}
+
+// ─── Fetch helpers ────────────────────────────────────────────────────────────
 async function fetchWithFallback(url) {
   const errs = [];
   for (const mkP of PROXIES) {
     try {
-      const res = await fetch(mkP(url), { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(12000) });
+      const res = await fetch(mkP(url), {
+        headers: { Accept: 'application/json' },
+        signal:  AbortSignal.timeout(12000),
+      });
       if (!res.ok) { errs.push(`HTTP ${res.status}`); continue; }
       const txt = await res.text();
-      if (!txt?.trim()) { errs.push('empty'); continue; }
+      if (!txt?.trim()) { errs.push('empty response'); continue; }
       return JSON.parse(txt);
     } catch (e) { errs.push(e.message); }
   }
   throw new Error('All proxies failed: ' + errs.join(' | '));
 }
+
 function buildUrl(host, cfg) {
-  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
+  return `https://${host}/v8/finance/chart/${encodeURIComponent(TICKER)}` +
+    `?range=${cfg.range}&interval=${cfg.interval}&includePrePost=false&events=div%7Csplit`;
 }
+
 async function fetchYF(cfg) {
   let last;
-  for (const host of YF_HOSTS) { try { return await fetchWithFallback(buildUrl(host, cfg)); } catch(e) { last = e; } }
+  for (const host of YF_HOSTS) {
+    try { return await fetchWithFallback(buildUrl(host, cfg)); }
+    catch (e) { last = e; }
+  }
   throw last;
 }
+
 function parseYF(json) {
   const r = json?.chart?.result?.[0];
   if (!r) throw new Error('Yahoo Finance: ' + (json?.chart?.error?.description || 'no data'));
   const ts = r.timestamp || [], q = r.indicators?.quote?.[0] || {}, m = r.meta || {};
-  if (!ts.length) throw new Error('Empty data from Yahoo Finance');
+  if (!ts.length) throw new Error('Yahoo Finance returned empty data');
+
   const candles = ts
-    .map((t, i) => ({ time: Math.floor(t), open: q.open?.[i], high: q.high?.[i], low: q.low?.[i], close: q.close?.[i], volume: q.volume?.[i] ?? 0 }))
+    .map((t, i) => ({
+      time:   Math.floor(t),
+      open:   q.open?.[i],
+      high:   q.high?.[i],
+      low:    q.low?.[i],
+      close:  q.close?.[i],
+      volume: q.volume?.[i] ?? 0,
+    }))
     .filter(c => c.open != null && c.high != null && c.low != null && c.close != null)
     .sort((a, b) => a.time - b.time);
+
   if (!candles.length) throw new Error('No valid candles after filtering');
   const last = candles[candles.length - 1];
-  return { candles, price: m.regularMarketPrice ?? last.close, yfPrevClose: m.chartPreviousClose ?? null, volume: m.regularMarketVolume ?? last.volume, dayHigh: m.regularMarketDayHigh ?? null, dayLow: m.regularMarketDayLow ?? null };
+  return {
+    candles,
+    price:       m.regularMarketPrice   ?? last.close,
+    yfPrevClose: m.chartPreviousClose   ?? null,
+    volume:      m.regularMarketVolume  ?? last.volume,
+    dayHigh:     m.regularMarketDayHigh ?? null,
+    dayLow:      m.regularMarketDayLow  ?? null,
+  };
 }
 
-// ── Main load ─────────────────────────────────────────────────────────────────
+// ─── Main load ────────────────────────────────────────────────────────────────
 async function loadData(isRefresh) {
   setRefreshing(true);
   if (!isRefresh) showLoading();
+
   const cfg = FETCH_CFG[curIv];
   try {
     const json = await fetchYF(cfg);
     let { candles, price, yfPrevClose, volume, dayHigh, dayLow } = parseYF(json);
+
     if (cfg.resample > 1) candles = resample(candles, cfg.resample);
 
+    // Shift to Prague local time for display
     const shifted = candles.map(c => ({ ...c, time: shiftTs(c.time) }));
     const closes  = candles.map(c => c.close);
 
-    // ── Candles + volume ──────────────────────────────────────────────────────
-    candleSeries.setData(shifted);
-    volSeries.setData(shifted.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a' })));
+    // ── Candles + volume ────────────────────────────────────────────────────
+    serCandle.setData(shifted);
+    serVol.setData(shifted.map(c => ({
+      time: c.time, value: c.volume,
+      color: c.close >= c.open ? '#1a3d2b' : '#3d1a1a',
+    })));
 
-    // ── EMA ───────────────────────────────────────────────────────────────────
+    // ── EMA ─────────────────────────────────────────────────────────────────
     const e50  = calcEMA(closes, 50);
     const e200 = calcEMA(closes, 200);
     const e500 = calcEMA(closes, 500);
-    const toLine = arr => shifted.map((c, i) => arr[i] != null ? { time: c.time, value: +arr[i].toFixed(4) } : null).filter(Boolean);
-    ema50S.setData(toLine(e50));
-    ema200S.setData(toLine(e200));
-    ema500S.setData(toLine(e500));
+    const toLine = arr =>
+      shifted.map((c, i) => arr[i] != null ? { time: c.time, value: +arr[i].toFixed(4) } : null).filter(Boolean);
+    serEma50.setData(toLine(e50));
+    serEma200.setData(toLine(e200));
+    serEma500.setData(toLine(e500));
     const li = candles.length - 1;
     g('ev50').textContent  = e50[li]  != null ? e50[li].toFixed(3)  : '—';
     g('ev200').textContent = e200[li] != null ? e200[li].toFixed(3) : '—';
     g('ev500').textContent = e500[li] != null ? e500[li].toFixed(3) : '—';
 
-    // ── RSI ───────────────────────────────────────────────────────────────────
+    // ── Premium / Discount zones ─────────────────────────────────────────────
+    const { high: swHigh, low: swLow } = findSwings(candles, SWING_STR);
+    if (swHigh != null && swLow != null && swHigh > swLow) {
+      const equil = (swHigh + swLow) / 2;
+      const t0 = shifted[0].time;
+      const t1 = shifted[shifted.length - 1].time;
+      const flat = val => [{ time: t0, value: +val.toFixed(4) }, { time: t1, value: +val.toFixed(4) }];
+
+      serZoneHigh.setData(flat(swHigh));
+      serZoneEquil.setData(flat(equil));
+      serZoneLow.setData(flat(swLow));
+
+      // Premium area: from swingHigh down to equilibrium (baseValue)
+      serPremiumArea.applyOptions({ baseValue: { type: 'price', price: equil } });
+      serPremiumArea.setData(flat(swHigh));
+
+      // Discount area: from equilibrium down to swingLow (baseValue)
+      serDiscountArea.applyOptions({ baseValue: { type: 'price', price: swLow } });
+      serDiscountArea.setData(flat(equil));
+
+      // Labels on Y axis
+      serZoneHigh.applyOptions({ title: 'Premium' });
+      serZoneEquil.applyOptions({ title: 'Equil.' });
+      serZoneLow.applyOptions({ title: 'Discount' });
+    } else {
+      // Clear zones if no valid swing points found
+      const empty = [];
+      [serZoneHigh, serZoneEquil, serZoneLow, serPremiumArea, serDiscountArea].forEach(s => s.setData(empty));
+    }
+
+    // ── RSI ──────────────────────────────────────────────────────────────────
     const rsiArr = calcRSI(closes, 14);
-    rsiSeries.setData(toLine(rsiArr));
-    const t0 = shifted[0].time, t1 = shifted[li].time;
-    rsiOB.setData( [{ time: t0, value: 70 }, { time: t1, value: 70 }]);
-    rsiOS.setData( [{ time: t0, value: 30 }, { time: t1, value: 30 }]);
-    rsiMid.setData([{ time: t0, value: 50 }, { time: t1, value: 50 }]);
+    serRsi.setData(toLine(rsiArr));
+    const t0r = shifted[0].time, t1r = shifted[li].time;
+    serRsiOB.setData( [{ time: t0r, value: 70 }, { time: t1r, value: 70 }]);
+    serRsiOS.setData( [{ time: t0r, value: 30 }, { time: t1r, value: 30 }]);
+    serRsiMid.setData([{ time: t0r, value: 50 }, { time: t1r, value: 50 }]);
     const lastRsi = rsiArr[li];
     g('ev-rsi').textContent = lastRsi != null ? lastRsi.toFixed(1) : '—';
     g('ev-rsi').style.color = rsiColor(lastRsi);
 
-    // ── MACD ──────────────────────────────────────────────────────────────────
-    const { macdLine, signalLine, histogram } = calcMACD(closes, 12, 26, 9);
-    macdLineSeries.setData(toLine(macdLine));
-    macdSignalSeries.setData(toLine(signalLine));
-    macdHistSeries.setData(
+    // ── MACD ─────────────────────────────────────────────────────────────────
+    const { macd, sig, hist } = calcMACD(closes, 12, 26, 9);
+    serMacdLine.setData(toLine(macd));
+    serMacdSignal.setData(toLine(sig));
+    serMacdHist.setData(
       shifted
-        .map((c, i) => histogram[i] != null ? { time: c.time, value: +histogram[i].toFixed(4), color: histogram[i] >= 0 ? '#26c28188' : '#e74c3c88' } : null)
+        .map((c, i) => hist[i] != null
+          ? { time: c.time, value: +hist[i].toFixed(4), color: hist[i] >= 0 ? 'rgba(38,194,129,0.6)' : 'rgba(231,76,60,0.6)' }
+          : null)
         .filter(Boolean)
     );
-    const lastMacd = macdLine[li], lastSig = signalLine[li], lastHist = histogram[li];
-    g('ev-macd').textContent = lastMacd != null ? lastMacd.toFixed(4) : '—';
-    g('ev-sig').textContent  = lastSig  != null ? lastSig.toFixed(4)  : '—';
-    g('ev-hist').textContent = lastHist != null ? lastHist.toFixed(4) : '—';
-    g('ev-hist').style.color = lastHist == null ? '#334155' : lastHist >= 0 ? '#26c281' : '#e74c3c';
+    const lm = macd[li], ls = sig[li], lh = hist[li];
+    g('ev-macd').textContent = lm != null ? lm.toFixed(4) : '—';
+    g('ev-sig').textContent  = ls != null ? ls.toFixed(4) : '—';
+    g('ev-hist').textContent = lh != null ? lh.toFixed(4) : '—';
+    g('ev-hist').style.color = lh == null ? '#555' : lh >= 0 ? '#26c281' : '#e74c3c';
 
-    // ── Premium / Discount zones ──────────────────────────────────────────────
-    drawZones(candles, shifted);
-
-    // ── Header ────────────────────────────────────────────────────────────────
+    // ── Header ───────────────────────────────────────────────────────────────
     const baseline = getPrevDayClose(candles, yfPrevClose);
     const ch  = baseline != null ? price - baseline : null;
     const pct = ch != null && baseline ? ch / baseline * 100 : null;
@@ -531,75 +655,93 @@ async function loadData(isRefresh) {
     const clr = up ? '#26c281' : '#e74c3c';
     const sgn = up ? '+' : '';
     setText('price', price.toFixed(3));
-    g('change').textContent    = ch  != null ? sgn + ch.toFixed(3) : '—'; g('change').style.color = clr;
+    g('change').textContent    = ch  != null ? sgn + ch.toFixed(3)          : '—'; g('change').style.color    = clr;
     g('changePct').textContent = pct != null ? `(${sgn}${pct.toFixed(2)}%)` : ''; g('changePct').style.color = clr;
     setText('vol', volume ? Number(volume).toLocaleString('en-US') : '—');
-    const today     = todayPrague();
-    const todayBars = candles.filter(c => new Date(c.time * 1000).toLocaleDateString('en-CA', { timeZone: TZ }) === today);
+
+    const today     = todayStr();
+    const todayBars = candles.filter(c => dateStr(c.time) === today);
     const tH = todayBars.length ? todayBars.reduce((m, c) => Math.max(m, c.high), -Infinity) : null;
-    const tL = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),  Infinity)  : null;
+    const tL = todayBars.length ? todayBars.reduce((m, c) => Math.min(m, c.low),   Infinity) : null;
     setText('dhigh', (dayHigh ?? tH ?? candles.reduce((m, c) => Math.max(m, c.high), -Infinity)).toFixed(3));
-    setText('dlow',  (dayLow  ?? tL ?? candles.reduce((m, c) => Math.min(m, c.low),  Infinity)).toFixed(3));
+    setText('dlow',  (dayLow  ?? tL ?? candles.reduce((m, c) => Math.min(m, c.low),   Infinity)).toFixed(3));
 
     if (!isRefresh) fitAll();
     hideOverlay();
     resetTimer();
   } catch (e) {
-    console.error(e);
+    console.error('loadData error:', e);
     if (!isRefresh) showErr(e.message || 'Unknown error');
   } finally {
     setRefreshing(false);
   }
 }
 
-// ── Timer ─────────────────────────────────────────────────────────────────────
+// ─── Timer ────────────────────────────────────────────────────────────────────
 function resetTimer() {
   clearInterval(refreshTimer);
   refreshTimer = setInterval(() => loadData(true), REFRESH_MS);
   setText('status', `Auto-refresh ${REFRESH_MS / 1000}s`);
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
+// ─── UI helpers ───────────────────────────────────────────────────────────────
 function g(id)          { return document.getElementById(id); }
 function setText(id, v) { g(id).textContent = v; }
+
 function clearTip() {
   g('hint').style.display = '';
   ['o','h','l','c'].forEach(k => g('oi-'+k).style.display = 'none');
   ['50','200','500'].forEach(p => g('ev'+p).textContent = '—');
   g('ev-rsi').textContent = '—'; g('ev-rsi').style.color = '#a78bfa';
   g('ev-macd').textContent = g('ev-sig').textContent = g('ev-hist').textContent = '—';
-  g('ev-hist').style.color = '#334155';
+  g('ev-hist').style.color = '#555';
 }
-function setOI(k, v, c) { g('oi-'+k).style.display='flex'; g('tv-'+k).textContent=v; g('tv-'+k).style.color=c; }
+function setOI(k, v, c) {
+  g('oi-'+k).style.display = 'flex';
+  g('tv-'+k).textContent   = v;
+  g('tv-'+k).style.color   = c;
+}
 function showLoading() {
-  const o = g('overlay'); o.style.display='flex';
+  const o = g('overlay'); o.style.display = 'flex';
   o.innerHTML = '<div id="spin"></div><div id="load-msg">Loading market data…</div>';
 }
 function showErr(msg) {
-  const o = g('overlay'); o.style.display='flex';
+  const o = g('overlay'); o.style.display = 'flex';
   o.innerHTML = `<div class="ebox"><p class="etit">⚠ Failed to load data</p><p class="emsg">${msg.replace(/\n/g,'<br>')}</p><button class="rbtn2" onclick="loadData(false)">Retry</button></div>`;
 }
-function hideOverlay()     { g('overlay').style.display='none'; }
-function setRefreshing(on) { g('dot').style.background=on?'#e7a22b':'#26c281'; if(on) setText('status','Loading…'); }
+function hideOverlay()     { g('overlay').style.display = 'none'; }
+function setRefreshing(on) {
+  g('dot').style.background = on ? '#e7a22b' : '#26c281';
+  if (on) setText('status', 'Loading…');
+}
 
-// ── Controls ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.iv').forEach(btn => btn.addEventListener('click', () => {
-  document.querySelectorAll('.iv').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on'); curIv = btn.dataset.iv; clearTip(); loadData(false);
-}));
+// ─── Controls ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('.iv').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.iv').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    curIv = btn.dataset.iv;
+    clearTip();
+    loadData(false);
+  });
+});
 g('fit-btn').addEventListener('click', () => fitAll());
 g('rbtn').addEventListener('click',    () => loadData(false));
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
+// ─── Boot ─────────────────────────────────────────────────────────────────────
 function waitForLib(cb) {
   if (typeof LightweightCharts !== 'undefined') { cb(); return; }
   let n = 0;
   const id = setInterval(() => {
     if (typeof LightweightCharts !== 'undefined') { clearInterval(id); cb(); return; }
-    if (++n > 100) { clearInterval(id); showErr('Failed to load chart library.'); }
+    if (++n > 100) { clearInterval(id); showErr('Failed to load chart library. Check connection.'); }
   }, 100);
 }
-waitForLib(() => { initCharts(); loadData(false); });
+
+waitForLib(() => {
+  initCharts();   // all series created here — LightweightCharts is guaranteed available
+  loadData(false);
+});
 </script>
 </body>
 </html>
